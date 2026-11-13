@@ -1,15 +1,16 @@
 # GOTime task list
 
-Open work, grouped by area. Owner in brackets where agreed. Updated 13 November 2026.
+Open work, grouped by area. Updated 13 November 2026.
+
+Ownership: Jessie owns AeroWise (the corrected street-level wind pipeline). Everything else, including the data layer, is ours.
 
 ## 1. Data layer: move to direct sources
-Direction agreed with Jessie on 13 November 2026. See the data sources section of the README.
+Sources follow Jessie's recommendations of 13 November 2026; the data layer itself is ours. See the data sources section of the README.
 
-- [ ] Agree a data contract between the pipeline and the engine: per location and hour, the 10 inputs with units, plus source and forecast issue time
-- [ ] Download workers for the ECMWF IFS open data and DWD ICON (ICON-EU, ICON-D2), Europe-only subsets (Jessie)
-- [ ] CAMS European air quality and pollen forecasts via the ADS with our own key (Jessie)
+- [ ] Download workers for the ECMWF IFS open data and DWD ICON (ICON-EU, ICON-D2), Europe-only subsets
+- [ ] CAMS European air quality and pollen forecasts via the ADS with our own key
 - [ ] Evaluate the ADS forecasts optimised at observation sites as the station correction
-- [ ] EEA Air Quality Download Service (E1a and E2a) to replace Luchtmeetnet, using the CAMS_dust_deduction_tool pipeline (Jessie)
+- [ ] EEA Air Quality Download Service (E1a and E2a) to replace Luchtmeetnet, using the CAMS_dust_deduction_tool pipeline (ask Jessie for access)
 - [ ] EUMETNET MeteoGate for station observations (KNMI and other European met services)
 - [ ] ERA5 from Copernicus for climatology (temperature percentiles, local heat reference)
 - [ ] Convert raw fields to engine inputs: humidity from dew point, wind speed and direction from components, sunlight from accumulated radiation to W/m²
@@ -17,9 +18,9 @@ Direction agreed with Jessie on 13 November 2026. See the data sources section o
 - [ ] Re-check the CAMS correction factors (NO₂ ×1.8, PM2.5 ×1.35) against the ADS feed
 - [ ] CPCB stations for India
 - [ ] NASA Earthdata surface temperature as a supplement for street-level heat mapping (with AeroWise)
-- [ ] Docker on OVH with scheduled download workers (Jessie)
+- [ ] Docker on OVH with scheduled download workers
 
-## 2. Wind: AeroWise integration (waiting for Jessie's agreement)
+## 2. Wind: AeroWise integration (Jessie)
 - [ ] Add a `route_profile` block to the API contract (v1.1): per ~200 m stretch, heading, headwind, gust, open or street canyon, elevation
 - [ ] AeroWise changes: accept an existing route, add a running mode, return several hours at once (or per-direction adjustment factors)
 - [ ] Use body-height wind per stretch in heat stress, the heat budget, effort on hills and into the wind, wind chill and start direction
