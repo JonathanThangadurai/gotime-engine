@@ -79,3 +79,11 @@ python3 test_cv_exertion.py checks it. Not yet wired into run_window.py - do tha
   Never edit the built file.
 - Wind: AeroWise (separate private repo, Python, Benelux, cycling) gives headwind/gust/path/elevation every 200 m. Planned as a
   separate service feeding a v1.1 `route_profile` block. Do not copy its code into this public repo.
+
+## Data-source direction (agreed 13 Nov 2026, from Jessie)
+Production replaces Open-Meteo with direct sources: ECMWF IFS open data (CC-BY-4.0 since 1 Oct 2025) and DWD ICON for
+weather, CAMS via ADS (own key) for air/pollen, EEA download service (E1a/E2a) instead of Luchtmeetnet, EUMETNET MeteoGate
+for station observations incl. KNMI, ERA5 from Copernicus for climatology. NASA land surface temperature is supplementary
+(street heat mapping), never a substitute for air temperature. Infra: Docker on OVH with download workers.
+The engines take hourly arrays per location, so only connectors / server.js conditionsFor change. Note: the CAMS correction
+factors in outputs/ were fitted against CAMS-via-Open-Meteo and must be re-checked against the ADS feed.

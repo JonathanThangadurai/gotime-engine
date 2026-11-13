@@ -112,16 +112,32 @@ The population alert uses Stafoggia et al. (2023) Model 3 with the pooled tables
 
 ## Data sources
 
-| Source | Used for | Notes |
-|---|---|---|
-| Open-Meteo forecast and archive (ECMWF IFS, ERA5) | Weather, climatology | The free tier is **non-commercial**; commercial use needs a paid plan or direct ECMWF/Copernicus access |
-| CAMS European and global air quality (via Open-Meteo) | Air pollution, pollen in Europe | The global grid is coarse and reads low for city streets (for example Chennai) |
-| Luchtmeetnet (RIVM) | Measured air quality, Netherlands | Used by the population alert; station correction for the API is planned |
-| KNMI Data Platform | Measured temperature | Needs a registered key; the older daily-data endpoint retires after 2026, and the history is frozen locally |
-| CBS StatLine 40080NED | Baseline deaths | Population alert only |
-| OpenStreetMap | Routes and maps (prototype) | © OpenStreetMap contributors, ODbL |
+The prototype still runs on convenience sources. Production moves to direct, commercially licensed sources (agreed direction, November 2026). The engine only takes hourly values per location, so this change is confined to the data layer.
 
----
+**Target sources (production)**
+
+| Source | Used for | Licence and notes |
+|---|---|---|
+| ECMWF IFS open data | Weather forecast (temperature, humidity, wind, radiation) | Entire real-time catalogue open under CC-BY-4.0 since 1 October 2025, commercial use allowed with attribution. A free subset is published openly; full resolution or dedicated delivery can carry service charges |
+| DWD ICON, ICON-EU, ICON-D2 | Second forecast, short-range high resolution | DWD open data, CC BY 4.0, commercial use allowed with attribution |
+| CAMS European air quality forecasts via the Atmosphere Data Store (own API key) | Air pollution and pollen forecast | Copernicus CC-BY licence (since July 2025). The ADS also offers forecasts optimised at observation sites (MOS), a ready-made station correction |
+| EEA Air Quality Download Service (E1a validated, E2a up-to-date) | Measured air quality, all European stations | Replaces Luchtmeetnet: the same Dutch data, one pipeline for every country |
+| EUMETNET MeteoGate | Measured weather from European met services, including KNMI | Single access point and API key for European open met data |
+| Copernicus ERA5 | Local climatology (temperature percentiles, heat reference) | Copernicus CC-BY licence |
+| NASA Earthdata satellite surface temperature | Mapping which streets run hot (with AeroWise) | Supplementary only: surface temperature is not air temperature and has cloud and overpass gaps |
+| CBS StatLine 40080NED | Baseline deaths (population alert) | Open data |
+| OpenStreetMap | Routes, buildings, maps | © OpenStreetMap contributors, ODbL |
+
+Planned infrastructure: Docker on OVH, with scheduled download workers for the sources above, Europe-only subsets of the variables the engine uses.
+
+**Current prototype sources**
+
+| Source | Used for | Status |
+|---|---|---|
+| Open-Meteo forecast and air-quality API (ECMWF, CAMS) | Weather, air quality, pollen | Free API is non-commercial. Prototype only, to be replaced by the direct sources above |
+| Open-Meteo archive (ERA5) | Climatology | To be replaced by ERA5 from Copernicus |
+| Luchtmeetnet (RIVM) | Measured air quality, Netherlands (population alert) | To be replaced by the EEA service |
+| KNMI Data Platform | Measured temperature (population alert) | To be accessed through MeteoGate; frozen history kept in `climatology/` |
 
 ## Repository layout
 
@@ -153,7 +169,7 @@ outputs/                 back-test summary and CAMS correction tables
 ## Known limitations
 
 - The API supports **Amsterdam and Chennai** only. Other locations return `422`.
-- Air quality is model data. Street-level stations (Luchtmeetnet, CPCB) are not yet used to correct it in the API.
+- Weather and air quality come from the Open-Meteo API (non-commercial, prototype only). Station correction is not yet applied in the API.
 - Wind is scaled from 10 m with a fixed factor. Shade, slope and street canyons are not yet used. The AeroWise wind service will provide them.
 - `/live` estimates core temperature from the heat budget. A heart-rate method is planned.
 - Nothing has been validated against outcomes for running yet. The population alert captured about 45 % of the 2026 heatwave signal (see the back-test summary).
@@ -162,8 +178,8 @@ outputs/                 back-test summary and CAMS correction tables
 
 1. **v1.1 route profile.** Integrate AeroWise as a separate service. It supplies headwind, gusts, street type and elevation every 200 m, which feed body-height wind into the heat budget, effort on hills and into the wind, and wind chill per segment.
 2. **Any location.** Compute climatology and the local reference on the fly from ERA5.
-3. **Station-corrected air quality** in the Netherlands and India.
-4. **Hosting.** API keys, rate limits, monitoring, and commercial weather and air data licences.
+3. **Data layer on direct sources**: ECMWF and ICON forecasts, CAMS via the ADS (including its station-optimised forecasts), EEA and MeteoGate observations, with CPCB for India.
+4. **Hosting.** Docker on OVH with download workers, API keys, rate limits and monitoring.
 5. **Validation.** Multi-season back-tests (2018, 2019, 2022, 2025), a common-sense benchmark and local checks in Chennai.
 6. **Heart rate** in `/live`, a cold-dose module, more languages.
 
