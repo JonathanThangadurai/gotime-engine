@@ -4,6 +4,9 @@ import { pitch } from "./pitch";
 import { userTest } from "./user-test";
 import type { PersonaId } from "../../presenter/state";
 
+/** A user-test question shown on the phone. Copy keys: UT_Q_<id>; scale ends UT_LOW_<id> / UT_HIGH_<id>. */
+export interface Question { id: string; kind: "choice" | "scale" | "yesno" | "text"; options?: string[] /* copy keys */ }
+
 export interface ScriptStep {
   scenario: string;          // scenario id (scenarios/index.ts)
   persona: PersonaId;
@@ -13,7 +16,9 @@ export interface ScriptStep {
   compare?: PersonaId;       // second phone (stage view)
   seconds?: number;          // planned speaking time
   note: string;              // speaker note (stage view only)
-  question?: string;         // user-test question to ask at this step (rating UI arrives in step 5)
+  question?: string;         // facilitator prompt (stage notes)
+  questions?: Question[];    // user test: questions on the phone at this step
+  consent?: boolean;         // user test: the one-screen consent before anything else
 }
 export interface Script { id: string; title: string; steps: ScriptStep[] }
 

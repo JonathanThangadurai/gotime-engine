@@ -21,7 +21,7 @@ export interface TodayView {
 export interface WhyView {
   reasons: Reason[];
   counterfactual: { code: string; params: Record<string, string | number> } | null;
-  disclaimer: string;
+  disclaimer: string;      // message code, rendered in the current language
 }
 
 /** "2026-06-27T06:45:00+02:00" -> "6:45" (local clock, engine style without a leading zero). */
@@ -89,7 +89,7 @@ export function todayView(rec: Recommendation, nowHour: number, usualHour?: numb
 export function whyView(rec: Recommendation, cmp: Comparison | null, max = 3): WhyView {
   const counterfactual = rec.summary.action !== "indoor" && cmp && cmp.ran && cmp.worthSaying
     ? { code: `CF_WHY_${cfFamily(cmp)}`, params: cfParams(cmp) } : null;
-  return { reasons: rec.reasons.slice(0, max), counterfactual, disclaimer: rec.disclaimer.text ?? rec.disclaimer.code };
+  return { reasons: rec.reasons.slice(0, max), counterfactual, disclaimer: rec.disclaimer.code };
 }
 
 // ---------------------------------------------------------------- step 2 views

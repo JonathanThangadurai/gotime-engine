@@ -1,5 +1,6 @@
 // Stored scenarios the presenter can pick. Weather and air arrays live in api/locations.js (shared with the API).
-import type { CityKey, Source } from "../engine";
+import { scenarioData, type CityKey, type Source } from "../engine";
+import { dayLabel, isoDow } from "../copy";
 import type { Persona } from "./personas";
 
 export interface Scenario {
@@ -9,8 +10,6 @@ export interface Scenario {
   label: string;
   personas: Persona["id"][]; // first = default
   defaultTime: string;      // local HH:MM when the runner wakes and opens the app; also the plan time for the evening message
-  dateLabel: string;
-  eveningLabel: string;     // the evening before
   routeId: string;
   sources: Source[];
 }
@@ -23,17 +22,22 @@ const ERA5: Source[] = [
 
 export const SCENARIOS: Scenario[] = [
   { id: "ams-heat", city: "ams", dataKey: "heat", label: "Heatwave", personas: ["sanne"], defaultTime: "06:45",
-    dateLabel: "Saturday 27 June", eveningLabel: "Friday 26 June", routeId: "vondelpark", sources: SYNTHETIC },
+    routeId: "vondelpark", sources: SYNTHETIC },
   // Same morning, two runners: Arjun (heat-adapted, local) goes early; Sanne (visitor) is sent indoors.
   { id: "chn-heat", city: "chn", dataKey: "heat", label: "May heat", personas: ["arjun", "sanne"], defaultTime: "05:15",
-    dateLabel: "Monday 6 May", eveningLabel: "Sunday 5 May", routeId: "marina", sources: ERA5 },
+    routeId: "marina", sources: ERA5 },
   // Bhogi: bonfire smoke at dawn, so Arjun's usual 5:30 slot is the worst of the day.
   { id: "chn-bhogi", city: "chn", dataKey: "bhogi", label: "Bhogi smoke", personas: ["arjun"], defaultTime: "05:15",
-    dateLabel: "Monday 13 January", eveningLabel: "Sunday 12 January", routeId: "marina", sources: ERA5 },
+    routeId: "marina", sources: ERA5 },
   // Indoor branch (plan section 3: "Chennai visitor in May"): Sanne, not heat-adapted, visiting on 6 May 2024.
   { id: "chn-heat-visitor", city: "chn", dataKey: "heat", label: "May heat, visitor", personas: ["sanne"], defaultTime: "05:15",
-    dateLabel: "Monday 6 May", eveningLabel: "Sunday 5 May", routeId: "marina", sources: ERA5 },
+    routeId: "marina", sources: ERA5 },
 ];
+
+/** The scenario's date (from api/locations.js) as "Saturday 27 June" in the current language; -1 = the evening before. */
+export const scenarioDate = (s: Scenario): string => scenarioData(s.city, s.dataKey).date;
+export const dateLabel = (s: Scenario, offsetDays = 0): string => dayLabel(scenarioDate(s), offsetDays);
+export const scenarioDow = (s: Scenario): number => isoDow(scenarioDate(s));
 
 export const CITY_LABEL: Record<CityKey, string> = { ams: "Amsterdam", chn: "Chennai" };
 

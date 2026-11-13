@@ -53,8 +53,8 @@ export function RouteScreen({ rec, route, onStart }: { rec: Recommendation; rout
       <RouteMap route={route} heading={heading} windFrom={windFrom} />
       <div class="block">
         <ul class="rows">
-          <li class="row"><Icon name="start" /><span>{heading === null ? t("ROUTE_START_ANY", { start_point: start.label })
-            : t("ROUTE_START", { start_point: start.label, heading: ENG.compass(heading) })}</span></li>
+          <li class="row"><Icon name="start" /><span>{heading === null ? t("ROUTE_START_ANY", { start_point: t(start.labelKey) })
+            : t("ROUTE_START", { start_point: t(start.labelKey), heading: ENG.compass(heading) })}</span></li>
           <li class="row"><Icon name="pace" /><span>{t(lap.code, lap.params)}</span></li>
           {g.route?.air_dose_saving_pct && g.route.compared_with && (
             <li class="row"><Icon name="air" /><span>{t("ROUTE_AIR", { compared_with: g.route.compared_with, saving_pct: g.route.air_dose_saving_pct })}</span></li>

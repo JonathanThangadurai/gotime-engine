@@ -75,7 +75,7 @@ describe("Marina promenade (OSM), out and back", () => {
     expect(t(s.code, s.params)).toBe("Marina promenade, 2.8 km each way. Turn back after 2.4 km to keep to 30 minutes");
   });
   it("heading north into the wind starts at the lighthouse end", () => {
-    expect(startEnd(ROUTES.marina, 0).label).toBe("Start at the lighthouse end");
-    expect(startEnd(ROUTES.marina, 180).label).toBe("Start at the north end");
+    expect(startEnd(ROUTES.marina, 0).labelKey).toBe("ROUTE_START_marina_a");
+    expect(startEnd(ROUTES.marina, 180).labelKey).toBe("ROUTE_START_marina_b");
   });
 });

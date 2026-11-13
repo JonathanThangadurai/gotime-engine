@@ -91,27 +91,37 @@ export function StageView() {
   const est = run.screen.value === "after" && run.action.value !== "indoor"
     ? Math.max(...run.trace.value.map(p => p.live.core_estimate_c)) : null;
   return (
-    <div class={`stage${barHidden.value ? " bar-hidden" : ""}${cmpOn ? " compare" : ""}`} data-layout="stage">
-      <header class="stage-top">
+    <div class={`stage${barHidden.value ? " bar-hidden" : ""}${cmpOn ? " compare" : ""}${notes.value || lens.value ? "" : " no-panel"}`} data-layout="stage">
+      {!barHidden.value && <header class="stage-top">
         <span><b>GOTime demo</b> · {sc ? `${sc.title}, step ${scriptStep.value + 1} of ${sc.steps.length}` : "Presenter"}</span>
         <span>{CITY_LABEL[city.value]} · {scenario.value.label}</span>
-      </header>
+      </header>}
       <div class="stage-body">
         <div class="phones">
           <Phone run={main} label={cmpOn ? personaLabel(main) : undefined} />
           {cmpOn && <Phone run={other} label={personaLabel(other)} />}
         </div>
-        <Panel>
-          <p class="panel-kicker">Moment {moment.value + 1} of 9 · {m.title}</p>
-          {notes.value && note && (
-            <div class="panel-note-box" data-testid="speaker-note">
-              <p class="panel-label">Speaker note</p>
-              <p>{note}</p>
-              {step?.question && <p class="panel-question">Ask: {step.question}</p>}
-            </div>
+        {(notes.value || payload) && <Panel>
+          {notes.value && (
+            <section data-testid="speaker-note">
+              <p class="panel-kicker">Moment {moment.value + 1} of 9 · {m.title}</p>
+              {note && (
+                <div class="panel-note-box">
+                  <p class="panel-label">Speaker note</p>
+                  <p>{note}</p>
+                  {step?.question && <p class="panel-question">Ask: {step.question}</p>}
+                </div>
+              )}
+              {silentEvening && <p class="panel-note" data-testid="no-message">{t("NO_MESSAGE")}</p>}
+              {!payload && (
+                <dl>
+                  <dt>What the runner sees</dt><dd>{m.sees}</dd>
+                  <dt>Principle at work</dt><dd>{m.principle}</dd>
+                </dl>
+              )}
+            </section>
           )}
-          {silentEvening && <p class="panel-note" data-testid="no-message">{t("NO_MESSAGE")}</p>}
-          {payload ? (
+          {payload && (
             <section class="lens" data-testid="partner-lens">
               <p class="panel-label">Partner lens</p>
               <p class="lens-embed"><span class="lens-swatch" aria-hidden="true" /> What your app embeds: the GOTime module (dashed outline)</p>
@@ -125,13 +135,8 @@ export function StageView() {
                 </>
               )}
             </section>
-          ) : (
-            <dl>
-              <dt>What the runner sees</dt><dd>{m.sees}</dd>
-              <dt>Principle at work</dt><dd>{m.principle}</dd>
-            </dl>
           )}
-        </Panel>
+        </Panel>}
       </div>
       {!barHidden.value && (
         <footer class="presenter-bar" data-testid="presenter-bar">

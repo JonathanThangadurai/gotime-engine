@@ -3,6 +3,7 @@
 // ?city=chn&scenario=bhogi&persona=arjun&moment=4&lens=partner&script=pitch, so every demo screen is reproducible.
 import { computed, effect, signal } from "@preact/signals";
 import { SCRIPTS, type ScriptStep } from "../scenarios/scripts";
+import { lang, type Lang } from "../copy";
 import { SCENARIOS } from "../scenarios";
 import { PERSONAS } from "../scenarios/personas";
 import { MOMENTS } from "../journey/machine";
@@ -51,7 +52,7 @@ export function restartScript() { if (scriptId.value) startScript(scriptId.value
 // ---------------------------------------------------------------- deep links
 export interface LinkState {
   city?: string; scenario?: string; persona?: PersonaId; compare?: PersonaId | null; moment?: number; time?: string;
-  lens?: boolean; notes?: boolean; script?: string | null; step?: number; kit?: Clothing | null;
+  lens?: boolean; notes?: boolean; script?: string | null; step?: number; kit?: Clothing | null; lang?: Lang;
 }
 const KITS: Clothing[] = ["running_kit", "full_length_light", "full_length_cotton"];
 const isPersona = (x: string | null): x is PersonaId => !!x && x in PERSONAS;
@@ -73,10 +74,11 @@ export function parseLink(search: string): LinkState {
   const m = Number(q.get("moment")); if (Number.isInteger(m) && m >= 1 && m <= MOMENTS.length) out.moment = m;
   const t = q.get("time"); if (t && /^\d{1,2}:\d{2}$/.test(t)) out.time = t.padStart(5, "0");
   const l = q.get("lens"); if (l) out.lens = l === "partner" || l === "on";
-  const n = q.get("notes"); if (n) out.notes = n !== "off";
+  const n = q.get("notes"); if (n) out.notes = n === "on";
   const s2 = q.get("script"); if (s2 && SCRIPTS[s2]) out.script = s2;
   const st = Number(q.get("step")); if (Number.isInteger(st) && st >= 1) out.step = st;
   const k = q.get("kit") as Clothing | null; if (k && KITS.includes(k)) out.kit = k;
+  const lg = q.get("lang"); if (lg === "nl" || lg === "nl-NL") out.lang = "nl-NL"; else if (lg === "en" || lg === "en-GB") out.lang = "en-GB";
   return out;
 }
 
@@ -93,6 +95,7 @@ export function applyLink(l: LinkState) {
   if (l.lens !== undefined) lens.value = l.lens;
   if (l.notes !== undefined) notes.value = l.notes;
   if (l.kit) main.clothing.value = l.kit;
+  if (l.lang) lang.value = l.lang;
 }
 
 /** The current state as a query string (layout is kept from the page URL). */
@@ -105,9 +108,10 @@ export function serializeLink(layout: string | null): string {
   q.set("moment", String(moment.value + 1));
   q.set("time", time.value);
   if (lens.value) q.set("lens", "partner");
-  if (!notes.value) q.set("notes", "off");
+  if (notes.value) q.set("notes", "on");
   if (scriptId.value) { q.set("script", scriptId.value); q.set("step", String(scriptStep.value + 1)); }
   if (main.clothing.value) q.set("kit", main.clothing.value);
+  if (lang.value !== "en-GB") q.set("lang", "nl");
   if (layout) q.set("layout", layout);
   return "?" + q.toString();
 }
@@ -116,6 +120,7 @@ export function serializeLink(layout: string | null): string {
 export function syncUrl() {
   return effect(() => {
     const layout = new URLSearchParams(location.search).get("layout");
+    document.documentElement.lang = lang.value;
     const next = serializeLink(layout);
     if (next !== location.search) history.replaceState(null, "", location.pathname + next);
   });

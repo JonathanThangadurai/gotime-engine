@@ -1,5 +1,5 @@
 // Demo routes drawn on OpenStreetMap: the Vondelpark running loop and the Marina promenade, both from OSM; the engine only uses the route name, axis and traffic factors from api/locations.js.
-export interface RouteEnd { at: [number, number]; label: string }
+export interface RouteEnd { at: [number, number]; labelKey: string }   // labelKey: copy key for the start point
 export interface DemoRoute {
   id: string;
   name: string;              // must match the route name in api/locations.js
@@ -15,8 +15,8 @@ export const ROUTES: Record<string, DemoRoute> = {
     // The main asphalt running loop (OSM ways highway=pedestrian, surface=asphalt, name=Vondelpark; ODbL,
     // © OpenStreetMap contributors). Outermost cycle of that path network, simplified to 8 m: 3.36 km.
     id: "vondelpark", name: "Vondelpark", axis: 60,
-    a: { at: [52.356, 4.85548], label: "Start at the Amstelveenseweg end" },
-    b: { at: [52.36023, 4.87582], label: "Start at the Van Baerlestraat end" },
+    a: { at: [52.356, 4.85548], labelKey: "ROUTE_START_vondelpark_a" },
+    b: { at: [52.36023, 4.87582], labelKey: "ROUTE_START_vondelpark_b" },
     path: [
       [52.356, 4.85548], [52.35571, 4.85559], [52.3553, 4.85611], [52.35498, 4.85593], [52.35516, 4.85698], [52.35511, 4.85823],
       [52.3552, 4.85912], [52.35589, 4.86164], [52.35608, 4.86284], [52.35631, 4.86598], [52.35615, 4.86637], [52.35636, 4.86623],
@@ -30,8 +30,8 @@ export const ROUTES: Record<string, DemoRoute> = {
     // The beach-side promenade along Kamarajar Salai (OSM way 240459461, ODbL, © OpenStreetMap contributors),
     // simplified to 8 m: 2.81 km each way. Out and back, not a loop.
     id: "marina", name: "Marina promenade", axis: 0, kind: "out_and_back",
-    a: { at: [13.03939, 80.2791], label: "Start at the lighthouse end" },
-    b: { at: [13.06431, 80.28375], label: "Start at the north end" },
+    a: { at: [13.03939, 80.2791], labelKey: "ROUTE_START_marina_a" },
+    b: { at: [13.06431, 80.28375], labelKey: "ROUTE_START_marina_b" },
     path: [
       [13.03939, 80.2791], [13.04333, 80.27996], [13.04514, 80.28013], [13.05485, 80.2816], [13.0621, 80.28306], [13.06386, 80.28351],
       [13.06403, 80.28369], [13.06431, 80.28375],
@@ -56,7 +56,6 @@ export function startEnd(route: DemoRoute, headingDeg: number | null): RouteEnd 
   return diff <= 90 ? route.a : route.b;
 }
 
-const NUM_WORD = ["", "One", "Two", "Three", "Four", "Five", "Six"];
 /** Lap message from the engine's pace and the planned duration: whole laps (or out-and-back trips) that fit. */
 export function lapMessage(route: DemoRoute, minutes: number, paceSPerKm: number): { code: string; params: Record<string, string | number> } {
   const leg = lengthKm(route.path), km = minutes * 60 / paceSPerKm;
@@ -64,10 +63,10 @@ export function lapMessage(route: DemoRoute, minutes: number, paceSPerKm: number
     const trips = Math.floor(km / (2 * leg) + 1e-9), base = { name: route.name, leg_km: leg.toFixed(1), minutes };
     if (trips < 1) return { code: "ROUTE_OUTBACK_SHORT", params: { ...base, turn_km: (km / 2).toFixed(1) } };
     if (trips === 1) return { code: "ROUTE_OUTBACK_ONE", params: base };
-    return { code: "ROUTE_OUTBACK", params: { ...base, trips_word: NUM_WORD[trips] ?? String(trips) } };
+    return { code: "ROUTE_OUTBACK", params: { ...base, trips } };
   }
   const laps = Math.floor(km / leg + 1e-9), base = { name: route.name, loop_km: leg.toFixed(1), minutes };
   if (laps < 1) return { code: "ROUTE_LOOP_SHORT", params: base };
   if (laps === 1) return { code: "ROUTE_LOOP_ONE", params: base };
-  return { code: "ROUTE_LOOP", params: { ...base, laps_word: NUM_WORD[laps] ?? String(laps) } };
+  return { code: "ROUTE_LOOP", params: { ...base, laps } };
 }

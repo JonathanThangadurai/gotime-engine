@@ -77,8 +77,8 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
   });
   it("route: start at the end that puts the first leg into the wind", () => {
     expect(rec.guidance.start_heading_deg).toBe(60);
-    expect(startEnd(ROUTES.vondelpark, 60).label).toBe("Start at the Amstelveenseweg end");
-    expect(startEnd(ROUTES.vondelpark, 240).label).toBe("Start at the Van Baerlestraat end");
+    expect(t(startEnd(ROUTES.vondelpark, 60).labelKey)).toBe("Start at the Amstelveenseweg end");
+    expect(t(startEnd(ROUTES.vondelpark, 240).labelKey)).toBe("Start at the Van Baerlestraat end");
     expect(lengthKm(ROUTES.vondelpark.path)).toBeGreaterThan(3.1);
     expect(lengthKm(ROUTES.vondelpark.path)).toBeLessThan(3.5);
   });

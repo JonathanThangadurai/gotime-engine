@@ -31,7 +31,7 @@ export function Watch() {
         <div class="w-bar"><span style={{ width: `${(v.minute / v.minutes) * 100}%` }} /></div>
         <div class="w-stats"><span>{v.minute} min</span><span>{km} km</span><span>{t(v.body.code)}</span></div>
         {v.alert && <div class={`w-alert ${ALERT_CLASS(v.alert.level)}`} role="status" data-testid="watch-alert">{t(v.alert.code)}</div>}
-        <div class="w-btns"><button type="button" onClick={() => { playing.value = false; goNext(); }}>End</button></div>
+        <div class="w-btns"><button type="button" onClick={() => { playing.value = false; goNext(); }}>{t("WATCH_END")}</button></div>
       </div></div>
       <div class="watch-demo">
         <label>

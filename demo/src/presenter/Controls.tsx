@@ -6,6 +6,8 @@ import {
   action, city, compareId, compareOptions, lens, moment, notes, personaId, reset, scenario, scenarioId, time, type PersonaId,
 } from "./state";
 import { backward, forward, script, scriptId, scriptStep, startScript, stopScript } from "./script";
+import { lang, LANGS } from "../copy";
+import { StudyControls } from "./study";
 
 const CIRCLED = "①②③④⑤⑥⑦⑧⑨";
 
@@ -80,7 +82,14 @@ export function Settings({ stage = false }: { stage?: boolean }) {
           {Object.values(SCRIPTS).map(s => <option value={s.id} key={s.id}>{s.title}</option>)}
         </select>
       </label>
+      <div class="seg" role="group" aria-label="Language">
+        {LANGS.map(l => (
+          <button type="button" key={l} class={lang.value === l ? "on" : ""} aria-pressed={lang.value === l}
+            onClick={() => { lang.value = l; }}>{l.slice(0, 2).toUpperCase()}</button>
+        ))}
+      </div>
       <button type="button" class="reset" onClick={() => { if (scriptId.value) startScript(scriptId.value); else reset(); }}>Reset</button>
+      <StudyControls />
       <span class="hint">{CITY_LABEL[city.value]} · {scenarioById(scenarioId.value).label}</span>
     </div>
   );

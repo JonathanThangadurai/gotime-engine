@@ -17,8 +17,10 @@ import { Watch } from "../screens/Watch";
 import { Icon } from "../screens/icons";
 import { MOMENTS } from "../journey/machine";
 import { ROUTES } from "../scenarios/routes";
+import { dateLabel } from "../scenarios";
 import { useLongPress } from "./useLongPress";
-import { drawerOpen, drinkTip, goNext, lens, moment, nowHour, scenario, time, useRun } from "../presenter/state";
+import { drawerOpen, drinkTip, goNext, lens, main, moment, nowHour, scenario, time, useRun } from "../presenter/state";
+import { StudyCard } from "../presenter/study";
 
 const idx = (id: string) => MOMENTS.findIndex(m => m.id === id);
 
@@ -68,7 +70,7 @@ function HostApp() {
     : numbers ? { title: t("NUMBERS_TITLE"), back: t("BACK_WHY"), onBack: () => { run.numbersOpen.value = false; } }
     : id === "route" ? { title: t("ROUTE_TITLE"), back: t("BACK_TODAY"), onBack: toToday }
     : id === "week" ? { title: t("WEEK_TITLE"), date: t("WEEK_DATE") }
-    : { title: t("TODAY_TITLE"), date: scenario.value.dateLabel };
+    : { title: t("TODAY_TITLE"), date: dateLabel(scenario.value) };
 
   let body;
   if (numbers) body = <NumbersScreen />;
@@ -114,11 +116,15 @@ function HostApp() {
   );
 }
 
-/** The device content for the current moment. */
-export function DeviceScreen() {
+function Screen() {
   const id = useRun().screen.value;
   if (id === "evening") return <EveningLock />;
   if (id === "glance") return <GlanceLock />;
   if (id === "run") return <Watch />;
   return <HostApp />;
+}
+
+/** The device content for the current moment, plus the user-test question card on the main phone. */
+export function DeviceScreen() {
+  return <><Screen />{useRun() === main && <StudyCard />}</>;
 }

@@ -11,6 +11,7 @@ Environmental health intelligence for outdoor activity. GOTime couples heat, hum
 | Component | Folder | Language | What it does | Status |
 |---|---|---|---|---|
 | **Recommendation API v1** | [`api/`](api/) | Node.js | The run engine behind an OpenAPI 3.1 contract: plan a run, then live guidance during it | Working locally; contract validated against 7 example cases |
+| **Phone demo** | [`demo/`](demo/) | Vite + Preact + TypeScript | Installable web app: the runner journey inside a fictional fitness app, with a presenter mode, partner lens and a user-test mode, on the same engine | Live at https://jonathanthangadurai.github.io/gotime-engine/ |
 | **Watch prototype** | [`prototype/`](prototype/) | One HTML file | Clickable watch demo (Amsterdam and Chennai, heat, city, pollen and cold runs) built on the same engine | Working; opened as a local file it fetches live data |
 | **Population alert** | repository root (`*.py`) | Python | Daily heat × air-pollution mortality risk and excess deaths for one Dutch municipality, today plus 2 days | Working for Amsterdam; 2026 back-test done |
 | **Exertion model** | `cv_exertion.py` | Python | Reference derivation of the run-level cardiovascular load used by the run engine | Tested (`test_cv_exertion.py`) |
@@ -35,6 +36,9 @@ The server fetches live Open-Meteo weather and CAMS air quality for the nearest 
 python3 prototype/build.py
 ```
 
+**Phone demo**: open **https://jonathanthangadurai.github.io/gotime-engine/** (shareable by link, not indexed by search
+engines). To run it locally: `cd demo && npm install && npm run dev`. See [Phone demo](#phone-demo) below.
+
 **Population alert** (Python 3.9+):
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -44,6 +48,58 @@ export KNMI_API_KEY=...                       # free registered key from the KNM
 .venv/bin/python run_window.py --compare 10:00 15:00 --compare-day tomorrow
 ```
 Without h5py or a KNMI key, yesterday's temperature falls back to Open-Meteo. Change the municipality in `config.json` (the name must match the CBS spelling). The frozen KNMI temperature history lives in `climatology/`, which is kept out of git; never delete your local copy, because the source endpoint retires after 2026.
+
+---
+
+## Phone demo
+
+**Link:** https://jonathanthangadurai.github.io/gotime-engine/ (rebuilt and published by GitHub Actions on every push to
+`main` that touches `demo/` or the shared engine files). It is an installable web app: "Add to Home Screen" on iPhone or
+Android, and it works offline after the first load (map tiles need a connection). The engine runs on the phone itself.
+Plan: [`docs/phone-demo-plan.md`](docs/phone-demo-plan.md). Build brief: [`docs/phone-demo-build-brief.md`](docs/phone-demo-build-brief.md).
+Developer notes: [`demo/README.md`](demo/README.md).
+
+**Two layouts.** On a laptop or projector the *stage view* shows the phone, a presenter bar and, on request, the partner
+lens and speaker notes. On a phone the app fills the screen; the presenter drawer opens with a one-second long press on
+the page header (date, "Today", avatar) or a three-finger tap. Force a layout with `?layout=stage` or `?layout=phone`.
+
+**Keys (stage view)**
+
+| Key | Action |
+|---|---|
+| → / ← | Next / previous moment (in a script: next / previous step) |
+| 1-9 | Jump to a moment: onboarding, evening, glance, Today, Why, route, run, after, week |
+| C / S | Switch city (Amsterdam, Chennai) / cycle scenarios |
+| P | Partner lens: outlines the GOTime module and shows the API response behind the screen |
+| N | Speaker notes (stage panel only, off by default) |
+| H | Clean stage: hides the presenter strip and bar |
+| R | Reset (restarts the script) |
+
+On the phone, swipe left or right along the bottom edge to step.
+
+**Scripts**
+- **Partner pitch** (`?script=pitch`, about 3 minutes, → only): Sanne's Amsterdam heatwave from the evening message to
+  the after-run card; Arjun on Bhogi morning in Chennai; Arjun and Sanne side by side on the same May morning (compare
+  mode); the partner lens.
+- **Runner user test** (`?script=user-test`, add `&lang=nl` for Dutch): a consent screen, then the journey with research
+  questions on the phone at the marked moments. Answers stay on that phone; the facilitator exports them as JSON
+  (without names) from the drawer or the stage bar, and starts the next session with "New participant".
+
+**Deep links** reproduce any screen, and the address bar follows the state, so copying it shares the exact view:
+
+| Example | Shows |
+|---|---|
+| `?moment=4` | Sanne's Today card, Amsterdam heatwave |
+| `?city=chn&scenario=bhogi&persona=arjun&moment=4&lens=partner` | Arjun on Bhogi morning with the partner lens |
+| `?city=chn&scenario=heat&persona=arjun&compare=sanne&moment=4` | Two phones: Arjun goes early, Sanne trains indoors |
+| `?script=pitch&step=7` | The pitch from step 7 |
+| `?script=user-test&lang=nl` | The user test in Dutch |
+
+Other parameters: `time=HH:MM`, `kit=running_kit|full_length_light|full_length_cotton`, `notes=on`, `layout=stage|phone`.
+
+**What is real and what is staged.** Real: the engine and its decisions, the API responses, the counterfactuals, the
+OpenStreetMap routes. Staged: the host app ("Stride"), the notifications and lock screens, the watch, the persona history
+in the week view (marked "Example week"), and the stored scenario data (Open-Meteo / ERA5, credited on screen).
 
 ---
 
@@ -151,6 +207,11 @@ api/                     Recommendation API v1
   messages/en-GB.json    text for every code
   examples/              validated request/response pairs
   build_examples.js      regenerate and validate examples
+demo/                    phone demo (Vite + Preact + TypeScript), published to GitHub Pages
+  src/                   engine wrapper, journey, scenarios and scripts, presenter, screens, copy (en-GB, nl-NL)
+  tests/                 Vitest (unit) and Playwright (screens; screenshots double as a storyboard)
+.github/workflows/
+  demo-pages.yml         builds and deploys the phone demo
 prototype/
   template.html          watch prototype source
   build.py               inlines api/engine.js -> gotime-watch.html

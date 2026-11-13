@@ -44,7 +44,7 @@ export default defineConfig({
     preact(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg"],
+      includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "GOTime demo",
         short_name: "GOTime",
@@ -54,9 +54,14 @@ export default defineConfig({
         display: "standalone",
         orientation: "portrait",
         start_url: ".",
-        icons: [{ src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }],
+        icons: [
+          { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          { src: "icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+        ],
       },
-      workbox: { globPatterns: ["**/*.{js,css,html,svg,woff2}"] },
+      workbox: { globPatterns: ["**/*.{js,css,html,svg,png,woff2}"] },
     }),
   ],
   test: {

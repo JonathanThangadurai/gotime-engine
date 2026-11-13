@@ -82,10 +82,10 @@ describe("compare mode: two run states, one scenario and time", () => {
 describe("week view", () => {
   it("counts well-timed runs (indoor counts), conditions avoided and the streak", () => {
     const h = HISTORY.sanne;
-    const v = weekView(h.runs, h.streakBefore, { day: "Saturday", at: "6:45", inWindow: true, avoided: "heat" });
-    expect(v).toMatchObject({ good: 3, total: 4, avoidedHeat: 2, avoidedAir: 0, streak: 1 });
-    const indoor = weekView(h.runs, h.streakBefore, { day: "Monday", at: "", inWindow: false, indoor: true });
+    const v = weekView(h.runs, h.streakBefore, { dow: 6, at: "6:45", inWindow: true, avoided: "heat" });
+    expect(v).toMatchObject({ good: 3, total: 4, avoidedHeat: 2, avoidedAir: 0, streak: 3 });
+    const indoor = weekView(h.runs, h.streakBefore, { dow: 1, at: "", inWindow: false, indoor: true });
     expect(indoor.good).toBe(3);
-    expect(indoor.streak).toBe(1);
+    expect(indoor.streak).toBe(3);
   });
 });

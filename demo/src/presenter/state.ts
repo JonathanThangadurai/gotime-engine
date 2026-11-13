@@ -9,6 +9,7 @@ import { evaluateDay, location, recommend, runTrace, type CityKey, type Recommen
 import { quarterUp, firstAlertMinute, hourOf } from "../engine/view";
 import { compareWith, referenceHour } from "../engine/reference";
 import { PERSONAS, type Persona } from "../scenarios/personas";
+import { t } from "../copy";
 import { parseTime, scenarioById, SCENARIOS } from "../scenarios";
 import { firstMoment, jump, next, prev, screenFor, MOMENTS } from "../journey/machine";
 
@@ -26,15 +27,15 @@ export const moment = signal(firstMoment());
 export const barHidden = signal(false);
 export const drawerOpen = signal(false);
 export const lens = signal(false);        // P: partner lens
-export const notes = signal(true);        // N: speaker notes (stage only)
+export const notes = signal(false);       // N: speaker notes (stage panel only, never in the phone); off by default
 export const compareId = signal<PersonaId | null>(null);
 
 export const scenario = computed(() => scenarioById(scenarioId.value));
 export const city = computed<CityKey>(() => scenario.value.city);
 export const nowHour = computed(() => parseTime(time.value));
 export const planHour = computed(() => parseTime(scenario.value.defaultTime));
-/** Local drink advice for the city (api/locations.js drinkTip), empty when none. */
-export const drinkTip = computed(() => location(scenario.value.city).drinkTip || undefined);
+/** Local drink advice when the city has one (api/locations.js drinkTip), worded in the current language. */
+export const drinkTip = computed(() => (location(scenario.value.city).drinkTip ? t(`DRINK_${scenario.value.city}`) : undefined));
 
 // ---------------------------------------------------------------- per runner
 export function makeRun(personaId: ReadonlySignal<PersonaId>) {

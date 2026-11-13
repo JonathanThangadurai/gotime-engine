@@ -16,7 +16,18 @@ function expectedHeadline(hour: number): string {
 }
 
 const SHOTS = "tests/screenshots";
-const shot = (page: Page, name: string, project: string) => page.screenshot({ path: `${SHOTS}/${project}-${name}.png` });
+/** Screenshots: on the stage, a clean screen (H hides the presenter strip and bar; notes are off by default),
+ *  so stage images show the phone(s) and, when on, the partner lens only. */
+async function shot(page: Page, name: string, project: string) {
+  if (project === "stage") {
+    await expect(page.getByTestId("speaker-note")).toHaveCount(0);
+    await page.keyboard.press("h");
+    await page.screenshot({ path: `${SHOTS}/${project}-${name}.png` });
+    await page.keyboard.press("h");
+  } else {
+    await page.screenshot({ path: `${SHOTS}/${project}-${name}.png` });
+  }
+}
 const CREDITS_DATA = "Weather and air: Open-Meteo / ERA5 (CC BY 4.0)";
 
 test.beforeEach(async ({ page }) => {
@@ -61,7 +72,9 @@ const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
     await expect(card).not.toContainText("38 °C"); } },
   { name: "08-week", check: async p => {
     await expect(p.getByTestId("week-card")).toContainText("3 of 4 runs in your best window");
-    await expect(p.getByTestId("week-card")).toContainText("Saturday · 6:45"); } },
+    await expect(p.getByTestId("week-card")).toContainText("Saturday · 6:45");
+    await expect(p.getByTestId("week-card")).toContainText("Streak: 3 well-timed runs");
+    await expect(p.getByTestId("example-week")).toHaveText("Example week"); } },
 ];
 
 test("all nine moments reachable in order with →", async ({ page }, info) => {
@@ -211,7 +224,9 @@ test("evening: Arjun on the May morning gets no message (change-only)", async ({
   await page.keyboard.press("c");
   await page.keyboard.press("2");
   await expect(page.getByTestId("notification")).toHaveCount(0);
+  await page.keyboard.press("n");                                // presenter note, panel only
   await expect(page.getByTestId("no-message")).toBeVisible();
+  await page.keyboard.press("n");
   await shot(page, "chn-01-evening-silent", info.project.name);
 });
 
@@ -240,7 +255,10 @@ test("the pitch script runs end to end with → only", async ({ page }, info) =>
   const seen: string[] = [];
   for (let i = 1; i <= 9; i++) {
     await expect(pos).toHaveText(`Partner pitch: ${i}/9`);
+    await page.keyboard.press("n");                              // notes only on N, in the panel
     await expect(page.getByTestId("speaker-note")).toBeVisible();
+    await expect(page.getByTestId("device").first().getByTestId("speaker-note")).toHaveCount(0);
+    await page.keyboard.press("n");
     seen.push(await page.locator(".device").first().getAttribute("data-testid") ?? "");
     await shot(page, `pitch-${String(i).padStart(2, "0")}`, info.project.name);
     if (i < 9) await page.keyboard.press("ArrowRight");
@@ -276,12 +294,11 @@ test("P toggles the partner lens, N the speaker notes", async ({ page }, info) =
   await page.keyboard.press("p");
   await expect(page.getByTestId("partner-lens")).toContainText("guidance");
   await expect(page.locator(".device .lens-on .gt-module")).toBeVisible();
-  await expect(page.getByTestId("speaker-note")).toHaveCount(0);          // notes come from a script
-  await page.selectOption("[data-testid=script-select]", "pitch");
+  await expect(page.getByTestId("speaker-note")).toHaveCount(0);          // notes are off by default
+  await page.keyboard.press("n");
   await expect(page.getByTestId("speaker-note")).toBeVisible();
   await page.keyboard.press("n");
   await expect(page.getByTestId("speaker-note")).toHaveCount(0);
-  await page.keyboard.press("p");
   await page.keyboard.press("8");
   await expect(page.getByTestId("partner-lens")).toContainText("estimated");
   await shot(page, "lens-after", info.project.name);

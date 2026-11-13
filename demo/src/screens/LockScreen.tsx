@@ -1,6 +1,7 @@
 // Simulated phone lock screens: the evening heads-up (moment 1) and the morning glance (moment 2).
 import type { ComponentChildren } from "preact";
-import { t } from "../copy";
+import { t, weekdayName } from "../copy";
+import { dateLabel, scenarioDow } from "../scenarios";
 import { eveningView, glanceView } from "../engine/view";
 import { drawerOpen, lens, nowHour, scenario, time, useRun } from "../presenter/state";
 import { useLongPress } from "../host/useLongPress";
@@ -26,9 +27,9 @@ function AppIcon() {
 export function EveningLock() {
   const run = useRun(), { calendarAdded } = run;
   const v = eveningView(run.plan.value, run.persona.value.usualHour, run.planComparison.value), s = scenario.value;
-  const day = s.dateLabel.split(" ")[0];
+  const day = weekdayName(scenarioDow(s));
   return (
-    <Lock clock="20:30" date={s.eveningLabel}>
+    <Lock clock="20:30" date={dateLabel(s, -1)}>
       {v.notify && (
         <article class="notif gt-module" data-testid="notification">
           <header><AppIcon /><span>{t("APP_NAME")}</span><span class="notif-when">{t("NOTIF_NOW")}</span></header>
@@ -61,7 +62,7 @@ function Ring({ arc, nowDeg, label }: { arc: { from: number; to: number } | null
 export function GlanceLock() {
   const v = glanceView(useRun().recommendation.value, nowHour.value);
   return (
-    <Lock clock={time.value} date={scenario.value.dateLabel}>
+    <Lock clock={time.value} date={dateLabel(scenario.value)}>
       <div class="widget gt-module" data-testid="glance">
         <Ring arc={v.arc} nowDeg={v.nowDeg} label={v.window ? t("GLANCE_RING_ARIA", v.window) : ""} />
         <div>

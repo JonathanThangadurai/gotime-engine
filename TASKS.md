@@ -42,15 +42,22 @@ Sources follow Jessie's recommendations of 13 November 2026; the data layer itse
 ## 4. Phone demo: user journey in a fitness app
 Plan: `docs/phone-demo-plan.md`. Build brief for Claude Code: `docs/phone-demo-build-brief.md`.
 
-- [ ] Journey script: evening notification, morning lock screen, Today card, Why, route map, run with watch alerts, post-run summary, weekly insight
-- [ ] Mobile web app (installable on the home screen), engine running on the phone itself
-- [ ] Onboarding in three questions (goal pace, heat-adapted, hay fever) with consent wording
-- [ ] Fictional host app with an embedded "Powered by GOTime" module, no real brand names or logos
-- [ ] Route map on OpenStreetMap with start direction (wind colouring once AeroWise is in)
-- [ ] Presenter mode: switch city, scenario and time of day without the audience seeing controls
-- [ ] Simulated notifications inside the demo, optional real web push
-- [ ] Optional "Was this useful?" feedback, to collect early validation data
-- [ ] Hosted on a public link that can fetch live data (GitHub Pages or similar)
+Live: https://jonathanthangadurai.github.io/gotime-engine/ (not indexed; `demo/`).
+
+- [x] Journey script: evening notification, morning lock screen, Today card, Why, route map, run with watch alerts, post-run summary, weekly insight
+- [x] Mobile web app (installable on the home screen), engine running on the phone itself
+- [x] Onboarding in three questions (goal pace, heat-adapted, hay fever) with consent wording
+- [x] Fictional host app with an embedded "Powered by GOTime" module, no real brand names or logos
+- [x] Route map on OpenStreetMap with start direction
+- [ ] Wind colouring on the route map once AeroWise is in
+- [x] Presenter mode: switch city, scenario and time of day without the audience seeing controls (plus partner lens, scripts, deep links, compare mode)
+- [x] Simulated notifications inside the demo
+- [ ] Optional real web push
+- [x] Optional "Was this useful?" feedback, to collect early validation data (feel rating; user-test mode with consent and JSON export)
+- [x] Hosted on a public link (GitHub Pages)
+- [ ] Live data in the demo (off in partner pitches; stored scenarios for now)
+- [ ] Native Dutch proofread of `demo/src/copy/nl-NL.json`
+- [ ] Open the public link on an iPhone and an Android phone: install to the home screen, check offline
 
 ## 5. Science and validation (parked)
 - [ ] Multi-season back-tests (2018, 2019, 2022, 2025) and a common-sense benchmark

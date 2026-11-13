@@ -34,7 +34,7 @@ export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view:
           <span>{t("SHOW_NUMBERS")}</span><Icon name="chevron" />
         </button>
         <footer class="sheet-foot">
-          <p>{view.disclaimer}</p>
+          <p>{t(view.disclaimer)}</p>
           <p data-testid="credits">{t("CREDITS_DATA")}</p>
         </footer>
       </section>
