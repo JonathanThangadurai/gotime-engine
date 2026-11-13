@@ -36,7 +36,7 @@ describe("May heat, 6 May 2024: same morning, two runners", () => {
     const cotton = recommend(inputs("chn-heat", "arjun", "full_length_cotton"));
     expect(cotton.summary.headline.text).toBe("Run before 6:00");
     expect(cotton.guidance.hydration.fluid_ml).toBeGreaterThan(arjun.guidance.hydration.fluid_ml);
-    const you = whyView(cotton, 9).reasons.find(r => r.factor === "athlete")!;
+    const you = whyView(cotton, null, 9).reasons.find(r => r.factor === "athlete")!;
     expect(t(you.code, you.params)).toBe("Used to heat, 62 kg, 168 cm, cotton full-length kit.");
   });
   it("evening: no message for Arjun, because 5:30 already fits (change-only)", () => {
@@ -56,27 +56,6 @@ describe("Bhogi, 13 January 2025 (Arjun)", () => {
     // the note rests on the API's own hourly level at 5:00
     const h5 = rec.hours!.find(h => h.start.slice(11, 13) === "05")!;
     expect(h5.air.level).toBeGreaterThanOrEqual(2);
-  });
-  it("evening heads-up: sent, and says why the usual slot is out", () => {
-    const v = eveningView(plan, PERSONAS.arjun.usualHour);
-    expect(v.notify).toBe(true);
-    expect(t(v.title.code, v.title.params)).toBe("Tomorrow: run after 15:00");
-    expect(t(v.body.code, v.body.params)).toBe("Skip your usual 5:30 run: thick smoke at that hour.");
-  });
-  it("why: the benefit line is about smoke, with the API's numbers", () => {
-    const w = whyView(rec), air = rec.reasons.find(r => r.code === "AIR_PM_EPISODE")!;
-    expect(w.counterfactual!.code).toBe("COUNTERFACTUAL_SMOKE");
-    expect(t(w.counterfactual!.code, w.counterfactual!.params))
-      .toBe(`You skip the smoke. At ${air.params.peak_time}, PM2.5 is ${air.params.peak_ugm3} µg/m³; in your window it is ${air.params.window_ugm3}.`);
-  });
-  it("after: the smoke counterfactual leads (engine worst hour vs the hour run in)", () => {
-    const day = evaluateDay(inp), start = quarterUp(hourOf(rec.summary.window!.start));
-    const v = afterView(rec, day, runTrace(inp, start), plan, drink);
-    expect(t(v.sub!.code)).toBe("You missed the worst of the air.");
-    expect(v.rows[0].code).toBe("AFTER_SMOKE_AVOIDED");
-    const ran = day.hours[Math.floor(start)];
-    expect(v.rows[0].params).toEqual({ time: `${day.worst.h}:00`, worst_ugm3: day.worst.pm25, ran_ugm3: ran.pm25 });
-    expect(t(v.planned!.code, v.planned!.params)).toBe("You went at 15:00, as planned.");
   });
 });
 

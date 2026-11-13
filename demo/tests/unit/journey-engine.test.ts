@@ -45,7 +45,6 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
     const v = eveningView(rec, PERSONAS.sanne.usualHour);
     expect(v.notify).toBe(true);
     expect(t(v.title.code, v.title.params)).toBe(`Tomorrow: run before ${rec.summary.headline.params.end}`);
-    expect(t(v.body.code)).toBe("It gets hot after that.");
     expect(v.slot).toEqual({ start: "6:45", end: "7:30" });
   });
   it("evening: silent when the usual time already fits (change-only)", () => {
@@ -71,23 +70,6 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
     expect(trace).toHaveLength(46);
     expect(trace[firstAlertMinute(trace)].live.alert?.code).toBe("TURN_FOR_TAILWIND");
     expect(runView(trace, firstAlertMinute(trace) + 2, 380).alert?.code).toBe("TURN_FOR_TAILWIND");
-  });
-  it("after: counterfactual first (the hour run in against the engine's worst hour), then run, then water", () => {
-    const plan = recommend(inp);   // last night's plan used the same wake time
-    const v = afterView(rec, day, trace, plan), ran = day.hours[Math.floor(start)];
-    expect(day.worst.h).toBe(15);
-    expect(t(v.title.code)).toBe("Well judged");
-    expect(t(v.sub!.code)).toBe("You dodged the hottest hour.");
-    expect(t(v.planned!.code, v.planned!.params)).toBe("You went at 6:45, as planned.");
-    expect(v.rows.map(r => r.code)).toEqual(["AFTER_HEAT_AVOIDED", "AFTER_RUN", "AFTER_WATER_NONE_CMP"]);
-    expect(v.rows[0].params).toEqual({ time: "15:00", delta_c: day.worst.W - ran.W });
-    const texts = v.rows.map(r => t(r.code, r.params));
-    expect(texts[0]).toBe(`At 15:00, heat stress would have been ${Math.round(day.worst.W - ran.W)} °C higher.`);
-    expect(texts[1]).toBe("7.1 km · 45 min");
-    const ml = Math.round(ran.b.sweatMlH * 0.75 / 50) * 50, worstMl = Math.round(day.worst.b.sweatMlH * 0.75 / 50) * 50;
-    expect(texts[2]).toBe(`You sweated about ${ml} ml, no need to top up. At 15:00 it would have been about ${worstMl} ml.`);
-    expect(texts.join(" ")).not.toMatch(/core|body heat/i);
-    expect(v.estimates!.peak_core_c).toBe(Math.max(...trace.map(p => p.live.core_estimate_c)));
   });
   it("after: no 'as planned' line when the run starts outside last night's window", () => {
     const late = recommend(inputs("ams-heat", "20:30"));
@@ -116,11 +98,10 @@ describe("indoor branch (Sanne visiting Chennai, 6 May 2024)", () => {
     expect(rec.summary.action).toBe("indoor");
     expect(rec.guidance.indoor_alternatives.map(a => a.code)).toContain("INDOOR_TREADMILL");
   });
-  it("after: indoor counts, with the avoided outdoor peak from the engine", () => {
+  it("after: indoor counts (the outdoor comparison is tested in reference.test.ts)", () => {
     const day = evaluateDay(inp), v = afterView(rec, day, runTrace(inp, inp.localHour));
     expect(v.indoor).toBe(true);
     expect(t(v.sub!.code)).toBe("Indoor counts. Your streak continues.");
-    expect(v.rows[0].params).toEqual({ peak_c: day.worst.W, time: `${day.worst.h}:00` });
   });
   it("evening: always sent on an indoor day", () => {
     expect(eveningView(rec, PERSONAS.sanne.usualHour).notify).toBe(true);

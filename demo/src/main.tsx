@@ -6,6 +6,11 @@ import { StageView } from "./presenter/StageView";
 import { PhoneView } from "./presenter/PhoneView";
 import { pickLayout } from "./presenter/state";
 import { handleKey } from "./presenter/keys";
+import { applyLink, parseLink, syncUrl } from "./presenter/script";
+
+// Deep link first (reproduces the exact screen), then keep the address bar in sync with the state.
+applyLink(parseLink(location.search));
+syncUrl();
 
 const layout = signal(pickLayout(location.search, window.innerWidth));
 window.addEventListener("resize", () => { layout.value = pickLayout(location.search, window.innerWidth); });

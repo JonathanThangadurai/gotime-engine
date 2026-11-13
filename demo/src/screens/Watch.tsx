@@ -1,14 +1,15 @@
 // Moment 6: the run on the watch, ported from prototype/template.html (run screen). Every value is a /live response.
 import { useEffect } from "preact/hooks";
-import { signal } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { t } from "../copy";
 import { runView } from "../engine/view";
-import { goNext, recommendation, runFrame, runMinute, trace } from "../presenter/state";
+import { goNext, lens, useRun } from "../presenter/state";
 
-const playing = signal(false);
 const ALERT_CLASS = (level: number) => level >= 3 ? "stop" : level >= 2 ? "warn" : "info";
 
 export function Watch() {
+  const { recommendation, runFrame, runMinute, trace } = useRun();
+  const playing = useSignal(false);
   const tr = trace.value, v = runView(tr, runFrame.value, recommendation.value.guidance.pace.planned_s_per_km);
   const km = (v.minute * 60 / recommendation.value.guidance.pace.planned_s_per_km).toFixed(2);
   useEffect(() => {
@@ -23,7 +24,7 @@ export function Watch() {
   return (
     <div class="watch-stage" data-testid="watch">
       <p class="watch-caption">{t("WATCH_CAPTION")}</p>
-      <div class="watch"><div class="watch-screen">
+      <div class={`watch${lens.value ? " lens-on" : ""}`}><div class="watch-screen gt-module">
         <div class="w-clock">{v.clock}</div>
         <div class="w-pace">{v.pace}<small>/km</small></div>
         <div class="w-cap">{t(v.cap.code, v.cap.params)}</div>

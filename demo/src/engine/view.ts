@@ -1,6 +1,7 @@
 // Turns a contract Recommendation into what the consumer screens show. Every value comes from the response:
 // no advice is computed here, only selected and formatted.
 import { ENG, type EngineDay, type Message, type Recommendation, type Reason, type TracePoint } from "./index";
+import { cfFamily, cfParams, type Comparison } from "./reference";
 
 export interface Chip { kind: "pace" | "start" | "water"; code: string; params: Record<string, string | number> }
 /** Thin timeline from now to the end of the running day: positions are fractions 0-1 of that span. */
@@ -84,18 +85,10 @@ export function todayView(rec: Recommendation, nowHour: number, usualHour?: numb
   };
 }
 
-export function whyView(rec: Recommendation, max = 3): WhyView {
-  const top = rec.reasons.find(r => r.factor === "heat" || r.factor === "air");
-  let counterfactual: WhyView["counterfactual"] = null;
-  const p = top?.params ?? {};
-  if (rec.summary.action === "indoor" || !top) counterfactual = null;
-  else if (top.code === "HEAT_RISES" && typeof p.peak_wbgt_c === "number" && typeof p.wbgt_c === "number") {
-    const delta = Math.round((p.peak_wbgt_c - p.wbgt_c) * 10) / 10;
-    if (delta >= 1) counterfactual = { code: "COUNTERFACTUAL_HEAT", params: { delta_c: delta, peak_time: String(p.peak_time) } };
-  } else if ((top.code === "AIR_PM_EPISODE" || top.code === "AIR_PEAK_LATER") && typeof p.peak_ugm3 === "number") {
-    counterfactual = { code: top.code === "AIR_PM_EPISODE" ? "COUNTERFACTUAL_SMOKE" : "COUNTERFACTUAL_AIR",
-      params: { peak_time: String(p.peak_time), peak_ugm3: p.peak_ugm3, window_ugm3: Number(p.window_ugm3), pollutant: String(p.pollutant ?? "") } };
-  }
+/** cmp: the day's shared reference comparison (engine/reference.ts); no benefit line on an indoor day. */
+export function whyView(rec: Recommendation, cmp: Comparison | null, max = 3): WhyView {
+  const counterfactual = rec.summary.action !== "indoor" && cmp && cmp.ran && cmp.worthSaying
+    ? { code: `CF_WHY_${cfFamily(cmp)}`, params: cfParams(cmp) } : null;
   return { reasons: rec.reasons.slice(0, max), counterfactual, disclaimer: rec.disclaimer.text ?? rec.disclaimer.code };
 }
 
@@ -109,7 +102,7 @@ export interface Coded { code: string; params: Record<string, string | number> }
 
 /** Evening heads-up: change-only. Sent only when the usual run time does not fit tomorrow's window. */
 export interface EveningView { notify: boolean; title: Coded; body: Coded; slot: { start: string; end: string } | null }
-export function eveningView(plan: Recommendation, usualHour: number): EveningView {
+export function eveningView(plan: Recommendation, usualHour: number, cmp?: Comparison | null): EveningView {
   const s = plan.summary, dur = durationH(plan);
   const title = { code: `TOMORROW.${s.headline.code}`, params: s.headline.params as Record<string, string | number> };
   if (s.action === "indoor" || !s.window) return { notify: true, title, body: { code: "TOMORROW_BODY_indoor", params: {} }, slot: null };
@@ -120,7 +113,9 @@ export function eveningView(plan: Recommendation, usualHour: number): EveningVie
   // window opens after the usual time: say why the usual slot is out; otherwise say what happens after the window
   const note = usualHour < st ? usualSlotNote(plan, usualHour, 0) : null;
   const usual = note ? { code: `${note.code}_TOMORROW`, params: note.params } : null;
-  const body = usual ?? (usualHour < st ? { code: s.detail.code, params: s.detail.params as Record<string, string | number> }
+  // the shared reference: when it is the usual time, say what that slot would be like
+  const ref = cmp && cmp.kind === "usual" && cmp.worthSaying ? { code: `CF_EVENING_${cfFamily(cmp)}`, params: cfParams(cmp) } : null;
+  const body = ref ?? usual ?? (usualHour < st ? { code: s.detail.code, params: s.detail.params as Record<string, string | number> }
     : { code: `TOMORROW_BODY_${top ? top.factor : "default"}`, params: {} });
   return { notify, title, body,
     slot: { start: ENG.fmtHM(a), end: ENG.fmtHM(a + dur) } };
@@ -155,7 +150,7 @@ export function runView(trace: TracePoint[], minute: number, paceSPerKm: number)
 export const firstAlertMinute = (trace: TracePoint[]): number =>
   trace.find(p => p.live.alert)?.minute ?? Math.floor((trace.length - 1) / 2);
 
-/** After the run. The counterfactual compares the hour run in with the engine's worst hour of the day. */
+/** After the run. The counterfactual uses the day's shared reference hour (engine/reference.ts). */
 export interface AfterView {
   indoor: boolean;
   title: Coded;
@@ -166,33 +161,35 @@ export interface AfterView {
 }
 const r50 = (ml: number) => Math.round(ml / 50) * 50;
 /** plan: last night's recommendation (the planned window); drink: local drink advice, if any. */
-export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint[], plan?: Recommendation, drink?: string): AfterView {
-  const worst = day.worst, time = ENG.fmtHM(worst.h);
+export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint[], plan?: Recommendation, drink?: string,
+  cmp?: Comparison | null): AfterView {
+  const at = cmp ? cfParams(cmp) : null;
   if (rec.summary.action === "indoor") {
+    const rows: AfterView["rows"] = cmp
+      ? [{ icon: cmp.factor === "heat" ? "heat" : "air", code: `AFTER_INDOOR_${cfFamily(cmp)}`, params: at! }] : [];
     return { indoor: true, title: { code: "AFTER_INDOOR_TITLE", params: {} }, sub: { code: "AFTER_INDOOR_SUB", params: {} }, planned: null,
-      rows: [{ icon: "heat", code: "AFTER_INDOOR_AVOIDED", params: { peak_c: worst.W, time } }], estimates: null };
+      rows, estimates: null };
   }
   const minutes = trace.length - 1, startH = trace[0].clock, ran = day.hours[Math.floor(startH)];
   const pace = rec.guidance.pace.planned_s_per_km, km = (minutes * 60 / pace).toFixed(1);
   const serious = trace.some(p => p.live.alert && p.live.alert.level >= 2);
-  const loss = ran.b.sweatMlH * minutes / 60, worstLoss = worst.b.sweatMlH * minutes / 60;
+  const loss = ran.b.sweatMlH * minutes / 60;
   const rows: AfterView["rows"] = [];
-  const delta = worst.W - ran.W;
-  const heatRow = delta >= 1 ? { icon: "heat", code: "AFTER_HEAT_AVOIDED", params: { time, delta_c: delta } } : null;
-  const airRow = worst.ab > ran.ab && worst.pm25 > 60
-    ? { icon: "air", code: "AFTER_SMOKE_AVOIDED", params: { time, worst_ugm3: worst.pm25, ran_ugm3: ran.pm25 } } : null;
-  for (const r of worst.hb >= worst.ab ? [heatRow, airRow] : [airRow, heatRow]) if (r) rows.push(r);
+  const say = cmp && cmp.ran && cmp.worthSaying ? cmp : null;
+  if (say) rows.push({ icon: say.factor === "heat" ? "heat" : "air", code: `CF_AFTER_${cfFamily(say)}`, params: cfParams(say) });
   rows.push({ icon: "pace", code: "AFTER_RUN", params: { km, minutes } });
-  const topUp = loss >= 300, compare = worstLoss - loss >= 100;
-  const water = `AFTER_WATER_${topUp ? "DRINK" : "NONE"}${compare ? "_CMP" : ""}${topUp && drink ? "_LOCAL" : ""}`;
-  rows.push({ icon: "water", code: water, params: { ml: r50(loss), time, worst_ml: r50(worstLoss), ...(drink ? { drink } : {}) } });
+  // sweat at the reference hour, for the same run
+  const refLoss = cmp ? cmp.ref.sweat_ml_per_h * minutes / 60 : 0;
+  const topUp = loss >= 300, compare = !!cmp && refLoss - loss >= 100;
+  const water = `AFTER_WATER_${topUp ? "DRINK" : "NONE"}${compare ? (cmp!.kind === "usual" ? "_CMP_USUAL" : "_CMP") : ""}${topUp && drink ? "_LOCAL" : ""}`;
+  rows.push({ icon: "water", code: water, params: { ml: r50(loss), time: cmp?.time ?? "", worst_ml: r50(refLoss), ...(drink ? { drink } : {}) } });
   let planned: Coded | null = null;
   const w = plan?.summary.window;
   if (w && startH >= hourOf(w.start) - 1e-9 && startH < hourOf(w.end)) planned = { code: "AFTER_AS_PLANNED", params: { start: ENG.fmtHM(startH) } };
   return {
     indoor: false,
     title: { code: serious ? "AFTER_TITLE_MIXED" : "AFTER_TITLE_GOOD", params: {} },
-    sub: delta >= 1 || worst.ab > ran.ab ? { code: worst.hb >= worst.ab ? "AFTER_SUB_HEAT" : "AFTER_SUB_AIR", params: {} } : null,
+    sub: say ? { code: `AFTER_SUB_${say.factor === "heat" ? "HEAT" : "AIR"}${say.kind === "usual" ? "_USUAL" : ""}`, params: { time: say.time } } : null,
     planned,
     rows,
     estimates: { peak_core_c: Math.max(...trace.map(p => p.live.core_estimate_c)) },

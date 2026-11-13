@@ -2,16 +2,17 @@ import type { TodayView } from "../engine/view";
 import { t } from "../copy";
 import { Icon } from "./icons";
 import { Timeline } from "./Timeline";
-import { clothing, request, type Clothing } from "../presenter/state";
+import { useRun, type Clothing } from "../presenter/state";
 
 const KITS: Clothing[] = ["running_kit", "full_length_light", "full_length_cotton"];
 
 /** The GOTime module a partner embeds: label, decision, one subline, the window line, three rows, Why. */
 export function TodayCard({ view, onWhy, kitChoice }: { view: TodayView; onWhy: () => void; kitChoice?: boolean }) {
+  const { clothing, request } = useRun();
   const kit = (request.value.athlete.clothing ?? "running_kit") as Clothing;
   const o = { action: view.action };
   return (
-    <section class="gt" aria-labelledby="gt-headline" data-testid="today-card">
+    <section class="gt gt-module" aria-labelledby="gt-headline" data-testid="today-card">
       <p class="gt-label">{t("MODULE_LABEL")}</p>
       <h2 id="gt-headline" class="gt-decision" data-testid="headline">{t(view.headlineMsg.code, view.headlineMsg.params, o)}</h2>
       <p class="gt-sub">{t(view.detailMsg.code, view.detailMsg.params, o)}</p>

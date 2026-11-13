@@ -1,5 +1,6 @@
 // What the device shows for each screen: simulated lock screens and the watch sit outside the host app;
 // everything else lives inside the fictional host app ("Stride", placeholder name) with GOTime embedded.
+import type { ComponentChildren } from "preact";
 import { todayView, whyView, afterView, paceText } from "../engine/view";
 import { ENG } from "../engine";
 import { t } from "../copy";
@@ -9,16 +10,15 @@ import { IndoorCard } from "../screens/IndoorCard";
 import { AfterCard } from "../screens/AfterCard";
 import { Onboarding } from "../screens/Onboarding";
 import { RouteScreen } from "../screens/RouteScreen";
+import { NumbersScreen } from "../screens/NumbersScreen";
+import { WeekCard } from "../screens/WeekCard";
 import { EveningLock, GlanceLock } from "../screens/LockScreen";
 import { Watch } from "../screens/Watch";
-import { Placeholder } from "../screens/Placeholder";
 import { Icon } from "../screens/icons";
 import { MOMENTS } from "../journey/machine";
 import { ROUTES } from "../scenarios/routes";
 import { useLongPress } from "./useLongPress";
-import {
-  action, currentMoment, day, drinkTip, plan, drawerOpen, goNext, moment, nowHour, persona, recommendation, request, runStart, scenario, screen, time, trace,
-} from "../presenter/state";
+import { drawerOpen, drinkTip, goNext, lens, moment, nowHour, scenario, time, useRun } from "../presenter/state";
 
 const idx = (id: string) => MOMENTS.findIndex(m => m.id === id);
 
@@ -50,35 +50,41 @@ function LastRun() {
   );
 }
 
-function Home({ children, lastRun = true }: { children: preact.ComponentChildren; lastRun?: boolean }) {
+function Home({ children, lastRun = true }: { children: ComponentChildren; lastRun?: boolean }) {
   return <div class="host-scroll"><div class="block">{children}</div>{lastRun && <LastRun />}</div>;
 }
 
 function HostApp() {
-  const id = screen.value, rec = recommendation.value, m = currentMoment.value, p = persona.value;
+  const run = useRun();
+  const id = run.screen.value, rec = run.recommendation.value, m = MOMENTS[moment.value], p = run.persona.value;
   const hold = useLongPress(() => { drawerOpen.value = true; });
   const toWhy = () => { moment.value = idx("why"); };
-  const a = request.value.activity;
-  const afterClock = ENG.fmtHM(runStart.value + a.planned_duration_s / 3600).padStart(5, "0");
-  const clock = id === "after" ? (action.value === "indoor" ? time.value : afterClock) : time.value;
+  const toToday = () => { run.numbersOpen.value = false; moment.value = idx("today"); };
+  const a = run.request.value.activity;
+  const afterClock = ENG.fmtHM(run.runStart.value + a.planned_duration_s / 3600).padStart(5, "0");
+  const clock = id === "after" ? (run.action.value === "indoor" ? time.value : afterClock) : time.value;
+  const numbers = run.numbersOpen.value && (id === "why" || id === "today" || id === "indoor");
   const head = id === "onboarding" ? { title: t("SETUP_TITLE") }
-    : id === "route" ? { title: t("ROUTE_TITLE"), back: true }
+    : numbers ? { title: t("NUMBERS_TITLE"), back: t("BACK_WHY"), onBack: () => { run.numbersOpen.value = false; } }
+    : id === "route" ? { title: t("ROUTE_TITLE"), back: t("BACK_TODAY"), onBack: toToday }
+    : id === "week" ? { title: t("WEEK_TITLE"), date: t("WEEK_DATE") }
     : { title: t("TODAY_TITLE"), date: scenario.value.dateLabel };
 
   let body;
-  if (id === "onboarding") body = <Onboarding />;
+  if (numbers) body = <NumbersScreen />;
+  else if (id === "onboarding") body = <Onboarding />;
   else if (id === "today" || id === "why") body = <Home><TodayCard view={todayView(rec, nowHour.value, p.usualHour, drinkTip.value)} onWhy={toWhy} kitChoice={p.kitChoice} /></Home>;
   else if (id === "indoor") body = <Home><IndoorCard rec={rec} onWhy={toWhy} /></Home>;
   else if (id === "route") body = <RouteScreen rec={rec} route={ROUTES[scenario.value.routeId]} onStart={goNext} />;
-  else if (id === "after") body = <Home lastRun={false}><AfterCard view={afterView(rec, day.value, trace.value, plan.value, drinkTip.value)} /></Home>;
-  else body = m.placeholder ? <Placeholder title={m.title} text={t("WEEK_LATER")} /> : <Placeholder title={m.title} text={t("NOT_BUILT", { step: m.step })} />;
+  else if (id === "after") body = <Home lastRun={false}><AfterCard view={afterView(rec, run.day.value, run.trace.value, run.plan.value, drinkTip.value, run.comparison.value)} /></Home>;
+  else body = <Home lastRun={false}><WeekCard /></Home>;
 
   return (
-    <div class="host" data-screen={id}>
+    <div class={`host${lens.value ? " lens-on" : ""}`} data-screen={numbers ? "numbers" : id} data-moment={m.id}>
       <StatusBar clock={clock} />
       {head.back ? (
         <header class="nav-head" data-testid="presenter-hold" {...hold}>
-          <button type="button" class="back" onClick={() => { moment.value = idx("today"); }}><Icon name="back" /><span>{t("BACK_TODAY")}</span></button>
+          <button type="button" class="back" onClick={head.onBack}><Icon name="back" /><span>{head.back}</span></button>
           <h1 class="nav-title">{head.title}</h1>
         </header>
       ) : (
@@ -99,8 +105,9 @@ function HostApp() {
           </button>
         ))}
       </nav>
-      {id === "why" && (
-        <WhySheet view={whyView(rec)} action={rec.summary.action} onClose={() => { moment.value = idx("today"); }}
+      {id === "why" && !numbers && (
+        <WhySheet view={whyView(rec, run.comparison.value)} action={rec.summary.action} onClose={toToday}
+          onNumbers={() => { run.numbersOpen.value = true; }}
           subtitle={t("WHY_SUBTITLE", { pace: paceText(a.planned_pace_s_per_km), minutes: Math.round(a.planned_duration_s / 60) })} />
       )}
     </div>
@@ -109,7 +116,7 @@ function HostApp() {
 
 /** The device content for the current moment. */
 export function DeviceScreen() {
-  const id = screen.value;
+  const id = useRun().screen.value;
   if (id === "evening") return <EveningLock />;
   if (id === "glance") return <GlanceLock />;
   if (id === "run") return <Watch />;

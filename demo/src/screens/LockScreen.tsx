@@ -2,14 +2,13 @@
 import type { ComponentChildren } from "preact";
 import { t } from "../copy";
 import { eveningView, glanceView } from "../engine/view";
-import { calendarAdded, nowHour, persona, plan, recommendation, scenario, time } from "../presenter/state";
+import { drawerOpen, lens, nowHour, scenario, time, useRun } from "../presenter/state";
 import { useLongPress } from "../host/useLongPress";
-import { drawerOpen } from "../presenter/state";
 
 function Lock({ clock, date, children }: { clock: string; date: string; children?: ComponentChildren }) {
   const hold = useLongPress(() => { drawerOpen.value = true; });
   return (
-    <div class="lock" data-testid="lock-screen">
+    <div class={`lock${lens.value ? " lens-on" : ""}`} data-testid="lock-screen">
       <div class="statusbar light" aria-hidden="true"><span /><span class="status-icons"><i /><i /><i /></span></div>
       <div class="lock-clock" data-testid="presenter-hold" {...hold}>
         <p class="lock-date">{date}</p>
@@ -25,12 +24,13 @@ function AppIcon() {
 }
 
 export function EveningLock() {
-  const v = eveningView(plan.value, persona.value.usualHour), s = scenario.value;
+  const run = useRun(), { calendarAdded } = run;
+  const v = eveningView(run.plan.value, run.persona.value.usualHour, run.planComparison.value), s = scenario.value;
   const day = s.dateLabel.split(" ")[0];
   return (
     <Lock clock="20:30" date={s.eveningLabel}>
       {v.notify && (
-        <article class="notif" data-testid="notification">
+        <article class="notif gt-module" data-testid="notification">
           <header><AppIcon /><span>{t("APP_NAME")}</span><span class="notif-when">{t("NOTIF_NOW")}</span></header>
           <p class="notif-title">{t(v.title.code, v.title.params)}</p>
           <p class="notif-body">{t(v.body.code, v.body.params)}</p>
@@ -59,10 +59,10 @@ function Ring({ arc, nowDeg, label }: { arc: { from: number; to: number } | null
 }
 
 export function GlanceLock() {
-  const v = glanceView(recommendation.value, nowHour.value);
+  const v = glanceView(useRun().recommendation.value, nowHour.value);
   return (
     <Lock clock={time.value} date={scenario.value.dateLabel}>
-      <div class="widget" data-testid="glance">
+      <div class="widget gt-module" data-testid="glance">
         <Ring arc={v.arc} nowDeg={v.nowDeg} label={v.window ? t("GLANCE_RING_ARIA", v.window) : ""} />
         <div>
           <p class="widget-label">{t("MODULE_LABEL")}</p>

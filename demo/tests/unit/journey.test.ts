@@ -4,7 +4,7 @@ import { pickLayout } from "../../src/presenter/state";
 
 const at = (id: string) => MOMENTS.findIndex(m => m.id === id);
 
-describe("journey state machine (step 2)", () => {
+describe("journey state machine", () => {
   it("has nine moments, 0-8, in plan order", () => {
     expect(MOMENTS.map(m => m.id)).toEqual(["onboarding", "evening", "glance", "today", "why", "route", "run", "after", "week"]);
   });
@@ -15,8 +15,8 @@ describe("journey state machine (step 2)", () => {
     expect(prev(0)).toBe(0);
     expect(next(8)).toBe(8);
   });
-  it("week is a reachable placeholder until step 4", () => {
-    expect(MOMENTS[8].placeholder).toBe(true);
+  it("week is built and reachable (step 4)", () => {
+    expect(MOMENTS[8].placeholder).toBeUndefined();
     expect(isReachable(8)).toBe(true);
   });
   it("indoor day: route and run are skipped, Today becomes the indoor screen", () => {

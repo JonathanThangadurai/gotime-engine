@@ -11,6 +11,7 @@ const P: Record<string, string> = {
   athlete: "M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm-7 16c1-4 4-6 7-6s6 2 7 6",
   chevron: "M9 5l7 7-7 7",
   check: "M5 12l5 5 9-10",
+  dash: "M6 12h12",
   skip: "M12 7v5l2 2M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM5 19L19 5",
   back: "M15 5l-7 7 7 7",
 };

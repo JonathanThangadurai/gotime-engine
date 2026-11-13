@@ -4,10 +4,10 @@ import { t } from "../copy";
 import { Icon } from "./icons";
 
 /** Bottom sheet: the benefit first, then plain reasons with a quiet evidence line, then disclaimer and credits. */
-export function WhySheet({ view, action, subtitle, onClose }: { view: WhyView; action: Action; subtitle: string; onClose: () => void }) {
+export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view: WhyView; action: Action; subtitle: string; onClose: () => void; onNumbers: () => void }) {
   return (
     <div class="sheet-scrim" onClick={onClose}>
-      <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="why-title" data-testid="why-sheet"
+      <section class="sheet gt-module" role="dialog" aria-modal="true" aria-labelledby="why-title" data-testid="why-sheet"
         onClick={e => e.stopPropagation()}>
         <div class="sheet-grip" aria-hidden="true" />
         <header class="sheet-head">
@@ -30,6 +30,9 @@ export function WhySheet({ view, action, subtitle, onClose }: { view: WhyView; a
             </li>
           ))}
         </ul>
+        <button class="row row-link numbers-link" type="button" onClick={onNumbers} data-testid="numbers-link">
+          <span>{t("SHOW_NUMBERS")}</span><Icon name="chevron" />
+        </button>
         <footer class="sheet-foot">
           <p>{view.disclaimer}</p>
           <p data-testid="credits">{t("CREDITS_DATA")}</p>

@@ -71,21 +71,16 @@ describe("Amsterdam heatwave, Sanne at 06:45", () => {
   it("consumer copy rounds numbers to whole units", () => {
     const heat = rec.reasons[0];
     expect(t(heat.code, heat.params, { action: "go_now" })).toBe("16 °C heat stress now, 26 °C at 15:00. Above 28 °C we suggest training indoors.");
-    const cf = whyView(rec).counterfactual!;
-    expect(t(cf.code, cf.params)).toBe("You miss the hottest part of the day. At 15:00, heat stress is 9 °C higher.");
     const wind = rec.reasons.find(r => r.factor === "wind")!;
     expect(t(wind.code, wind.params)).toBe("Light north-east wind. Start into it, and it is behind you on the way home.");
   });
-  it("why sheet: three ranked reasons and an engine-derived counterfactual", () => {
-    const w = whyView(rec);
+  it("why sheet: three ranked reasons (the benefit line is tested in reference.test.ts)", () => {
+    const w = whyView(rec, null);
     expect(w.reasons).toHaveLength(3);
     expect(w.reasons[0].factor).toBe("heat");
-    const heat = rec.reasons[0];
-    expect(w.counterfactual?.params.peak_time).toBe(heat.params.peak_time);
-    expect(w.counterfactual?.params.delta_c).toBeCloseTo((heat.params.peak_wbgt_c as number) - (heat.params.wbgt_c as number), 1);
   });
   it("never shows mortality or relative risk wording", () => {
-    const words = JSON.stringify([todayView(rec, 6.75), whyView(rec), copy]).toLowerCase();
+    const words = JSON.stringify([todayView(rec, 6.75), whyView(rec, null), copy]).toLowerCase();
     for (const banned of ["mortality", "relative risk", "heart attack", "death", "cardio_load"]) expect(words).not.toContain(banned);
   });
 });

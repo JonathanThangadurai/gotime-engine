@@ -8,7 +8,7 @@ const ALT_ICON: Record<string, string> = { INDOOR_TREADMILL: "pace", INDOOR_CROS
 export function IndoorCard({ rec, onWhy }: { rec: Recommendation; onWhy: () => void }) {
   const s = rec.summary, o = { action: s.action };
   return (
-    <section class="gt" data-testid="indoor-card">
+    <section class="gt gt-module" data-testid="indoor-card">
       <p class="gt-label">{t("MODULE_LABEL")}</p>
       <h2 class="gt-decision" data-testid="headline">{t(s.headline.code, s.headline.params, o)}</h2>
       <p class="gt-sub">{t(s.detail.code, s.detail.params, o)}</p>

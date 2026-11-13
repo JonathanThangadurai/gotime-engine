@@ -33,6 +33,10 @@ Sources follow Jessie's recommendations of 13 November 2026; the data layer itse
 - [ ] Heart-rate-based core temperature in `/live`
 - [ ] Translations of the message catalogue (Dutch first)
 - [ ] Partner SDKs, documentation site, webhooks when the window changes
+- [ ] Optional `usual_start` request field (local `HH:MM`, the athlete's usual start time) and a `USUAL_TIME_OUTSIDE_WINDOW`
+  reason code (params: `usual_start`, `factor`, reference values at that hour), so partners get the "skip your usual run"
+  logic and the usual-time counterfactual from the API instead of the demo. Additive, schema v1.x; until then the phone
+  demo derives it from `hours[]` (`demo/src/engine/reference.ts`)
 - [ ] Legal: GDPR (hay fever is health data) and a regulatory opinion on EU medical device rules
 
 ## 4. Phone demo: user journey in a fitness app
