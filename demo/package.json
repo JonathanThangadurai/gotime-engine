@@ -1,0 +1,34 @@
+{
+  "name": "gotime-phone-demo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GOTime phone demo: installable web app showing the runner journey inside a fictional host app",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "test": "vitest run && playwright test",
+    "test:unit": "vitest run",
+    "screenshots": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource/instrument-sans": "^5.3.0",
+    "@preact/signals": "^2.11.4",
+    "preact": "^10.29.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.53",
+    "@preact/preset-vite": "2.9",
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^2.1.9"
+  },
+  "overrides": {
+    "path-scurry": {
+      "lru-cache": "11.0.2"
+    },
+    "@rollup/plugin-terser": "0.4.4"
+  }
+}

@@ -1,0 +1,22 @@
+/* FerryWellCo tokens. One accent (teal / aqua) is reserved for the runner's own plan. */
+:root {
+  --ink: #18343b;
+  --ink-2: #4b6268;          /* muted text, 6.1:1 on paper */
+  --teal: #176a70;           /* accent: the runner's plan, 6.0:1 on paper */
+  --aqua: #9fe8dd;
+  --aqua-soft: #e3f6f2;
+  --paper: #fbf8f2;
+  --card: #ffffff;
+  --line: #e2ddd2;
+  --stage-bg: #10262b;
+  --stage-panel: #193a41;
+  --stage-text: #e9f3f1;
+  --stage-muted: #a9c2c0;
+  /* condition levels: also encoded by bar height and text, never by colour alone */
+  --lvl0: #7fbf98;
+  --lvl1: #e6bd4f;
+  --lvl2: #d4683f;
+  --lvl3: #2a2523;
+  --radius: 18px;
+  --font: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
