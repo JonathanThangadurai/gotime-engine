@@ -176,6 +176,8 @@ outputs/                 back-test summary and CAMS correction tables
 
 ## Roadmap
 
+The full task list is in [`TASKS.md`](TASKS.md).
+
 1. **v1.1 route profile.** Integrate AeroWise as a separate service. It supplies headwind, gusts, street type and elevation every 200 m, which feed body-height wind into the heat budget, effort on hills and into the wind, and wind chill per segment.
 2. **Any location.** Compute climatology and the local reference on the fly from ERA5.
 3. **Data layer on direct sources**: ECMWF and ICON forecasts, CAMS via the ADS (including its station-optimised forecasts), EEA and MeteoGate observations, with CPCB for India.
