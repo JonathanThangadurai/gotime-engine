@@ -1,8 +1,8 @@
 // ===== Locations and scenarios =====
+// UTC offsets are never stored here: they come per instant from the IANA zone (`tz`) via the engine.
 const rep = v => Array(24).fill(v);
 const LOCATIONS = {
   ams: { name: "Amsterdam", tz: "Europe/Amsterdam", lat: 52.3584, lon: 4.8697, aqDomain: "cams_europe", pollen: true,
-    tzFor: d => { const m = +d.slice(5,7); return m >= 4 && m <= 10 ? 2 : 1; },
     // warm-season daily-mean temperature percentiles, ERA5 2016-2025
     clim: [[8.3,1],[10.5,5],[13.2,15],[14.6,25],[16.6,50],[18.5,75],[19.5,85],[22,95],[24.5,99]],
     W0: 10,  // reference heat stress for the cardio term
@@ -13,7 +13,6 @@ const LOCATIONS = {
     indoor: ["Treadmill, 40 min easy", "Spin class or a swim", "Or run tomorrow morning"],
     drinkTip: "" },
   chn: { name: "Chennai", tz: "Asia/Kolkata", lat: 13.0827, lon: 80.2707, aqDomain: "cams_global", pollen: false,
-    tzFor: () => 5.5,
     // all-year daily-mean temperature percentiles, ERA5 2016-2025 (no cool season)
     clim: [[23.6,1],[24.6,5],[25.5,15],[26.2,25],[28.2,50],[29.8,75],[30.5,85],[31.6,95],[32.8,99]],
     // local reference: Amsterdam's 10 C shifted by the gap in median shade heat stress (26.7 vs 14.9 C, ERA5)

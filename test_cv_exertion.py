@@ -1,9 +1,19 @@
-"""Checks the derivation numerically and prints worked examples. Run: python3 test_cv_exertion.py"""
+"""Checks the derivation numerically and prints worked examples. Run: python3 test_cv_exertion.py
+Exits with status 1 if any check fails (so CI and scripts notice)."""
 import math
+import sys
 from cv_exertion import (Runner, run_load, better_time, wbgt_limit, metabolic_rate_w, ve_l_per_min,
                          daily_volume_m3, dose_fraction, dwbgt_dta, heat_term)
 
-ok = lambda c, msg: print(("PASS " if c else "FAIL ") + msg) or c
+FAILURES = []
+
+
+def ok(cond, msg):
+    """Record a check; every FAIL makes the process exit non-zero at the end."""
+    print(("PASS " if cond else "FAIL ") + msg)
+    if not cond:
+        FAILURES.append(msg)
+    return cond
 
 print("== Physiology and standards checks ==")
 ok(abs(ve_l_per_min(1.0, 70) - 6.6) < 0.2, f"resting VE {ve_l_per_min(1.0, 70):.1f} L/min (textbook 6-8)")
@@ -52,6 +62,9 @@ for r, lbl in ((runner, "unacclimatised, 10 MET"), (Runner(70, 10, 60, True), "a
     a = run_load(hw10["wbgt"], hw10["ta"], hw10["rh"], hw10["conc"], 100, r)
     b = run_load(hw15["wbgt"], hw15["ta"], hw15["rh"], hw15["conc"], 100, r)
     show(f"Illustrative heatwave day - {lbl}", a, b, "10:00", "15:00")
+    ok(better_time(a, b) == "A", f"heatwave, {lbl}: 10:00 is the better time")
+    ok(b["est"]["RR"] > a["est"]["RR"] >= 1.0, f"heatwave, {lbl}: RR(15:00) {b['est']['RR']:.3f} > RR(10:00) {a['est']['RR']:.3f} >= 1")
+    ok(a["lo"]["RR"] <= a["est"]["RR"] <= a["hi"]["RR"], f"heatwave, {lbl}: estimate inside its interval")
 
 # 3) Invariance and sensitivity
 import cv_exertion as cv
@@ -67,4 +80,13 @@ for dm in (1.4, 1.55, 1.8):
     gap = math.log(b["est"]["RR"] / a["est"]["RR"])
     print(f"  daily mean MET={dm:.2f}: f={dose_fraction(10,60,70):.3f}  ratio={b['est']['RR']/a['est']['RR']:.3f}  "
           f"heat share {100*(b['est']['H']-a['est']['H'])/gap:.0f}% / pollution share {100*(b['est']['P']-a['est']['P'])/gap:.0f}%")
+    ok(b["est"]["RR"] / a["est"]["RR"] > 1, f"daily mean MET {dm}: 15:00 stays worse than 10:00")
 cv.DAILY_MEAN_MET = 1.55
+
+print()
+if FAILURES:
+    print(f"{len(FAILURES)} check(s) failed:")
+    for m in FAILURES:
+        print("  - " + m)
+    sys.exit(1)
+print("All checks passed.")

@@ -59,10 +59,10 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
     const { live, LOCATIONS } = require(path.join(API, "adapter.js"));
     const { SCENARIOS } = require(path.join(API, "locations.js"));
     const L = LOCATIONS.ams, d = SCENARIOS.ams.heat;
-    const inst = (h: number) => new Date(Date.parse(d.date + "T00:00:00Z") + (h - L.tzFor(d.date)) * 3600000).toISOString();
+    const inst = (h: number) => require(path.join(API, "adapter.js")).instantFor(L.tz, d.date, h);
     let state: string | null = null;
     for (const p of trace.slice(0, 30)) {
-      const r: { state: string } = live({ location: { lat: L.lat, lon: L.lon }, elapsed_s: p.minute * 60, planned_duration_s: 2700, speed_mps: 1000 / 380,
+      const r: { state: string } = live({ recommendation_id: "rec_demo", location: { lat: L.lat, lon: L.lon }, elapsed_s: p.minute * 60, planned_duration_s: 2700, speed_mps: 1000 / 380,
         athlete: inp.request.athlete, state }, { data: d, L, lang: "en-GB", nowISO: inst(start + p.minute / 60) });
       state = r.state;
       expect(p.live).toEqual(r);
@@ -89,6 +89,19 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
     const one = lapMessage(ROUTES.vondelpark, 25, 380), short = lapMessage(ROUTES.vondelpark, 20, 380);
     expect(t(one.code, one.params)).toBe("Vondelpark loop, 3.4 km. One lap fits your 25 minutes");
     expect(t(short.code, short.params)).toBe("Vondelpark loop, 3.4 km. Turn back halfway to keep to 20 minutes");
+  });
+});
+
+describe("last night's plan is a real tomorrow request", () => {
+  it("asked at 20:30 the evening before, for the scenario date, from the runner's earliest start", () => {
+    const s = scenarioById("ams-heat");
+    const plan = recommend({ city: s.city, scenario: s.dataKey, localHour: 0, request: PERSONAS.sanne.request, sources: s.sources,
+      eveningBefore: { startAfter: s.defaultTime } });
+    expect(plan.generated_at).toBe("2026-06-26T18:30:00.000Z");     // 20:30 CEST on Friday 26 June
+    expect(plan.activity.date).toBe("2026-06-27");
+    expect(plan.summary.window!.start).toBe("2026-06-27T06:45:00+02:00");
+    expect(plan.summary.action).toBe("go_later");
+    expect(plan.tips?.[0]?.code).toBe("TIP_HEAT_NOT_ADAPTED");
   });
 });
 

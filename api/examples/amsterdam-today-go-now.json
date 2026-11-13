@@ -6,13 +6,14 @@
     },
     "activity": {
       "type": "run",
+      "date": "2026-11-13",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
     "athlete": {}
   },
   "response": {
-    "schema_version": "1.1.0",
+    "schema_version": "0.9.0",
     "id": "rec_mwepbjc0c9kp",
     "generated_at": "2026-11-13T08:15:00.000Z",
     "valid_until": "2026-11-13T09:00:00.000Z",
@@ -24,6 +25,7 @@
     },
     "activity": {
       "type": "run",
+      "date": "2026-11-13",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
@@ -33,7 +35,8 @@
       "level_name": "green",
       "window": {
         "start": "2026-11-13T09:15:00+01:00",
-        "end": "2026-11-13T22:00:00+01:00"
+        "end": "2026-11-13T22:00:00+01:00",
+        "latest_start": "2026-11-13T21:15:00+01:00"
       },
       "headline": {
         "code": "GO_NOW",
@@ -55,6 +58,7 @@
       "pace": {
         "planned_s_per_km": 380,
         "planned_pace_ok": true,
+        "limit_status": "capped",
         "fastest_safe_pace_s_per_km": 241,
         "max_duration_at_planned_s": null,
         "pace_for_full_duration_s_per_km": null
@@ -66,6 +70,7 @@
         "compared_with": "Stadhouderskade"
       },
       "start_heading_deg": 240,
+      "start_heading_status": "into_wind",
       "hydration": {
         "fluid_ml": 0,
         "sweat_rate_ml_per_h": 0,
@@ -152,7 +157,9 @@
       }
     ],
     "data": {
-      "engine_version": "2.1.0",
+      "engine_version": "2.2.0",
+      "status": "ok",
+      "not_assessed": [],
       "sources": [
         {
           "id": "open-meteo-forecast",
@@ -164,7 +171,8 @@
             "wind_speed_10m",
             "wind_direction_10m"
           ],
-          "retrieved_at": "2026-11-13T09:19:28Z"
+          "retrieved_at": "2026-11-13T09:19:28Z",
+          "age_s": 0
         },
         {
           "id": "cams-europe",
@@ -176,7 +184,8 @@
             "ozone",
             "pollen"
           ],
-          "retrieved_at": "2026-11-13T09:19:28Z"
+          "retrieved_at": "2026-11-13T09:19:28Z",
+          "age_s": 0
         }
       ],
       "coverage": {

@@ -1,0 +1,48 @@
+# API and model checks: contract examples, API tests (no network), exertion model assertions.
+name: API tests
+
+on:
+  push:
+    branches: [main]
+    paths: ["api/**", "prototype/**", "cv_exertion.py", "test_cv_exertion.py", ".github/workflows/api-tests.yml"]
+  pull_request:
+    paths: ["api/**", "prototype/**", "cv_exertion.py", "test_cv_exertion.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci
+      - name: API tests (stubbed fetch, DST, window fit, /live state)
+        run: npm test
+      - name: Examples are valid against the contract and up to date
+        run: |
+          node build_examples.js
+          git diff --exit-code -- examples/
+      - name: Watch prototype builds from the shared engine
+        working-directory: .
+        run: |
+          python3 prototype/build.py
+          git diff --exit-code -- prototype/gotime-watch.html
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Exertion model checks (exit 1 on any failure)
+        run: python3 test_cv_exertion.py

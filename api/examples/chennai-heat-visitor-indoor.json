@@ -6,6 +6,7 @@
     },
     "activity": {
       "type": "run",
+      "date": "2024-05-06",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
@@ -16,7 +17,7 @@
     }
   },
   "response": {
-    "schema_version": "1.1.0",
+    "schema_version": "0.9.0",
     "id": "rec_lvu6k480k0bi",
     "generated_at": "2024-05-05T23:45:00.000Z",
     "valid_until": "2024-05-06T00:00:00.000Z",
@@ -28,6 +29,7 @@
     },
     "activity": {
       "type": "run",
+      "date": "2024-05-06",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
@@ -56,12 +58,14 @@
       "pace": {
         "planned_s_per_km": 380,
         "planned_pace_ok": false,
+        "limit_status": "indoor",
         "fastest_safe_pace_s_per_km": null,
         "max_duration_at_planned_s": null,
         "pace_for_full_duration_s_per_km": null
       },
       "route": null,
       "start_heading_deg": null,
+      "start_heading_status": "indoor",
       "hydration": {
         "fluid_ml": 0,
         "sweat_rate_ml_per_h": 1036,
@@ -164,7 +168,9 @@
       }
     ],
     "data": {
-      "engine_version": "2.1.0",
+      "engine_version": "2.2.0",
+      "status": "ok",
+      "not_assessed": [],
       "sources": [
         {
           "id": "era5-reanalysis",
@@ -176,7 +182,8 @@
             "wind_speed_10m",
             "wind_direction_10m"
           ],
-          "retrieved_at": null
+          "retrieved_at": null,
+          "age_s": null
         },
         {
           "id": "gotime-synthetic",
@@ -187,7 +194,8 @@
             "nitrogen_dioxide",
             "ozone"
           ],
-          "retrieved_at": null
+          "retrieved_at": null,
+          "age_s": null
         }
       ],
       "coverage": {

@@ -9,7 +9,7 @@ const { recommend, LOCATIONS } = require(path.join(API, "adapter.js"));
 const { SCENARIOS } = require(path.join(API, "locations.js"));
 function expectedHeadline(hour: number): string {
   const L = LOCATIONS.ams, data = SCENARIOS.ams.heat;
-  const nowISO = new Date(Date.parse(data.date + "T00:00:00Z") + (hour - L.tzFor(data.date)) * 3600000).toISOString();
+  const nowISO = require(path.join(API, "adapter.js")).instantFor(L.tz, data.date, hour);
   const req = { location: { lat: L.lat, lon: L.lon }, activity: { type: "run", planned_duration_s: 2700, planned_pace_s_per_km: 380 },
     athlete: { mass_kg: 64, height_m: 1.69, heat_acclimatised: false, hay_fever: true }, include: ["hours"] };
   return recommend(req, { data, L, lang: "en-GB", nowISO, sources: [], coverage: { pollen: "covered", air_quality: "model_grid" } }).summary.headline.text;
@@ -40,7 +40,7 @@ test.beforeEach(async ({ page }) => {
 const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
   { name: "00-onboarding", check: async p => { await expect(p.getByTestId("onboarding")).toBeVisible(); } },
   { name: "01-evening", check: async p => {
-    await expect(p.getByTestId("notification")).toContainText("Tomorrow: run before 11:00");
+    await expect(p.getByTestId("notification")).toContainText("Tomorrow: run 6:45–11:00");
     await expect(p.getByTestId("notification")).toContainText(/At your usual 18:00, heat stress will be \d+\s°C higher\./); } },
   { name: "02-glance", check: async p => { await expect(p.getByTestId("glance")).toContainText("Go before 11:00"); } },
   { name: "03-today", check: async p => {

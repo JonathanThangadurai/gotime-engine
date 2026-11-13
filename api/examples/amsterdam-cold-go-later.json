@@ -6,6 +6,7 @@
     },
     "activity": {
       "type": "run",
+      "date": "2027-01-12",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
@@ -15,7 +16,7 @@
     }
   },
   "response": {
-    "schema_version": "1.1.0",
+    "schema_version": "0.9.0",
     "id": "rec_mys9ugg0c9kp",
     "generated_at": "2027-01-12T05:30:00.000Z",
     "valid_until": "2027-01-12T06:00:00.000Z",
@@ -27,6 +28,7 @@
     },
     "activity": {
       "type": "run",
+      "date": "2027-01-12",
       "planned_duration_s": 2700,
       "planned_pace_s_per_km": 380
     },
@@ -36,7 +38,8 @@
       "level_name": "green",
       "window": {
         "start": "2027-01-12T10:00:00+01:00",
-        "end": "2027-01-12T22:00:00+01:00"
+        "end": "2027-01-12T22:00:00+01:00",
+        "latest_start": "2027-01-12T21:15:00+01:00"
       },
       "headline": {
         "code": "GO_AFTER",
@@ -60,6 +63,7 @@
       "pace": {
         "planned_s_per_km": 380,
         "planned_pace_ok": true,
+        "limit_status": "capped",
         "fastest_safe_pace_s_per_km": 240,
         "max_duration_at_planned_s": null,
         "pace_for_full_duration_s_per_km": null
@@ -71,6 +75,7 @@
         "compared_with": "Stadhouderskade"
       },
       "start_heading_deg": 60,
+      "start_heading_status": "into_wind",
       "hydration": {
         "fluid_ml": 0,
         "sweat_rate_ml_per_h": 0,
@@ -169,7 +174,9 @@
       }
     ],
     "data": {
-      "engine_version": "2.1.0",
+      "engine_version": "2.2.0",
+      "status": "ok",
+      "not_assessed": [],
       "sources": [
         {
           "id": "gotime-synthetic",
@@ -177,7 +184,8 @@
           "variables": [
             "all"
           ],
-          "retrieved_at": null
+          "retrieved_at": null,
+          "age_s": null
         }
       ],
       "coverage": {

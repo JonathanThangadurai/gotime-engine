@@ -90,7 +90,7 @@ test("Dutch: the journey in nl-NL", async ({ page }, info) => {
   await expect(page.getByTestId("why-sheet")).toContainText("Ozon stijgt");
   await shot(page, "nl-04-why", info.project.name);
   await page.keyboard.press("2");
-  await expect(page.getByTestId("notification")).toContainText("Morgen: loop vóór 11:00");
+  await expect(page.getByTestId("notification")).toContainText("Morgen: loop 6:45–11:00");
   await expect(page.getByText("vrijdag 26 juni")).toBeVisible();
   await shot(page, "nl-01-evening", info.project.name);
   await page.keyboard.press("8");

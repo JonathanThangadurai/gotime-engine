@@ -11,6 +11,7 @@ on:
       - "api/engine.js"
       - "api/locations.js"
       - "api/adapter.js"
+      - "api/conditions.js"
       - "api/messages/**"
       - ".github/workflows/demo-pages.yml"
   workflow_dispatch:

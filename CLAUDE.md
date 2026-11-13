@@ -74,8 +74,11 @@ python3 test_cv_exertion.py checks it. Not yet wired into run_window.py - do tha
   adapted heat bands (ACSM 18/23/28, +4.4 C acclimatised), simplified ISO 7933 heat budget (39 C core cap), Stafoggia S3 air
   term at the LOCAL temperature percentile, NAQI/EU guard rails, wind chill, pollen. locations.js = Amsterdam + Chennai only.
   `node build_examples.js` must pass after any change (validates examples against the contract).
-- Contract rules: codes + params first, text optional; units in field names; null = no limit / not applicable; additive only in 1.x.
-- prototype/gotime-watch.html is BUILT from prototype/template.html + api/engine.js + api/locations.js (python3 prototype/build.py).
+- Contract rules (schema 0.9.0, prototype): codes + params first, text optional; units in field names; missing data is never a
+  value (data.status ok | degraded | unavailable, data.not_assessed, source age_s); explicit status fields instead of overloaded
+  nulls (pace.limit_status, start_heading_status); UTC offsets per instant from the IANA zone (no month rules); a window fits
+  the whole run (latest_start); /live is experimental with a signed state. Auth and 429 are planned. `cd api && npm test`.
+- prototype/gotime-watch.html is BUILT from prototype/template.html + api/engine.js + api/locations.js + api/conditions.js (python3 prototype/build.py).
   Never edit the built file.
 - Wind: AeroWise (separate private repo, Python, Benelux, cycling) gives headwind/gust/path/elevation every 200 m. Planned as a
   separate service feeding a v1.1 `route_profile` block. Do not copy its code into this public repo.

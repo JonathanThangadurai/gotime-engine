@@ -51,7 +51,7 @@ export function usualSlotNote(rec: Recommendation, usualHour: number | undefined
   const h = rec.hours?.find(x => +x.start.slice(11, 13) === Math.floor(usualHour));
   if (!h) return null;
   const time = ENG.fmtHM(usualHour);
-  if (h.air.level >= 2 && h.air.level >= h.heat.level) return { code: h.air.pm25_ugm3 > 60 ? "SKIP_USUAL_SMOKE" : "SKIP_USUAL_AIR", params: { time } };
+  if (h.air.level >= 2 && h.air.level >= h.heat.level) return { code: (h.air.pm25_ugm3 ?? 0) > 60 ? "SKIP_USUAL_SMOKE" : "SKIP_USUAL_AIR", params: { time } };
   if (h.heat.level >= 2) return { code: "SKIP_USUAL_HEAT", params: { time } };
   return null;
 }
@@ -60,7 +60,7 @@ export function usualSlotNote(rec: Recommendation, usualHour: number | undefined
 export function todayView(rec: Recommendation, nowHour: number, usualHour?: number, drink?: string): TodayView {
   const { summary: s, guidance: g } = rec;
   const chips: Chip[] = [];
-  if (s.action !== "indoor") {
+  if (s.action !== "indoor" && s.action !== "none_today") {
     const p = g.pace;
     if (!p.planned_pace_ok && p.max_duration_at_planned_s !== null)
       chips.push({ kind: "pace", code: "CHIP_PACE_SHORT", params: { minutes: Math.round(p.max_duration_at_planned_s / 60) } });

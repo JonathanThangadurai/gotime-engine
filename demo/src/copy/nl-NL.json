@@ -304,5 +304,15 @@
   "TIP_HYDRATE_EVENING": "Morgen warm: drink vanavond gewoon en neem een glas water voordat je gaat.",
   "TIP_RUN_BY_FEEL": "Benauwd vandaag: loop op gevoel. Je tempo op je horloge is lager, en dat is prima.",
   "TIP_COLD_WARMUP": "Vriesweer vandaag: warm 10 minuten binnen op, begin rustig, buff voor je mond.",
-  "EVIDENCE_published_research": "Gepubliceerd onderzoek"
+  "EVIDENCE_published_research": "Gepubliceerd onderzoek",
+  "NO_WINDOW_TODAY": "Vandaag geen goed tijdvak meer",
+  "TRY_TOMORROW": "Probeer het morgen.",
+  "FITS_IN_WINDOW": "{max_minutes} min passen vóór {end}, niet de volle {planned_minutes}.",
+  "AIR_NOT_ASSESSED": "Luchtkwaliteit vandaag niet beoordeeld: geen gegevens.",
+  "AIR_CLEAN_PARTIAL": "De stoffen die we konden beoordelen blijven onder de WHO-waarden; {not_assessed} niet beoordeeld.",
+  "WIND_DIRECTION_UNKNOWN": "Windrichting niet beschikbaar, dus start in elke richting.",
+  "NUM_PM25_NA": "PM2,5 niet beoordeeld",
+  "NUM_O3_NA": "ozon niet beoordeeld",
+  "GLANCE.NO_WINDOW_TODAY": "Vandaag geen tijdvak",
+  "TOMORROW.NO_WINDOW_TODAY": "Morgen: geen goed tijdvak"
 }

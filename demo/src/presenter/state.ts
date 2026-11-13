@@ -59,13 +59,13 @@ export function makeRun(personaId: ReadonlySignal<PersonaId>) {
 
   const recommendation = computed(() => recommend(inputs(nowHour.value)));
   /** What the engine says at the wake time: the basis of last night's message and of the day's reference hour. */
-  const plan = computed(() => recommend({ ...inputs(planHour.value), request: { ...request.value, context: "evening_before" } }));
+  const plan = computed(() => recommend({ ...inputs(planHour.value), eveningBefore: { startAfter: scenario.value.defaultTime } }));
   const planDay = computed(() => evaluateDay(inputs(planHour.value)));
   const day = computed(() => evaluateDay(inputs(nowHour.value)));
   const action = computed(() => recommendation.value.summary.action);
   /** Run start: the window start, rounded up to the quarter hour. */
   const runStart = computed(() => { const w = recommendation.value.summary.window; return w ? quarterUp(hourOf(w.start)) : nowHour.value; });
-  const trace = computed(() => runTrace(inputs(nowHour.value), runStart.value));
+  const trace = computed(() => runTrace(inputs(nowHour.value), runStart.value, recommendation.value.id));
   const runFrame = computed(() => runMinute.value ?? firstAlertMinute(trace.value));
   /** One reference hour per day (engine/reference.ts), compared with today's run on every screen. */
   const reference = computed(() => referenceHour(plan.value, planDay.value, persona.value.usualHour, planHour.value));

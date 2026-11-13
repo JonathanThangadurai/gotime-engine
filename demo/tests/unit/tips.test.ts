@@ -81,14 +81,14 @@ describe("each scenario shows the expected tip, never more than one", () => {
   it("hay-fever spring day: no tip at all", () => {
     expect(rec("ams-heat", "sanne").tips).toHaveLength(1);
     const L = adapter.LOCATIONS.ams, d = SCENARIOS.ams.pollen;
-    const nowISO = new Date(Date.parse(d.date + "T00:00:00Z") + (6.5 - L.tzFor(d.date)) * 3600000).toISOString();
+    const nowISO = adapter.instantFor(L.tz, d.date, 6.5);
     const r = adapter.recommend({ location: { lat: L.lat, lon: L.lon }, activity: { type: "run", planned_duration_s: 2700, planned_pace_s_per_km: 380 }, athlete: { hay_fever: true } },
       { data: d, L, lang: "en-GB", nowISO, sources: [], coverage: { pollen: "covered", air_quality: "model_grid" } });
     expect(r.tips).toEqual([]);
   });
   it("a bitter morning (the icy day shifted 16 °C colder, run hours below -15 °C): hard session indoors", () => {
     const L = adapter.LOCATIONS.ams, d0 = SCENARIOS.ams.cold, d = { ...d0, t: d0.t.map((x: number) => x - 16) };
-    const nowISO = new Date(Date.parse(d.date + "T00:00:00Z") + (9 - L.tzFor(d.date)) * 3600000).toISOString();
+    const nowISO = adapter.instantFor(L.tz, d.date, 9);
     const r = adapter.recommend({ location: { lat: L.lat, lon: L.lon }, activity: { type: "run", planned_duration_s: 2700, planned_pace_s_per_km: 380 }, athlete: {} },
       { data: d, L, lang: "en-GB", nowISO, sources: [], coverage: { pollen: "covered", air_quality: "model_grid" } });
     expect(r.tips.map((x: { code: string }) => x.code)).toEqual(["TIP_COLD_HARD_INDOORS"]);

@@ -15,7 +15,7 @@ export function HourlyStrip({ rec, compact = false }: { rec: Recommendation; com
             <span class="hour-time">{hh}</span>
             <span class="hour-bar" aria-hidden="true"><span style={{ width: `${Math.max(4, (h.heat.wbgt_c / maxW) * 100)}%` }} /></span>
             <span class="hour-vals">
-              {t("NUM_HEAT", { wbgt_c: h.heat.wbgt_c })} · {t("NUM_PM25", { ugm3: h.air.pm25_ugm3 })} · {t("NUM_O3", { ugm3: h.air.o3_ugm3 })}
+              {t("NUM_HEAT", { wbgt_c: h.heat.wbgt_c })} · {h.air.pm25_ugm3 === null ? t("NUM_PM25_NA") : t("NUM_PM25", { ugm3: h.air.pm25_ugm3 })} · {h.air.o3_ugm3 === null ? t("NUM_O3_NA") : t("NUM_O3", { ugm3: h.air.o3_ugm3 })}
               {h.pollen.grains_m3 !== null && <> · {t("NUM_POLLEN", { grains: h.pollen.grains_m3 })}</>}
               {h.in_window && <> · <b>{t("NUM_IN_WINDOW")}</b></>}
             </span>

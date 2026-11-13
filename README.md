@@ -10,12 +10,12 @@ Environmental health intelligence for outdoor activity. GOTime couples heat, hum
 
 | Component | Folder | Language | What it does | Status |
 |---|---|---|---|---|
-| **Recommendation API v1** | [`api/`](api/) | Node.js | The run engine behind an OpenAPI 3.1 contract: plan a run, then live guidance during it | Working locally; contract validated against 7 example cases |
+| **Recommendation API** (prototype, schema 0.9) | [`api/`](api/) | Node.js | The run engine behind an OpenAPI 3.1 contract: plan a run for a date, then (experimental) live guidance during it | Working locally; 9 validated example cases and an API test suite (`npm test`) |
 | **Phone demo** | [`demo/`](demo/) | Vite + Preact + TypeScript | Installable web app: the runner journey inside a fictional fitness app, with a presenter mode, partner lens and a user-test mode, on the same engine | Live at https://jonathanthangadurai.github.io/gotime-engine/ |
 | **Watch prototype** | [`prototype/`](prototype/) | One HTML file | Clickable watch demo (Amsterdam and Chennai, heat, city, pollen and cold runs) built on the same engine | Working; opened as a local file it fetches live data |
 | **Population alert** | repository root (`*.py`) | Python | Daily heat × air-pollution mortality risk and excess deaths for one Dutch municipality, today plus 2 days | Working for Amsterdam; 2026 back-test done |
 | **Exertion model** | `cv_exertion.py` | Python | Reference derivation of the run-level cardiovascular load used by the run engine | Tested (`test_cv_exertion.py`) |
-| **Wind service (AeroWise)** | separate private repository | Python | Street-level headwind and gusts every 200 m along a route | Integration planned for API v1.1 |
+| **Wind service (AeroWise)** | separate private repository | Python | Street-level headwind and gusts every 200 m along a route | Integration planned (route profile) |
 
 ---
 
@@ -26,10 +26,11 @@ Environmental health intelligence for outdoor activity. GOTime couples heat, hum
 cd api
 npm install
 node build_examples.js     # regenerates examples/ and checks them against openapi.yaml
+npm test                   # DST, window fit, dates, missing data, server with stubbed fetch, /live state
 node server.js             # http://localhost:8787/v1
 curl "http://localhost:8787/v1/recommendations?lat=52.37&lon=4.89&duration_s=2700&pace_s_per_km=380"
 ```
-The server fetches live Open-Meteo weather and CAMS air quality for the nearest supported city. If the network is unavailable it uses a stored snapshot. The prototype-only header `X-GOTime-Scenario: heat | cold | pollen | bhogi` replays a stored demo day. The partner-facing guide is [`api/README.md`](api/README.md).
+The server fetches Open-Meteo weather and CAMS air quality for the nearest supported city and the requested `activity.date` (default today, up to 4 days ahead). Missing values are never replaced by zeros: a missing pollutant is reported as not assessed (`data.status: degraded`), missing weather means no advice (`503`). If the network is unavailable it uses the stored snapshot only when that snapshot is for the requested date. The prototype-only header `X-GOTime-Scenario: heat | cold | pollen | bhogi` replays a stored demo day. The partner-facing guide is [`api/README.md`](api/README.md).
 
 **Watch prototype**: open `prototype/gotime-watch.html` in a browser. To change the engine, edit `api/engine.js` or `api/locations.js` and rebuild:
 ```bash
@@ -198,7 +199,7 @@ Planned infrastructure: Docker on OVH, with scheduled download workers for the s
 ## Repository layout
 
 ```
-api/                     Recommendation API v1
+api/                     Recommendation API (prototype, schema 0.9)
   openapi.yaml           contract (source of truth)
   engine.js              run engine (WBGT, heat budget, air, cold, pollen, decision)
   locations.js           city settings and demo scenarios (Amsterdam, Chennai)
@@ -239,7 +240,7 @@ outputs/                 back-test summary and CAMS correction tables
 
 The full task list is in [`TASKS.md`](TASKS.md).
 
-1. **v1.1 route profile.** Integrate AeroWise as a separate service. It supplies headwind, gusts, street type and elevation every 200 m, which feed body-height wind into the heat budget, effort on hills and into the wind, and wind chill per segment.
+1. **Route profile.** Integrate AeroWise as a separate service. It supplies headwind, gusts, street type and elevation every 200 m, which feed body-height wind into the heat budget, effort on hills and into the wind, and wind chill per segment.
 2. **Any location.** Compute climatology and the local reference on the fly from ERA5.
 3. **Data layer on direct sources**: ECMWF and ICON forecasts, CAMS via the ADS (including its station-optimised forecasts), EEA and MeteoGate observations, with CPCB for India.
 4. **Hosting.** Docker on OVH with download workers, API keys, rate limits and monitoring.

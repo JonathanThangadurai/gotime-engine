@@ -198,6 +198,7 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute
 <script>
 /*ENGINE*/
 /*DATA*/
+/*CONDITIONS*/
 const $ = id => document.getElementById(id);
 const S = { loc: "ams", scen: "live", now: 7, pace: 6+20/60, dur: 45, kg: 72, ht: 1.8, cloth: "kit", acc: false, hay: false, dt: 0, drh: 0, pmx: 1, o3: 1, pol: 0, wsx: 1, screen: 0 };
 let DATA = JSON.parse(JSON.stringify(SCENARIOS)), R = null;
@@ -219,19 +220,23 @@ const fmtStamp = (iso, tz) => new Date(iso).toLocaleString("en-GB",{timeZone:tz,
 const LOC = () => LOCATIONS[S.loc];
 
 async function tryLive(key) {
+  // Missing values stay missing (never 0): conditions.js checks HTTP status, lengths and aligned time axes.
   const L = LOCATIONS[key], q = `latitude=${L.lat}&longitude=${L.lon}&timezone=${encodeURIComponent(L.tz)}&forecast_days=1`;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: L.tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   try {
     const ctl = new AbortController(); setTimeout(() => ctl.abort(), 5000);
     const pol = L.pollen ? ",grass_pollen,birch_pollen,alder_pollen,mugwort_pollen" : "";
-    const [w, a] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,relative_humidity_2m,shortwave_radiation,wind_speed_10m,wind_direction_10m`, {signal: ctl.signal}).then(r => r.json()),
-      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${q}&hourly=pm10,pm2_5,nitrogen_dioxide,ozone${pol}&domains=${L.aqDomain}`, {signal: ctl.signal}).then(r => r.json())]);
-    const H = w.hourly, A = a.hourly, z = v => (v ?? 0);
-    const sum = i => ["grass_pollen","birch_pollen","alder_pollen","mugwort_pollen"].reduce((s,k) => s + z(A[k] && A[k][i]), 0);
-    Object.assign(DATA[key].live, { date: H.time[0].slice(0,10), fetched: new Date().toISOString(),
-      t: H.temperature_2m.map(z), rh: H.relative_humidity_2m.map(z), sw: H.shortwave_radiation.map(z), ws: H.wind_speed_10m.map(z), wd: H.wind_direction_10m.map(z),
-      pm10: A.pm10.map(z), pm25: A.pm2_5.map(z), no2: A.nitrogen_dioxide.map(z), o3: A.ozone.map(z), pollen: L.pollen ? A.time.map((_,i) => sum(i)) : null });
-    LIVE[key] = true;
+    const get = url => fetch(url, { signal: ctl.signal }).then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+    const [w, a] = await Promise.allSettled([
+      get(`https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,relative_humidity_2m,shortwave_radiation,wind_speed_10m,wind_direction_10m`),
+      get(`https://air-quality-api.open-meteo.com/v1/air-quality?${q}&hourly=pm10,pm2_5,nitrogen_dioxide,ozone${pol}&domains=${L.aqDomain}`)]);
+    if (w.status === "fulfilled") {
+      const { data, quality } = COND.fromOpenMeteo(w.value, a.status === "fulfilled" ? a.value : null, { date: today, pollen: !!L.pollen });
+      if (quality.status !== "unavailable") {      // without usable weather keep the stored snapshot
+        Object.assign(DATA[key].live, { ...data, fetched: new Date().toISOString(), notAssessed: quality.not_assessed });
+        LIVE[key] = true;
+      }
+    }
   } catch (e) {}
   srcLine(); update();
 }
@@ -244,10 +249,11 @@ function srcLine() {
 
 function conditions() {
   const d = DATA[S.loc][S.scen], o = { date: d.date };
-  for (const k of ["t","rh","sw","ws","wd","pm10","pm25","no2","o3"]) o[k] = d[k].slice();
-  o.pollen = d.pollen ? d.pollen.map(x => x + S.pol) : null;
+  for (const k of ["t","rh","sw","ws","wd","pm10","pm25","no2","o3"]) o[k] = d[k] ? d[k].slice() : null;   // null = not assessed
+  const map = (arr, f) => arr ? arr.map(f) : null;
+  o.pollen = map(d.pollen, x => x + S.pol);
   o.t = o.t.map(x => x + S.dt); o.rh = o.rh.map(x => Math.max(5, Math.min(100, x + S.drh)));
-  o.pm25 = o.pm25.map(x => x*S.pmx); o.pm10 = o.pm10.map(x => x*S.pmx); o.o3 = o.o3.map(x => x*S.o3); o.ws = o.ws.map(x => x*S.wsx);
+  o.pm25 = map(o.pm25, x => x*S.pmx); o.pm10 = map(o.pm10, x => x*S.pmx); o.o3 = map(o.o3, x => x*S.o3); o.ws = o.ws.map(x => x*S.wsx);
   return o;
 }
 const user = () => ({ pace: S.pace, minutes: S.dur, kg: S.kg, height: S.ht, acc: S.acc, cloth: S.cloth, hayfever: S.hay, now: S.now });
@@ -307,8 +313,8 @@ function inspector(d, ms) {
     card("Fastest pace, " + S.dur + " min", capP ? ENG.fmtPace(capP) : "Walk only", "Inside the heat budget"),
     card("Sweat", `${Math.round(b.b.sweatMlH)} ml/h`, `Needs ${Math.round(Math.max(0,b.b.Ereq))} W of ${Math.round(b.b.Emax)} W possible`),
     card("Radiant temp", `${b.tmrt.toFixed(0)} °C`, `Sun, sky and ground on the body · air ${b.t.toFixed(1)} °C`),
-    card("PM2.5", `${Math.round(b.pm25)}`, `µg/m³ · band ${ENG.FLAGS[ENG.airBand(b.pm25,0)]} · peak ${Math.round(Math.max(...d.pm25))}`),
-    card("Ozone · NO₂", `${Math.round(b.o3)} · ${Math.round(b.no2)}`, "µg/m³ · WHO 100 · 25"),
+    card("PM2.5", d.pm25 ? `${Math.round(b.pm25)}` : "not assessed", d.pm25 ? `µg/m³ · band ${ENG.FLAGS[ENG.airBand(b.pm25,0)]} · peak ${Math.round(Math.max(...d.pm25))}` : "no data today"),
+    card("Ozone · NO₂", `${b.o3 == null ? "n/a" : Math.round(b.o3)} · ${b.no2 == null ? "n/a" : Math.round(b.no2)}`, "µg/m³ · WHO 100 · 25 · n/a = not assessed"),
     card("Air term P", b.P.toFixed(4), (b.driver ? ENG.NAMES[b.driver] + " · " : "") + `run = ${(R.f*100).toFixed(1)}% of a day's breathing` + (saving > 5 ? ` · ${R.route.name} −${saving}%` : "")),
     card("Heat term H", b.H.toFixed(3), `Above local reference ${R.W0} °C · day at p${Math.round(R.pct)}`),
     card("Cardio load", `×${b.rr.toFixed(3)}`, `vs a cool, clean hour · worst ×${R.worst.rr.toFixed(3)}`),
@@ -321,7 +327,7 @@ function inspector(d, ms) {
   const y = v => top + (Hh - top - bot)*(1 - (v - mn)/(mx - mn)), bw = (W - x0*2)/24;
   const col = ["#9fe8dd","#e8b04a","#e0714f","#2b2b2b"];
   let s = R.indoor ? "" : `<rect x="${x0 + R.start*bw}" y="0" width="${Math.max(2,(R.end - R.start)*bw)}" height="${Hh-bot+4}" fill="#176a70" opacity=".12" rx="6"/>`;
-  R.hours.forEach((h,i) => { s += `<rect x="${x0 + i*bw + 3}" y="${y(h.W)}" width="${bw-6}" height="${Math.max(1, y(mn) - y(h.W))}" rx="3" fill="${col[h.flag]}"><title>${i}:00 · WBGT ${h.W.toFixed(1)} · PM2.5 ${Math.round(h.pm25)} · ${h.b.dlim >= 240 ? "no time limit" : h.b.dlim + " min to 39 °C"}</title></rect>`;
+  R.hours.forEach((h,i) => { s += `<rect x="${x0 + i*bw + 3}" y="${y(h.W)}" width="${bw-6}" height="${Math.max(1, y(mn) - y(h.W))}" rx="3" fill="${col[h.flag]}"><title>${i}:00 · WBGT ${h.W.toFixed(1)} · PM2.5 ${h.pm25 == null ? "n/a" : Math.round(h.pm25)} · ${h.b.dlim >= 240 ? "no time limit" : h.b.dlim + " min to 39 °C"}</title></rect>`;
     if (i % 3 === 0) s += `<text x="${x0 + i*bw + bw/2}" y="${Hh-8}" font-size="11" text-anchor="middle" fill="#6b7c80">${i}:00</text>`; });
   [[e[1],"Red"],[e[2],"indoors"]].forEach(([v,t]) => { s += `<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#18343b" stroke-dasharray="5 4" stroke-width="1"/><text x="${W-6}" y="${y(v)-4}" font-size="11" text-anchor="end" fill="#18343b">${t} ${v} °C</text>`; });
   s += `<line x1="${x0 + S.now*bw}" x2="${x0 + S.now*bw}" y1="0" y2="${Hh-bot+4}" stroke="#176a70" stroke-width="2"/><text x="${x0 + S.now*bw + 4}" y="11" font-size="11" fill="#176a70">now</text>`;
@@ -359,7 +365,7 @@ function tickRun(noAdvance) {
   const speed = 1000/(run.pace*60), b = ENG.budget(c, speed, user());
   if (!noAdvance) { run.t += 1; run.km += speed*60/1000; run.base += (b.Teq - run.base)/10; run.store = Math.max(0, run.store + (b.S > 0 ? b.rise : -b.drain)); }
   const core = run.base + run.store; run.peak = Math.max(run.peak, core);
-  const hb = ENG.heatBand(c.W, S.acc), ab = ENG.airBand(c.pm25*(L.routes[0].x.pm25||1), c.o3);
+  const hb = ENG.heatBand(c.W, S.acc), ab = ENG.airBand(c.pm25 == null ? null : c.pm25*(L.routes[0].x.pm25||1), c.o3);
   if (!noAdvance && (core >= 39 || hb === 3 || ab === 3)) run.over += 1;
   $("r-clock").textContent = ENG.fmtHM(h);
   $("r-pace").innerHTML = ENG.fmtPace(run.pace) + "<small>/km</small>";
