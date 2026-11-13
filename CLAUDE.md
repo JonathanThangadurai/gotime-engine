@@ -68,3 +68,14 @@ the runner's metabolic rate (reproduces ACSM 18/23/28 at 10 MET acclimatised); P
 slope x dose fraction f = (MET-1.55)*D/(1.55*1440) x (C - WHO ref), max over pollutants.
 Decision rule: lower flag first, then lower RR_env. Derivation in the module docstring;
 python3 test_cv_exertion.py checks it. Not yet wired into run_window.py - do that only when asked.
+
+## api/ and prototype/ (added 13 Nov 2026)
+- api/: run recommendation engine + OpenAPI 3.1 contract (api/openapi.yaml is the source of truth). engine.js = Liljegren WBGT,
+  adapted heat bands (ACSM 18/23/28, +4.4 C acclimatised), simplified ISO 7933 heat budget (39 C core cap), Stafoggia S3 air
+  term at the LOCAL temperature percentile, NAQI/EU guard rails, wind chill, pollen. locations.js = Amsterdam + Chennai only.
+  `node build_examples.js` must pass after any change (validates examples against the contract).
+- Contract rules: codes + params first, text optional; units in field names; null = no limit / not applicable; additive only in 1.x.
+- prototype/gotime-watch.html is BUILT from prototype/template.html + api/engine.js + api/locations.js (python3 prototype/build.py).
+  Never edit the built file.
+- Wind: AeroWise (separate private repo, Python, Benelux, cycling) gives headwind/gust/path/elevation every 200 m. Planned as a
+  separate service feeding a v1.1 `route_profile` block. Do not copy its code into this public repo.

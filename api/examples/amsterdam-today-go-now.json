@@ -1,0 +1,192 @@
+{
+  "request": {
+    "location": {
+      "lat": 52.3584,
+      "lon": 4.8697
+    },
+    "activity": {
+      "type": "run",
+      "planned_duration_s": 2700,
+      "planned_pace_s_per_km": 380
+    },
+    "athlete": {}
+  },
+  "response": {
+    "schema_version": "1.0.0",
+    "id": "rec_mwepbjc0c9kp",
+    "generated_at": "2026-11-13T08:15:00.000Z",
+    "valid_until": "2026-11-13T09:00:00.000Z",
+    "location": {
+      "lat": 52.3584,
+      "lon": 4.8697,
+      "timezone": "Europe/Amsterdam",
+      "label": "Amsterdam"
+    },
+    "activity": {
+      "type": "run",
+      "planned_duration_s": 2700,
+      "planned_pace_s_per_km": 380
+    },
+    "summary": {
+      "action": "go_now",
+      "level": 0,
+      "level_name": "green",
+      "window": {
+        "start": "2026-11-13T09:15:00+01:00",
+        "end": "2026-11-13T22:00:00+01:00"
+      },
+      "headline": {
+        "code": "GO_NOW",
+        "params": {},
+        "text": "Good to go now"
+      },
+      "detail": {
+        "code": "STAYS_FINE",
+        "params": {},
+        "text": "Conditions stay fine for hours."
+      },
+      "notification": {
+        "title": "Good to go now",
+        "body": "Conditions stay fine for hours."
+      }
+    },
+    "guidance": {
+      "intensity": "normal",
+      "pace": {
+        "planned_s_per_km": 380,
+        "planned_pace_ok": true,
+        "fastest_safe_pace_s_per_km": 241,
+        "max_duration_at_planned_s": null,
+        "pace_for_full_duration_s_per_km": null
+      },
+      "route": {
+        "id": "vondelpark",
+        "name": "Vondelpark",
+        "air_dose_saving_pct": 100,
+        "compared_with": "Stadhouderskade"
+      },
+      "start_heading_deg": 240,
+      "hydration": {
+        "fluid_ml": 0,
+        "sweat_rate_ml_per_h": 0,
+        "electrolytes_recommended": false
+      },
+      "warm_up_indoors": false,
+      "indoor_alternatives": []
+    },
+    "reasons": [
+      {
+        "factor": "air",
+        "code": "AIR_PEAK_LATER",
+        "level": 0,
+        "evidence": "published_slopes",
+        "params": {
+          "pollutant": "NO₂",
+          "peak_ugm3": 52,
+          "peak_time": "19:00",
+          "window_ugm3": 23
+        },
+        "text": "NO₂ 52 µg/m³ at 19:00, 23 in your slot."
+      },
+      {
+        "factor": "wind",
+        "code": "WIND_START_INTO",
+        "level": 0,
+        "evidence": "physics",
+        "params": {
+          "speed_kmh": 16,
+          "from": "north-west",
+          "heading": "south-west"
+        },
+        "text": "16 km/h from the north-west. Start heading south-west, into the wind; tailwind home."
+      },
+      {
+        "factor": "heat",
+        "code": "HEAT_LOW",
+        "level": 0,
+        "evidence": "published_standard",
+        "params": {
+          "wbgt_c": 7.7
+        },
+        "text": "Heat stress 7.7 °C, comfortably low."
+      },
+      {
+        "factor": "athlete",
+        "code": "ATHLETE_NOT_ADAPTED",
+        "level": 0,
+        "evidence": "athlete_input",
+        "params": {
+          "mass_kg": 70,
+          "height_cm": 175,
+          "clothing": "running_kit"
+        },
+        "text": "Not heat-adapted, 70 kg, 175 cm."
+      }
+    ],
+    "assumptions": [
+      {
+        "field": "athlete.mass_kg",
+        "value": 70,
+        "basis": "population_default"
+      },
+      {
+        "field": "athlete.height_m",
+        "value": 1.75,
+        "basis": "population_default"
+      },
+      {
+        "field": "athlete.heat_acclimatised",
+        "value": false,
+        "basis": "local_climate"
+      },
+      {
+        "field": "athlete.clothing",
+        "value": "running_kit",
+        "basis": "population_default"
+      },
+      {
+        "field": "athlete.hay_fever",
+        "value": false,
+        "basis": "population_default"
+      }
+    ],
+    "data": {
+      "engine_version": "2.0.0",
+      "sources": [
+        {
+          "id": "open-meteo-forecast",
+          "kind": "forecast",
+          "variables": [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "shortwave_radiation",
+            "wind_speed_10m",
+            "wind_direction_10m"
+          ],
+          "retrieved_at": "2026-11-13T09:19:28Z"
+        },
+        {
+          "id": "cams-europe",
+          "kind": "model",
+          "variables": [
+            "pm2_5",
+            "pm10",
+            "nitrogen_dioxide",
+            "ozone",
+            "pollen"
+          ],
+          "retrieved_at": "2026-11-13T09:19:28Z"
+        }
+      ],
+      "coverage": {
+        "pollen": "covered",
+        "air_quality": "model_grid"
+      }
+    },
+    "disclaimer": {
+      "code": "ADVISORY_NOT_MEDICAL",
+      "params": {},
+      "text": "Advisory only, not medical advice. Stop if you feel unwell."
+    }
+  }
+}

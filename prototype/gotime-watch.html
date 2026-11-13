@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GOTime watch prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#18343b;--teal:#176a70;--aqua:#9fe8dd;--paper:#fbf8f2;--line:#e4ddd0;--mute:#6b7c80;--warn:#e8b04a;--hot:#e0714f}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Instrument Sans",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+header{padding:18px 28px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em;margin-right:auto}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--ink);padding:6px 14px;border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff}
+.src{font-size:13px;color:var(--mute);padding:6px 28px 0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mute);margin-right:6px;vertical-align:1px}
+.dot.live{background:#2fa36b}
+.scens{display:flex;gap:10px;flex-wrap:wrap;padding:14px 28px 0}
+.sc{font:inherit;text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;cursor:pointer;min-width:170px;color:var(--ink)}
+.sc small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin-bottom:2px}
+.sc span{font-size:14px;font-weight:600}
+.sc.on{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal) inset}
+main{display:grid;grid-template-columns:minmax(290px,360px) 1fr;gap:28px;padding:18px 28px 40px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:0 0 12px;font-weight:600}
+.ctl{margin:0 0 13px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.ctl label b{font-weight:600}
+input[type=range]{width:100%;accent-color:var(--teal)}
+select{width:100%;font:inherit;font-size:14px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.tog{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.tog button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.tog button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+details{margin-top:6px}
+summary{cursor:pointer;font-size:14px;color:var(--teal);font-weight:600;margin-bottom:10px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.watch{width:300px;height:356px;border-radius:84px;background:linear-gradient(145deg,#3a3f42,#1d2022);padding:16px;position:relative;box-shadow:0 30px 60px -20px rgba(24,52,59,.45)}
+.watch:before{content:"";position:absolute;right:-9px;top:96px;width:12px;height:52px;border-radius:6px;background:#2d3134}
+.watch:after{content:"";position:absolute;right:-6px;top:170px;width:7px;height:36px;border-radius:4px;background:#2d3134}
+.screen{width:100%;height:100%;border-radius:68px;background:#000;color:#fff;overflow:hidden;position:relative}
+.scr{position:absolute;inset:0;padding:28px 24px 20px;display:none;flex-direction:column}
+.scr.on{display:flex;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.clock{font-size:14px;color:#aab;text-align:right;font-weight:500}
+.big{font-size:56px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.comp{margin-top:auto;background:#151a1b;border-radius:20px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.comp:hover{background:#1c2426}
+.ring{width:44px;height:44px;flex:none}
+.k{font-size:11px;color:#9aa;text-transform:uppercase;letter-spacing:.07em}
+.hl{font-size:23px;font-weight:600;line-height:1.08;letter-spacing:-.01em;margin:4px 0 2px}
+.sub{font-size:13px;color:#aab;line-height:1.3}
+.rows{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:9px;align-items:center;font-size:14px;line-height:1.2}
+.row i{font-style:normal;width:22px;height:22px;border-radius:50%;background:#152224;display:grid;place-items:center;font-size:12px;color:var(--aqua);flex:none}
+.btns{display:flex;gap:8px;margin-top:auto}
+.btn{flex:1;font:inherit;font-size:15px;font-weight:600;border:0;border-radius:999px;padding:10px 0;cursor:pointer;background:#1e2628;color:#fff}
+.btn.go{background:var(--aqua);color:#062b2e}
+.why{overflow:auto;margin:6px -6px 0;padding:0 6px;scrollbar-width:none}
+.why::-webkit-scrollbar{display:none}
+.why .it{border-bottom:1px solid #1d2426;padding:7px 0}
+.why .it b{font-size:13px;color:var(--aqua);font-weight:600}
+.why .it em{font-style:normal;font-size:10px;color:#8a9;border:1px solid #2a3537;border-radius:6px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.why .it div{font-size:12.5px;color:#dde;line-height:1.3;margin-top:2px}
+.pace{font-size:46px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;margin-top:4px}
+.pace small{font-size:15px;color:#9aa;font-weight:500;margin-left:2px}
+.cap{text-align:center;font-size:13px;color:#aab;margin-top:4px}
+.bar{height:8px;border-radius:4px;background:#1d2426;margin:10px 4px 6px;position:relative;overflow:hidden}
+.bar span{position:absolute;left:0;top:0;bottom:0;background:var(--aqua);border-radius:4px;transition:width .3s}
+.stats{display:flex;justify-content:space-between;font-size:12.5px;color:#cdd;padding:0 4px}
+.alert{background:var(--warn);color:#2a1d00;border-radius:14px;padding:7px 10px;font-size:13px;font-weight:600;margin-top:8px;text-align:center;display:none}
+.alert.on{display:block;animation:pulse 1s ease 2}
+.alert.info{background:var(--aqua);color:#062b2e}
+.alert.stop{background:var(--hot);color:#fff}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.pm{display:flex;gap:8px;margin-top:auto}
+.pm .btn{padding:8px 0;font-size:14px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.steps button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.steps button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.hint{font-size:13px;color:var(--mute);text-align:center;max-width:400px;line-height:1.45}
+.story{max-width:400px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;line-height:1.45}
+.story b{font-weight:600}
+.insp{grid-column:1/-1}
+body.runner .insp{display:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{background:var(--paper);border-radius:12px;padding:10px 12px}
+.card .k{color:var(--mute)}
+.card .v{font-size:19px;font-weight:600;margin-top:2px}
+.card .n{font-size:12px;color:var(--mute);margin-top:2px;line-height:1.3}
+.strip{margin:18px 0 6px}
+.strip svg{width:100%;height:150px;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+.legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.legend span.nb:before{display:none}
+.ev{display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:13.5px;margin-top:10px;max-width:880px}
+.ev .t{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);white-space:nowrap;justify-self:start}
+.ev .t.a{background:#fff4e0;border-color:#f0d9a8}
+.foot{font-size:12px;color:var(--mute);margin-top:14px;line-height:1.5}
+.ms{font-size:12px;color:var(--mute);text-transform:none;letter-spacing:0;font-weight:400}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:20px 0 4px;font-weight:600}
+</style>
+</head>
+<body class="runner">
+<header>
+  <h1>GOTime · watch prototype</h1>
+  <div class="seg" id="locSeg"><button data-l="ams" class="on">Amsterdam</button><button data-l="chn">Chennai</button></div>
+  <div class="seg" id="viewSeg"><button data-v="runner" class="on">Runner view</button><button data-v="partner">Partner view</button></div>
+</header>
+<div class="src" id="src"><span class="dot"></span>Loading…</div>
+<div class="scens" id="scens"></div>
+<main>
+  <section class="panel">
+    <h2>Time</h2>
+    <div class="ctl"><label>Now <b id="nowV"></b></label><input id="now" type="range" min="4" max="21" step="0.25"></div>
+    <h2 style="margin-top:16px">Runner</h2>
+    <div class="ctl"><label>Planned pace <b id="paceV"></b></label><input id="pace" type="range" min="4" max="9" step="0.0833"></div>
+    <div class="ctl"><label>Duration <b id="durV"></b></label><input id="dur" type="range" min="20" max="120" step="5"></div>
+    <div class="ctl"><label>Body mass <b id="kgV"></b></label><input id="kg" type="range" min="45" max="110" step="1"></div>
+    <div class="ctl"><label>Height <b id="htV"></b></label><input id="ht" type="range" min="1.5" max="2.0" step="0.01"></div>
+    <div class="ctl"><label>Clothing</label><select id="cloth"><option value="kit">Running kit</option><option value="light">Full-length, light synthetic</option><option value="cotton">Full-length cotton</option></select></div>
+    <div class="tog"><button id="acc">Heat-adapted</button><button id="hay">Hay fever</button></div>
+    <details><summary>Push the conditions</summary>
+      <div class="ctl"><label>Temperature shift <b id="dtV"></b></label><input id="dt" type="range" min="-6" max="10" step="0.5" value="0"></div>
+      <div class="ctl"><label>Humidity shift <b id="drhV"></b></label><input id="drh" type="range" min="-30" max="20" step="5" value="0"></div>
+      <div class="ctl"><label>Particles (PM) × <b id="pmV"></b></label><input id="pmx" type="range" min="0.5" max="5" step="0.25" value="1"></div>
+      <div class="ctl"><label>Ozone × <b id="o3V"></b></label><input id="o3" type="range" min="0.5" max="2.5" step="0.1" value="1"></div>
+      <div class="ctl"><label>Pollen + <b id="polV"></b></label><input id="pol" type="range" min="0" max="200" step="10" value="0"></div>
+      <div class="ctl"><label>Wind × <b id="wsV"></b></label><input id="wsx" type="range" min="0" max="2.5" step="0.1" value="1"></div>
+    </details>
+  </section>
+
+  <section class="stage">
+    <div class="watch"><div class="screen">
+      <div class="scr" data-s="0">
+        <div class="clock" id="g-date"></div>
+        <div class="big" id="g-time" style="margin-top:10px"></div>
+        <div class="comp" onclick="go(1)">
+          <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#1d2a2c" stroke-width="5"/><circle id="g-ring" cx="22" cy="22" r="18" fill="none" stroke="#9fe8dd" stroke-width="5" stroke-linecap="round" transform="rotate(-90 22 22)" stroke-dasharray="113" stroke-dashoffset="40"/></svg>
+          <div><div class="k">GOTime</div><div style="font-size:16px;font-weight:600;line-height:1.15" id="g-txt"></div></div>
+        </div>
+      </div>
+      <div class="scr" data-s="1">
+        <div class="clock" id="p-clock"></div>
+        <div class="hl" id="p-hl"></div>
+        <div class="sub" id="p-sub"></div>
+        <div class="rows" id="p-rows"></div>
+        <div class="btns" id="p-btns"></div>
+      </div>
+      <div class="scr" data-s="2">
+        <div class="k" style="text-align:center">Why</div>
+        <div class="why" id="w-list"></div>
+        <div class="btns" style="margin-top:8px"><button class="btn" onclick="go(1)">Back</button></div>
+      </div>
+      <div class="scr" data-s="3">
+        <div class="clock" id="r-clock"></div>
+        <div class="pace" id="r-pace"></div>
+        <div class="cap" id="r-cap"></div>
+        <div class="bar"><span id="r-bar"></span></div>
+        <div class="stats"><span id="r-el"></span><span id="r-km"></span><span id="r-core"></span></div>
+        <div class="alert" id="r-alert"></div>
+        <div class="pm"><button class="btn" onclick="nudge(1)">Slower</button><button class="btn" onclick="endRun()">End</button><button class="btn" onclick="nudge(-1)">Faster</button></div>
+      </div>
+      <div class="scr" data-s="4">
+        <div class="k">Done</div>
+        <div class="hl" id="s-hl"></div>
+        <div class="rows" id="s-rows"></div>
+        <div class="btns"><button class="btn go" onclick="go(0)">Close</button></div>
+      </div>
+    </div></div>
+    <div class="steps" id="steps"><button data-g="0">1 Glance</button><button data-g="1">2 Plan</button><button data-g="2">3 Why</button><button data-g="3">4 Run</button><button data-g="4">5 Done</button></div>
+    <div class="story" id="story"></div>
+    <div class="hint">Tap the watch. During the run, one second is one minute; press Faster to push your body temperature and see the alert.</div>
+  </section>
+
+  <section class="panel insp">
+    <h2>What the engine sees <span class="ms" id="ms"></span></h2>
+    <div class="cards" id="cards"></div>
+    <div class="strip"><svg id="strip" viewBox="0 0 960 150" preserveAspectRatio="none"></svg></div>
+    <div class="legend"><span style="--c:#9fe8dd">Green</span><span style="--c:#e8b04a">Yellow</span><span style="--c:#e0714f">Red</span><span style="--c:#2b2b2b">Black: indoors</span><span style="--c:#176a70">Your window</span><span class="nb">Bars: heat stress (WBGT, °C), coloured by the worst of heat, air and cold · dashed lines: your Red and Black heat lines</span></div>
+    <h3>How sure each part is</h3>
+    <div class="ev" id="ev"></div>
+    <details><summary>Show the formulas</summary>
+      <div style="font-size:13px;line-height:1.6">
+        <p><b>Heat stress.</b> WBGT = 0.7·natural wet bulb + 0.2·globe + 0.1·air, each solved from temperature, humidity, sun angle and wind (Liljegren 2008).</p>
+        <p><b>Heat bands.</b> Not heat-adapted: 18 / 23 / 28 °C (ACSM). Heat-adapted: +4.4 °C, the ISO 7243 acclimatisation offset at running effort, so indoors above 32.4 °C (US Army Category 5 starts at 32.2 °C).</p>
+        <p><b>Heat budget</b> (simplified ISO 7933). Heat made M = MET·1.163·kg. Shed by air and radiation A·(h_c(T_skin − T_air) + 0.72·h_r(T_skin − T_radiant)), by breathing, and by sweat up to E_max = A·16.5·h_c·(p_skin − p_air), capped by maximum sweat (400 W/m², +25 % heat-adapted). Heat that cannot be shed is stored: core rises by S/(kg·3490) per second on top of the steady core 36.6 + 0.0036·M/A. The plan keeps the core below 39 °C.</p>
+        <p><b>Cardiovascular load.</b> RR = exp(H + P). H = 0.00508·max(0, WBGT − local reference). P = max over pollutants of β·f·max(0, C − WHO), β from Stafoggia 2023 at the local temperature percentile, f = (MET − 1.55)·minutes / (1.55·1440).</p>
+        <p><b>Air guard rails.</b> PM2.5 hourly above 60 / 120 / 250 µg/m³ (India NAQI bands), ozone above 180 / 240 (EU thresholds). <b>Cold.</b> Wind chill at your running airflow: −10 / −27 / −40 °C. <b>Pollen.</b> 50 grains/m³ with hay fever on.</p>
+      </div>
+    </details>
+    <p class="foot">Prototype for demonstration, not medical advice. Weather: Open-Meteo and ERA5; air: CAMS (Europe for Amsterdam, global for Chennai). Opened as a file on a computer, the page fetches today's forecast for the chosen city; inside the published link it uses today's readings captured on 13 Nov. Chennai's global air grid is coarse and reads low for city streets.</p>
+  </section>
+</main>
+<script>
+// ===== GOTime engine v2 (browser port, demo) =====
+// Heat: Liljegren (2008) WBGT -> adapted heat bands + simplified ISO 7933 heat budget (time to 39 C core).
+// Air: Stafoggia 2023 Table S3 slopes x run dose share, at the LOCAL temperature percentile; India NAQI / EU bands as guard rails.
+// Cardio heat term: Rowland 2020 slope above a LOCAL reference (adaptation shift). Cold: wind chill at running airflow,
+// breathing heat loss, warm-up rule. Pollen: Scholten 50 grains/m3.
+const ENG = (() => {
+  const C_REF = { pm25: 15, pm10: 45, no2: 25, o3: 100 };
+  const NAMES = { pm25: "PM2.5", pm10: "PM10", no2: "NO₂", o3: "Ozone" };
+  const S3 = {
+    pm10: [[1,.54],[5,.48],[15,.31],[25,.19],[50,.43],[75,.09],[85,.31],[95,.90],[99,1.21]],
+    pm25: [[1,-.41],[5,-.25],[15,.14],[25,.30],[50,.29],[75,-.10],[85,.18],[95,.81],[99,1.11]],
+    o3:   [[1,0],[5,-.04],[15,-.08],[25,-.05],[50,.17],[75,-.08],[85,.12],[95,.42],[99,.53]],
+    no2:  [[1,.99],[5,.95],[15,.78],[25,.70],[50,.62],[75,.31],[85,.44],[95,.81],[99,1.00]],
+  };
+  const BETA_W = Math.log(1.079) / 16 / 0.94;
+  const POLLEN_LIMIT = 50, T_CORE_LIM = 39.0;
+  const interp = (rows, x) => { if (x <= rows[0][0]) return rows[0][1]; const n = rows.length;
+    if (x >= rows[n-1][0]) return rows[n-1][1];
+    for (let i = 1; i < n; i++) if (x <= rows[i][0]) { const [x0,y0] = rows[i-1], [x1,y1] = rows[i]; return y0 + (y1-y0)*(x-x0)/(x1-x0); } };
+  const esK = T => 0.6112 * Math.exp(17.62 * T / (243.12 + T));          // kPa, T in C
+
+  // ---------- sun ----------
+  function cosZenith(lat, lon, tz, dateStr, hourMid) {
+    const d = new Date(dateStr + "T00:00:00Z"), doy = Math.floor((d - Date.UTC(d.getUTCFullYear(),0,0)) / 864e5);
+    const rad = Math.PI/180, decl = 23.44*rad*Math.sin(2*Math.PI*(284+doy)/365);
+    const B = 2*Math.PI*(doy-81)/365, eot = 9.87*Math.sin(2*B) - 7.53*Math.cos(B) - 1.5*Math.sin(B);
+    const solar = hourMid + (4*lon - 60*tz + eot)/60, ha = 15*(solar-12)*rad;
+    return Math.sin(lat*rad)*Math.sin(decl) + Math.cos(lat*rad)*Math.cos(decl)*Math.cos(ha);
+  }
+
+  // ---------- Liljegren WBGT ----------
+  const SIG=5.6696e-8, CP=1003.5, MA=28.97, MW=18.015, RA=8314.34/MA, RATIO=CP*MA/MW, PR=CP/(CP+1.25*RA);
+  const visc = T => { const om = (T/97 - 2.9)/0.4*(-0.034) + 1.048; return 2.6693e-6*Math.sqrt(MA*T)/(3.617*3.617*om); };
+  const kAir = T => (CP + 1.25*RA)*visc(T);
+  const diffu = (T,P) => 2.5e-5*Math.pow(T/298.15,1.75)*(1013.25/P);
+  const evapH = T => (313.15 - T)/30*(-71100) + 2.4073e6;
+  const hSphere = (D,T,P,u) => { const rho = P*100/(RA*T), Re = Math.max(u,0.5)*rho*D/visc(T); return (2 + 0.6*Math.sqrt(Re)*Math.pow(PR,1/3))*kAir(T)/D; };
+  const hCyl = (D,T,P,u) => { const rho = P*100/(RA*T), Re = Math.max(u,0.5)*rho*D/visc(T); return 0.281*Math.pow(Re,0.6)*Math.pow(PR,0.44)*kAir(T)/D; };
+  function wbgtLiljegren(Tc, RH, SW, u2, cza, P = 1010) {
+    const Ta = Tc + 273.15, ea = RH/100*esK(Tc)*10;                       // hPa
+    let solar = cza > 0.0087 ? SW : 0, fdir = 0, Z = Math.acos(Math.max(0.0087, Math.min(1, cza)));
+    if (solar > 0) { const s = Math.min(0.85, solar/(1367*Math.max(cza,0.0087))); fdir = Math.min(0.9, Math.exp(3 - 1.34*s - 1.65/s)); }
+    const emA = 0.575*Math.pow(ea, 1/7), Ts = Ta;
+    let Tg = Ta;                                                            // globe
+    for (let i = 0; i < 60; i++) { const h = hSphere(0.0508, 0.5*(Tg+Ta), P, u2);
+      const n = Math.pow(Math.max(1, 0.5*(emA*Ta**4 + 0.999*Ts**4) - h/(SIG*0.95)*(Tg-Ta) + solar/(2*SIG*0.95)*(0.95)*(fdir*(1/(2*Math.max(cza,0.05)) - 1) + 1 + 0.45)), 0.25);
+      if (Math.abs(n - Tg) < 0.01) { Tg = n; break; } Tg = 0.9*Tg + 0.1*n; }
+    const Td = (() => { const g = Math.log(RH/100) + 17.62*Tc/(243.12+Tc); return 243.12*g/(17.62-g) + 273.15; })();
+    let Tw = Td;                                                            // natural wet bulb
+    for (let i = 0; i < 60; i++) { const Tr = 0.5*(Tw+Ta), h = hCyl(0.007, Tr, P, u2);
+      const Fat = SIG*0.95*(0.5*(emA*Ta**4 + 0.999*Ts**4) - Tw**4) + 0.6*solar*((1-fdir)*(1 + 0.25*0.007/0.0254) + fdir*(Math.tan(Math.min(Z, 1.47))/Math.PI + 0.25*0.007/0.0254) + 0.45);
+      const ew = esK(Tw-273.15)*10, rho = P*100/(RA*Tr), Sc = visc(Tr)/(rho*diffu(Tr,P));
+      const n = Ta - evapH(Tr)/RATIO*(ew - ea)/(P - ew)*Math.pow(PR/Sc, 0.56) + Fat/h;
+      if (Math.abs(n - Tw) < 0.01) { Tw = n; break; } Tw = 0.9*Tw + 0.1*n; }
+    const tg = Tg - 273.15, tnw = Tw - 273.15;
+    // mean radiant temperature for a standing person (direct, diffuse, reflected sun + long-wave), used by the heat budget
+    const elev = 90 - Z*180/Math.PI, fp = 0.308*Math.cos((elev*(1 - elev*elev/48402))*Math.PI/180);
+    const I = solar > 0 ? solar*fdir/Math.max(cza, 0.05) : 0, Dif = solar*(1 - fdir), Ref = 0.2*solar;
+    const Sstr = 0.7*(fp*I + 0.5*Dif + 0.5*Ref) + 0.97*0.5*(emA*SIG*Ta**4 + 0.999*SIG*Ts**4);
+    const tmrt = Math.pow(Sstr/(0.97*SIG), 0.25) - 273.15;
+    return { W: 0.7*tnw + 0.2*tg + 0.1*Tc, tg, tnw, tmrt };
+  }
+
+  // ---------- adapted heat bands ----------
+  // Unadapted: ACSM race bands 18/23/28 C WBGT. Heat-adapted: +4.4 C (ISO 7243 acclimatisation offset at running effort),
+  // which puts the "indoors" line at 32.4 C, matching the US Army Category 5 line (32.2 C) for acclimatised soldiers.
+  const bandEdges = acc => acc ? [22.4, 27.4, 32.4] : [18, 23, 28];
+  const heatBand = (W, acc) => { const e = bandEdges(acc); return W < e[0] ? 0 : W < e[1] ? 1 : W < e[2] ? 2 : 3; };
+  // Air guard rails (hourly): PM2.5 India NAQI 60/120/250; ozone EU information 180 / alert 240.
+  const airBand = (pm25, o3) => Math.max(pm25 > 250 ? 3 : pm25 > 120 ? 2 : pm25 > 60 ? 1 : 0, o3 > 240 ? 2 : o3 > 180 ? 1 : 0);
+  // Cold: wind chill at running airflow (Environment Canada): -10 / -27 / -40
+  const wct = (T, v) => v < 4.8 ? T : 13.12 + 0.6215*T - 11.37*Math.pow(v,0.16) + 0.3965*T*Math.pow(v,0.16);
+  const coldBand = c => c > -10 ? 0 : c > -27 ? 1 : c > -40 ? 2 : 3;
+
+  // ---------- exertion ----------
+  const metFromSpeed = s => { const m = s*60; return m >= 134 ? (0.2*m + 3.5)/3.5 : (0.1*m + 3.5)/3.5; };   // s in m/s, ACSM
+  const bsa = (kg, m) => 0.202*Math.pow(kg,0.425)*Math.pow(m,0.725);
+  const CLOTH = { kit: { d: 1, e: 1, label: "Running kit" }, light: { d: 0.85, e: 0.85, label: "Full-length, light" }, cotton: { d: 0.8, e: 0.7, label: "Full-length cotton" } };
+
+  // Simplified ISO 7933 (Predicted Heat Strain) heat budget for one hour's conditions at a given running speed.
+  function budget(c, speed, u) {
+    const A = bsa(u.kg, u.height), met = metFromSpeed(speed), M = met*1.163*u.kg;
+    const cl = CLOTH[u.cloth] || CLOTH.kit;
+    const v = speed + 0.5*c.u2, hc = 8.3*Math.pow(v, 0.6), hr = 4.7;
+    const Tsk = Math.min(36, 33.5 + 0.1*Math.max(0, c.t - 25));
+    const Tmrt = c.tmrt;
+    const Pa = c.rh/100*esK(c.t), Psk = esK(Tsk);
+    const dry = A*cl.d*(hc*(Tsk - c.t) + 0.72*hr*(Tsk - Tmrt));                 // + = loss
+    const resp = 0.0014*M*(34 - c.t) + 0.0173*M*(5.87 - Pa);
+    const Ereq = M - dry - resp;
+    const wmax = u.acc ? 1 : 0.85, SWmax = 400*A*(u.acc ? 1.25 : 1);
+    const Emax1 = A*16.5*hc*Math.max(0.05, Psk - Pa)*cl.e;
+    let Eact, sweat, S;
+    if (Ereq <= 0) { Eact = 0; sweat = 0; S = 0; }
+    else { const w = Ereq/Emax1;
+      if (w <= wmax) { const r = 1 - w*w/2, SWreq = Ereq/r;
+        if (SWreq <= SWmax) { Eact = Ereq; sweat = SWreq; S = 0; } else { Eact = SWmax*r; sweat = SWmax; S = Ereq - Eact; } }
+      else { const r = 1 - wmax*wmax/2; Eact = Math.min(Emax1*wmax, SWmax*r); sweat = Math.min(SWmax, Eact/r); S = Ereq - Eact; } }
+    const Teq = 36.6 + 0.0036*(M/A);
+    // spare cooling (W) when the heat budget balances: lets stored heat drain after an over-hot spell
+    const spare = S > 0 || Ereq <= 0 ? (Ereq <= 0 ? Math.min(-Ereq, 300) : 0) : Math.max(0, Math.min(Emax1*wmax, SWmax*(1 - wmax*wmax/2)) - Ereq);
+    // minutes to the core limit
+    // core = approach to the steady-state core (10-min time constant) + heat that cannot be shed, stored in the body
+    let base = 37.0, store = 0, dlim = 240; const rise = S*60/(u.kg*3490);
+    for (let t = 1; t <= 240; t++) { base += (Teq - base)/10; store += rise; if (base + store >= T_CORE_LIM) { dlim = t; break; } }
+    const sweatMlH = sweat*3600/2426;
+    return { A, met, M, hc, Tsk, Tmrt, dry, resp, Ereq, Emax: Emax1*wmax, SWmax, sweatMlH, S, Teq, dlim, rise, drain: spare*60/(u.kg*3490) };
+  }
+  // Fastest speed (m/s) whose budget allows the planned minutes; null if even a 4 km/h walk fails
+  function maxSpeedFor(c, minutes, u) {
+    if (budget(c, 1.11, u).dlim < minutes) return null;
+    let lo = 1.11, hi = 5.5; if (budget(c, hi, u).dlim >= minutes) return hi;
+    for (let i = 0; i < 22; i++) { const m = (lo+hi)/2; if (budget(c, m, u).dlim >= minutes) lo = m; else hi = m; }
+    return lo;
+  }
+  const paceOf = s => 1000/s/60;                    // min/km
+  const fmtPace = p => { if (!isFinite(p)) return "--"; let m = Math.floor(p), s = Math.round((p-m)*60); if (s === 60) { m++; s = 0; } return m + ":" + String(s).padStart(2,"0"); };
+  const fmtHM = h => { h = ((h % 24) + 24) % 24; const hh = Math.floor(h), mm = Math.round((h-hh)*60); return mm === 60 ? (hh+1) + ":00" : hh + ":" + String(mm).padStart(2,"0"); };
+  const compass = d => ["north","north-east","east","south-east","south","south-west","west","north-west"][Math.round(((d%360)+360)%360/45)%8];
+  const FLAGS = ["Green","Yellow","Red","Black"];
+
+  // breathing heat loss (W) at a given MET, mass and air
+  function breathLoss(met, kg, T, RH) {
+    const VE = 25*met*3.5*kg/1000, mdot = VE/1000/60*1.2;               // kg/s
+    const AHin = 0.622*RH/100*esK(T)/(101.3), AHex = 0.622*esK(34)/101.3;
+    return mdot*(1006*(34 - T) + 2.43e6*Math.max(0, AHex - AHin));
+  }
+
+  function hourConditions(d, h, loc) {
+    const u2 = Math.max(0.5, d.ws[h]/3.6*0.7);
+    const cza = cosZenith(loc.lat, loc.lon, loc.tzFor(d.date), d.date, h - 0.5);
+    const w = wbgtLiljegren(d.t[h], d.rh[h], d.sw[h], u2, cza);
+    return { h, t: d.t[h], rh: d.rh[h], sw: d.sw[h], ws: d.ws[h], wd: d.wd[h], u2, cza, W: w.W, tg: w.tg, tnw: w.tnw, tmrt: w.tmrt,
+             pm25: d.pm25[h], pm10: d.pm10[h], no2: d.no2[h], o3: d.o3[h], pollen: d.pollen ? d.pollen[h] : null };
+  }
+
+  function evaluate(d, u, loc) {
+    const speed = 1000/(u.pace*60), met = metFromSpeed(speed), kmh = speed*3.6;
+    const f = Math.max(0, (met - 1.55)*u.minutes/(1.55*1440));
+    const dayMean = d.t.reduce((a,b)=>a+b,0)/24, pct = interp(loc.clim, dayMean);
+    const beta = Object.fromEntries(Object.keys(S3).map(k => [k, Math.max(0, Math.log(1 + interp(S3[k], pct)/100)/10)]));
+    const W0 = loc.W0;
+    const routes = loc.routes;
+    const hours = [];
+    for (let h = 0; h < 24; h++) {
+      const c = hourConditions(d, h, loc);
+      const b = budget(c, speed, u);
+      const hb = heatBand(c.W, u.acc);
+      const head = wct(c.t, c.ws + 1.5*kmh), tail = wct(c.t, Math.abs(c.ws - 1.5*kmh));
+      const cb = coldBand(head);
+      // air dose per route
+      const air = routes.map(r => { let P = 0, drv = null;
+        for (const k of Object.keys(C_REF)) { const conc = c[k]*(r.x[k] || 1); const v = beta[k]*f*Math.max(0, conc - C_REF[k]); if (v > P) { P = v; drv = k; } }
+        return { P, drv, ab: airBand(c.pm25*(r.x.pm25||1), c.o3) }; });
+      const ri = air[0].P <= air[1].P ? 0 : 1, A = air[ri];
+      const H = BETA_W*Math.max(0, c.W - W0);
+      const rr = Math.exp(H + A.P);
+      const pollenHigh = c.pollen != null && c.pollen >= POLLEN_LIMIT;
+      const ab = A.ab;
+      const flag = Math.max(hb, ab, cb);
+      const short = Math.max(0, u.minutes - b.dlim)/u.minutes;
+      const coldPen = Math.max(0, 0 - head)*0.6 + (c.t < 0 ? 2 : 0);   // demo weights
+      const score = flag*10 + short*15 + (rr - 1)*100 + (u.hayfever && pollenHigh ? 6 + c.pollen/40 : 0) + coldPen;
+      hours.push({ ...c, b, hb, ab, cb, flag, H, P: A.P, driver: A.drv, route: ri, airAlt: air[1-ri], rr, head, tail, pollenHigh, short, score });
+    }
+    const nowH = Math.floor(u.now);
+    const pool = hours.filter(x => x.h >= Math.max(5, nowH) && x.h <= 21);
+    const usable = pool.filter(x => x.flag <= 2 && x.b.dlim >= 15);
+    const indoor = usable.length === 0;
+    const best = (usable.length ? usable : (pool.length ? pool : hours)).reduce((a,b) => b.score < a.score ? b : a);
+    const worst = (pool.length ? pool : hours).reduce((a,b) => b.score > a.score ? b : a);
+    let s = best.h, e = best.h;
+    const ok = x => x && x.flag <= Math.max(best.flag, 1) && x.h >= 5 && x.h <= 21 && x.h >= nowH && x.b.dlim >= u.minutes && !(u.hayfever && x.pollenHigh && !best.pollenHigh) && x.score <= best.score + (best.flag === 0 ? 13 : 3);
+    while (ok(hours[s-1])) s--; while (ok(hours[e+1])) e++;
+    const end = e + 1, start = Math.max(s, u.now);
+    const capS = indoor ? null : maxSpeedFor(best, u.minutes, u);
+    const dlimPlan = best.b.dlim;
+    const route = routes[best.route];
+    // direction along the route axis: start into the wind
+    const along = best.ws*Math.cos((best.wd - route.axis)*Math.PI/180);
+    const direction = Math.abs(along) < 3 ? { short: "Any direction", text: "Wind is light along the route." }
+      : along >= 0 ? { short: route.into[0], text: route.into[1] } : { short: route.away[0], text: route.away[1] };
+    const loss = best.b.sweatMlH*u.minutes/60;
+    const drink = loss < 400 ? "Optional" : (Math.round(loss*0.6/50)*50) + " ml";
+    // headline
+    let headline, sub, mode = "go", hc, sc;                   // hc / sc: machine codes + params for the API
+    const why = best.ab >= best.hb && best.ab >= best.cb && best.ab > 0 ? "air" : best.cb > best.hb ? "cold" : "heat";
+    if (indoor) { mode = "indoor";
+      const smoke = pool.some(x => x.ab === 3), hot = pool.some(x => x.hb === 3 || x.b.dlim < 15);
+      headline = "Train indoors today"; hc = { code: "INDOOR_TODAY", params: {} };
+      if (smoke && !hot) { sub = "Smoke is too thick outside."; sc = { code: "REASON_SMOKE", params: {} }; }
+      else if (hot) { sub = "Too hot and humid for a safe run."; sc = { code: "REASON_HEAT", params: {} }; }
+      else { sub = "Conditions are against you all day."; sc = { code: "REASON_MIXED", params: {} }; } }
+    else if (dlimPlan < u.minutes) { mode = "short";
+      if (start <= u.now + 0.5) { headline = "Go now, keep it short"; hc = { code: "GO_NOW_SHORT", params: {} }; }
+      else { headline = `Run at ${fmtHM(s)}, keep it short`; hc = { code: "GO_AT_SHORT", params: { start: fmtHM(s) } }; }
+      sub = `${dlimPlan} min at your pace, or slow down for the full ${u.minutes}.`; sc = { code: "SHORT_OR_SLOWER", params: { max_minutes: dlimPlan, planned_minutes: u.minutes } }; }
+    else if (start <= u.now + 0.5) {
+      if (end - u.now <= 6) { headline = "Run before " + fmtHM(end); hc = { code: "GO_BEFORE", params: { end: fmtHM(end) } }; sub = "After that, conditions turn against you."; sc = { code: "WORSE_LATER", params: {} }; }
+      else { headline = "Good to go now"; hc = { code: "GO_NOW", params: {} }; sub = "Conditions stay fine for hours."; sc = { code: "STAYS_FINE", params: {} }; } }
+    else if (e >= 21) { headline = "Run after " + fmtHM(s); hc = { code: "GO_AFTER", params: { start: fmtHM(s) } }; const ex = hours.filter(x => x.h >= Math.max(5, nowH) && x.h < s);
+      const mx = k => Math.max(0, ...ex.map(x => x[k])), pv = { hb: mx("hb"), ab: mx("ab"), cb: mx("cb"), t: ex.length ? Math.min(...ex.map(x => x.t)) : best.t };
+      if (pv.cb > 0 && pv.cb >= pv.hb && pv.cb >= pv.ab || pv.t < 2) { sub = "Too cold and windy until then."; sc = { code: "COLD_UNTIL", params: {} }; }
+      else if (pv.ab > pv.hb) { sub = "The air clears by then."; sc = { code: "AIR_CLEARS", params: {} }; }
+      else { sub = "Too warm until then."; sc = { code: "HEAT_UNTIL", params: {} }; } }
+    else { headline = "Run " + fmtHM(s) + "–" + fmtHM(end); hc = { code: "GO_BETWEEN", params: { start: fmtHM(s), end: fmtHM(end) } };
+      if (why === "air" && hours[nowH] && hours[nowH].ab >= 2) { sub = "Skip the early slot today: smoke."; sc = { code: "SKIP_EARLY_SMOKE", params: {} }; }
+      else { sub = "That's your best window today."; sc = { code: "BEST_WINDOW", params: {} }; } }
+    if (!indoor && best.flag === 2 && mode === "go") { sub = "Go easy: " + (why === "air" ? "the air is poor." : why === "cold" ? "it is bitterly cold." : "hot and humid."); sc = { code: why === "air" ? "EASY_AIR" : why === "cold" ? "EASY_COLD" : "EASY_HEAT", params: {} }; }
+    // reasons ranked
+    const reasons = [];
+    const lim = bandEdges(u.acc);
+    reasons.push({ k: "Heat", code: best.hb === 0 && worst.hb <= 1 ? "HEAT_LOW" : "HEAT_RISES", v: worst.hb*3 + (worst.short || 0)*4 - best.hb*3, tag: "Standard + physiology",
+      text: best.hb === 0 && worst.hb <= 1 ? `Heat stress ${best.W.toFixed(1)} °C, comfortably low.`
+        : `Heat stress ${best.W.toFixed(1)} °C in your slot, ${worst.W.toFixed(1)} °C at ${worst.h}:00. ${u.acc ? "Heat-adapted" : "Not heat-adapted"}: indoors above ${lim[2]} °C. Body heat budget: ${dlimPlan >= 240 ? "no time limit" : dlimPlan + " min"} at your pace.` });
+    const drv = worst.driver || best.driver;
+    const altGain = best.airAlt.P > best.P*1.05 ? Math.round((1 - best.P/Math.max(1e-9, best.airAlt.P))*100) : 0;
+    reasons.push({ k: "Air", code: best.pm25 > 60 || worst.pm25 > 60 ? "AIR_PM_EPISODE" : drv ? "AIR_PEAK_LATER" : "AIR_CLEAN", routeSaving: altGain, v: (worst.ab - best.ab)*3 + (worst.P - best.P)*200, tag: "Published slopes",
+      text: (best.pm25 > 60 || worst.pm25 > 60 ? `PM2.5 ${Math.round(worst.pm25)} µg/m³ at ${worst.h}:00, ${Math.round(best.pm25)} in your slot.` : drv ? `${NAMES[drv]} ${Math.round(worst[drv])} µg/m³ at ${worst.h}:00 vs ${Math.round(best[drv])} in your slot.` : "Air under WHO guideline levels all day.")
+        + (altGain > 5 ? (best.P < 1e-6 ? ` On ${route.name} you stay under WHO levels; on ${routes[1-best.route].name} you would not.` : ` ${route.name} cuts your extra dose by ${altGain}% vs ${routes[1-best.route].name}.`) : "") });
+    if (u.hayfever) reasons.push({ k: "Pollen", code: d.pollen == null ? "POLLEN_NOT_COVERED" : hours.some(x => x.pollenHigh) ? (best.pollenHigh ? "POLLEN_HIGH_IN_WINDOW" : "POLLEN_PEAK_AVOIDED") : "POLLEN_LOW", v: worst.pollenHigh ? 2 : 0, tag: "Published threshold",
+      text: d.pollen == null ? "No pollen forecast for this region." : hours.some(x => x.pollenHigh) ? `Pollen peaks at ${Math.round(Math.max(...hours.map(x=>x.pollen||0)))} grains/m³; your slot is ${best.pollenHigh ? "still high" : "below 50"}.` : "Pollen low all day." });
+    const breath = breathLoss(met, u.kg, best.t, best.rh);
+    if (best.t < 8) reasons.push({ k: "Cold", code: "COLD_WARM_UP", v: best.cb*3 + Math.max(0, 5 - best.head)/3, tag: "Mechanism + demo weights",
+      text: `Wind chill ${best.head.toFixed(0)} °C running into the wind. Cold air raises blood pressure: warm up indoors, keep the first km easy. Breathing costs you ${Math.round(breath)} W of heat.` });
+    reasons.push({ k: "Wind", code: direction.short === "Any direction" ? "WIND_LIGHT" : "WIND_START_INTO", v: 0.5, tag: "Physics", text: `${Math.round(best.ws)} km/h from the ${compass(best.wd)}. ${direction.text}` });
+    reasons.push({ k: "You", code: u.acc ? "ATHLETE_ADAPTED" : "ATHLETE_NOT_ADAPTED", v: 0, tag: "Your settings", text: `${u.acc ? "Heat-adapted" : "Not heat-adapted"}, ${u.kg} kg, ${(u.height*100).toFixed(0)} cm, ${(CLOTH[u.cloth]||CLOTH.kit).label.toLowerCase()}.` });
+    reasons.sort((a,b) => b.v - a.v);
+    return { hours, best, worst, start, end, s, e, headline, sub, hc, sc, mode, along, direction, route, drink, loss, capS, dlimPlan, met, f, pct, W0, reasons, kmh, speed, breath, why, indoor };
+  }
+  return { evaluate, budget, maxSpeedFor, hourConditions, wbgtLiljegren, cosZenith, paceOf, fmtPace, fmtHM, compass, FLAGS, NAMES, C_REF, heatBand, bandEdges, metFromSpeed, CLOTH, wct, airBand };
+})();
+// ===== Locations and scenarios =====
+const rep = v => Array(24).fill(v);
+const LOCATIONS = {
+  ams: { name: "Amsterdam", tz: "Europe/Amsterdam", lat: 52.3584, lon: 4.8697, aqDomain: "cams_europe", pollen: true,
+    tzFor: d => { const m = +d.slice(5,7); return m >= 4 && m <= 10 ? 2 : 1; },
+    // warm-season daily-mean temperature percentiles, ERA5 2016-2025
+    clim: [[8.3,1],[10.5,5],[13.2,15],[14.6,25],[16.6,50],[18.5,75],[19.5,85],[22,95],[24.5,99]],
+    W0: 10,  // reference heat stress for the cardio term
+    persona: { kg: 72, height: 1.80, acc: false, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
+    routes: [
+      { name: "Vondelpark", x: {}, axis: 60, into: ["Head north-east", "Start at the Amstelveenseweg end, into the wind; tailwind home."], away: ["Head south-west", "Start at the Leidseplein end, into the wind; tailwind home."] },
+      { name: "Stadhouderskade", x: { no2: 1.8, pm25: 1.2, pm10: 1.3 }, axis: 60, into: ["Head north-east", ""], away: ["Head south-west", ""] } ],
+    indoor: ["Treadmill, 40 min easy", "Spin class or a swim", "Or run tomorrow morning"],
+    drinkTip: "" },
+  chn: { name: "Chennai", tz: "Asia/Kolkata", lat: 13.0827, lon: 80.2707, aqDomain: "cams_global", pollen: false,
+    tzFor: () => 5.5,
+    // all-year daily-mean temperature percentiles, ERA5 2016-2025 (no cool season)
+    clim: [[23.6,1],[24.6,5],[25.5,15],[26.2,25],[28.2,50],[29.8,75],[30.5,85],[31.6,95],[32.8,99]],
+    // local reference: Amsterdam's 10 C shifted by the gap in median shade heat stress (26.7 vs 14.9 C, ERA5)
+    W0: 21.8,
+    persona: { kg: 62, height: 1.68, acc: true, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
+    routes: [
+      { name: "Marina promenade", x: {}, axis: 0, into: ["Head north first", "Start at the lighthouse end, north into the wind; tailwind home."], away: ["Head south first", "Start at the north end, south into the wind; tailwind home."] },
+      { name: "Anna Salai", x: { no2: 1.8, pm25: 1.3, pm10: 1.4 }, axis: 30, into: ["", ""], away: ["", ""] } ],
+    indoor: ["Treadmill in AC, 40 min easy", "Stair or strength session indoors", "Tomorrow: go at 5:15, before the heat"],
+    drinkTip: "ORS or neer mor" },
+};
+const SCENARIOS = {
+  ams: {
+    live: { label: "Today (real readings)", type: "City run", date: "2026-11-13", fetched: "2026-11-13T09:19:28Z",
+      t:[8,7.4,6.8,8.4,7.6,7.9,8.1,7.4,7.3,7.8,9.1,9.6,10.1,8.6,8.9,9.8,9.7,9,9.2,9,8.8,8.7,8.3,8.2],
+      rh:[73,75,77,64,60,72,60,66,62,74,63,61,60,75,75,68,66,78,73,71,73,71,75,75],
+      sw:[0,0,0,0,0,0,0,0,0,25,107,133,173,90,84,61,25,11,0,0,0,0,0,0],
+      ws:[11.2,7.9,9.4,14,12.6,13,14.4,11.9,11.9,13.3,15.8,17.6,18,14.4,14,16.2,16.9,14.4,9.7,8.6,6.1,7.9,6.8,6.1],
+      wd:[330,321,283,315,309,304,323,302,303,293,311,312,313,312,287,311,308,277,305,313,290,286,256,253],
+      pm10:[12.7,12,12.3,13.1,11.4,10.6,10.7,12,12.7,13.5,13.3,13.6,12.3,10.8,11.7,11.7,12.9,13.5,14,13.1,12.4,12.2,12.2,12.2],
+      pm25:[4.5,3.9,3.6,3.4,3.3,3.3,3.6,3.9,4.5,4.9,4.7,4.4,4.3,4.3,4.6,4.8,5.1,5.8,6,6.9,6.8,6.3,5.6,5.6],
+      no2:[16.7,14,9.9,10.2,9.7,10,12.2,16.3,25,28.6,23,16.8,11.7,15.6,14.4,18,27.1,36.6,43.2,52.1,45.4,46.7,41.5,32.5],
+      o3:[55,58,62,65,62,63,63,60,53,52,55,58,62,61,59,57,52,45,38,24,28,28,33,36], pollen: rep(0) },
+    heat: { label: "Heatwave Saturday (synthetic)", type: "Heat run", date: "2026-06-27",
+      t:[21,20.4,19.8,19.4,19,19.2,19.6,20.2,21.2,22.4,23.8,25.4,27,28.4,29.4,30,29.6,28.8,27.6,26,24.4,23.2,22.4,21.8],
+      rh:[62,64,66,67,68,67,64,60,55,50,45,41,38,35,33,32,33,35,38,42,47,52,56,59],
+      sw:[0,0,0,0,0,5,60,170,310,450,590,700,770,800,770,690,570,430,270,120,25,0,0,0],
+      ws:[9,8,8,7,7,8,9,10,11,12,13,14,15,15,15,14,13,12,11,10,9,9,9,9], wd: rep(45),
+      o3:[70,65,60,58,55,55,60,70,85,100,120,140,160,175,185,190,185,175,160,140,120,100,90,80],
+      no2:[30,25,22,20,22,30,40,45,38,30,24,20,18,17,17,18,22,30,36,35,33,32,31,30],
+      pm25:[13,13,12,12,12,13,14,15,15,14,13,13,12,12,12,12,13,14,15,16,16,15,14,14],
+      pm10:[24,23,22,22,22,23,25,27,27,26,25,24,23,23,23,23,24,25,27,28,28,27,26,25], pollen: rep(20) },
+    pollen: { label: "Spring hay-fever day (synthetic)", type: "Pollen run", hay: true, date: "2026-05-21",
+      t:[11,10.5,10,9.6,9.4,9.8,11,12.6,14.2,15.8,17.2,18.4,19.4,20.1,20.5,20.6,20.2,19.4,18.2,16.8,15.4,14.2,13.2,12.4],
+      rh:[82,84,86,87,88,86,80,72,64,58,52,48,45,43,42,42,44,47,52,58,64,70,75,79],
+      sw:[0,0,0,0,0,30,120,250,390,520,620,690,720,700,640,540,410,270,140,40,0,0,0,0],
+      ws:[6,6,5,5,5,6,8,10,12,13,14,15,15,15,14,13,12,10,8,7,6,6,6,6], wd: rep(240),
+      o3:[55,50,48,46,45,48,55,65,75,85,95,105,112,118,120,118,112,102,90,78,68,62,58,56],
+      no2:[22,18,15,14,16,24,34,38,32,26,20,17,15,14,14,15,18,25,30,28,26,25,24,23],
+      pm25:[7,7,6,6,6,7,8,9,9,8,8,7,7,7,7,7,8,8,9,9,9,8,8,8],
+      pm10:[15,14,14,13,13,14,16,18,18,17,16,16,15,15,15,15,16,17,18,18,18,17,16,16],
+      pollen:[8,6,5,4,4,6,14,30,55,80,100,115,120,118,110,98,80,62,45,32,22,15,11,9] },
+    cold: { label: "Icy winter morning (synthetic)", type: "Cold run", date: "2027-01-12",
+      t:[-4,-4.4,-4.8,-5.2,-5.5,-5.8,-6,-6,-5.6,-4.6,-3.4,-2.2,-1.2,-0.6,-0.4,-0.8,-1.6,-2.4,-3,-3.4,-3.8,-4,-4.2,-4.4],
+      rh:[85,86,87,88,88,89,89,88,85,80,74,70,66,64,64,66,70,74,78,80,82,83,84,85],
+      sw:[0,0,0,0,0,0,0,0,15,70,140,190,210,190,140,70,15,0,0,0,0,0,0,0],
+      ws:[20,21,22,23,24,25,26,27,28,28,27,26,24,23,22,22,23,24,25,25,24,23,22,21], wd: rep(50),
+      o3:[55,56,57,58,58,57,52,44,40,44,50,55,58,60,60,58,52,44,40,42,46,50,52,54],
+      no2:[24,20,17,16,18,28,42,52,46,34,26,22,20,20,22,28,38,46,44,38,32,28,26,25],
+      pm25:[10,9,9,8,9,10,12,14,13,11,10,9,9,9,10,11,13,14,13,12,11,11,10,10],
+      pm10:[18,17,16,16,17,18,21,24,23,20,18,17,17,17,18,20,23,25,24,22,20,19,18,18], pollen: rep(0) },
+  },
+  chn: {
+    live: { label: "Today (real readings)", type: "Heat run", date: "2026-11-13", fetched: "2026-11-13T09:40:00Z",
+      t:[25.9,25.3,25.0,24.7,24.3,24.8,24.4,25.2,26.4,27.4,28.3,28.8,29.1,29.7,29.9,29.1,27.9,27.6,27.3,27.2,27.1,27.0,26.9,26.7],
+      rh:[83,85,85,87,89,89,90,86,80,76,72,69,65,62,61,64,72,73,75,76,75,75,74,74],
+      sw:[0,0,0,0,0,0,4,86,238,396,576,616,668,654,646,477,276,81,0,0,0,0,0,0],
+      ws:[8.6,9.3,9.4,9.4,8.8,10.6,11.1,10.8,11.3,12.1,13.5,13.2,13.9,15,17.3,18.4,16.4,13.4,12.8,12.2,12.1,12.5,12.7,11.5],
+      wd:[349,335,325,337,349,334,324,339,347,345,2,7,19,33,36,27,23,20,24,24,25,25,27,25],
+      pm10:[20.3,19.6,19.2,18.1,16.6,15.9,15.7,15.9,15.8,14.8,16.2,16.1,17.5,18.7,19.8,20.8,21.5,22.1,22.8,22.3,21.4,21.1,21.1,20.7],
+      pm25:[16.4,15.8,15.4,14.5,13,12.4,12.3,12.4,11.1,9.6,10.1,9.9,10.7,11.6,12.5,13.4,14,14.8,15.4,15,14.3,14.2,14.2,13.9],
+      no2:[5.7,4.8,4,3.5,3.3,3.2,3.5,4,4.1,3.4,2.4,1.6,1.3,1.3,1.7,2.8,4.4,5.7,6.5,7,7.3,7.2,6.8,6.3],
+      o3:[83,74,68,65,66,66,66,66,67,68,70,72,75,79,81,81,80,78,76,74,73,72,72,73], pollen: null, gridNote: true },
+    heat: { label: "Pre-monsoon heat, 6 May 2024 (real weather)", type: "Heat run", date: "2024-05-06",
+      t:[31.1,30.9,30.6,30.4,30.1,29.8,31.3,32.3,34.1,35.9,37.1,36.5,36,35.6,35.6,34.9,33.8,32.7,31.1,30.9,30.8,30.8,30.7,30.7],
+      rh:[81,77,74,73,79,84,86,80,69,59,54,63,63,62,62,64,69,76,83,85,85,83,82,81],
+      sw:[0,0,0,0,0,0,24,140,345,587,722,884,939,909,786,647,453,219,42,0,0,0,0,0],
+      ws:[22.4,18.5,18.1,18.4,19.9,18.5,20.9,22,20.9,17.3,18.9,28.5,32.6,30.8,29,27.9,26.8,24.7,19.3,20,21.1,23.5,23.1,24.2],
+      wd:[184,187,187,183,186,187,177,178,182,179,166,159,160,159,160,158,163,167,156,154,157,162,165,165],
+      pm25:[34,32,31,30,31,34,40,45,44,38,32,28,26,25,25,26,28,32,38,42,42,40,38,36],
+      pm10:[70,66,64,62,64,70,82,92,90,80,68,60,56,54,54,56,60,68,80,88,88,84,78,74],
+      no2:[28,24,20,18,20,28,38,42,36,26,18,14,12,12,12,14,18,26,34,38,36,34,32,30],
+      o3:[40,38,36,35,35,38,45,58,72,88,102,112,118,120,116,108,96,82,66,55,48,44,42,41], pollen: null },
+    bhogi: { label: "Bhogi morning, 13 Jan 2025 (real weather, smoke synthetic)", type: "City run", date: "2025-01-13",
+      t:[24.5,23.7,23.6,23.6,23.8,23.8,24.1,24.5,25.2,25.9,26,26.4,26.4,26.7,26.9,26.4,26.2,26.1,26.1,26.2,26.1,25.9,25.7,25.5],
+      rh:[89,92,91,93,94,92,94,92,87,82,82,79,80,78,77,81,79,78,77,77,79,80,81,81],
+      sw:[0,0,0,0,0,0,0,32,135,266,385,511,435,504,580,395,247,105,6,0,0,0,0,0],
+      ws:[13,10.6,7,7.7,10.2,10.2,7.4,9,9.4,12.5,14,16.2,18.4,19.2,18,15.8,16.1,15.2,13.1,12.4,12,11.9,11.2,9.5],
+      wd:[49,35,23,37,30,30,32,30,30,43,54,54,59,64,67,67,63,66,75,73,71,67,68,58],
+      pm25:[90,120,150,190,240,290,320,310,260,190,130,90,70,60,55,55,60,70,85,100,110,110,105,100],
+      pm10:[150,190,230,290,360,430,470,460,390,290,200,145,115,100,92,92,100,115,140,160,175,175,168,160],
+      no2:[24,22,20,20,22,28,34,38,36,30,24,20,18,18,18,20,24,30,36,38,36,32,30,28],
+      o3:[30,28,26,25,24,24,26,32,42,56,70,80,86,90,88,80,68,54,44,38,34,32,31,30], pollen: null },
+  },
+};
+const $ = id => document.getElementById(id);
+const S = { loc: "ams", scen: "live", now: 7, pace: 6+20/60, dur: 45, kg: 72, ht: 1.8, cloth: "kit", acc: false, hay: false, dt: 0, drh: 0, pmx: 1, o3: 1, pol: 0, wsx: 1, screen: 0 };
+let DATA = JSON.parse(JSON.stringify(SCENARIOS)), R = null;
+const LIVE = { ams: false, chn: false };
+const run = { on: false, t: 0, km: 0, pace: 0, peak: 37, over: 0, timer: null, base: 37, store: 0 };
+const STORIES = {
+  "ams.live": "<b>City run.</b> A mild November day. The engine finds nothing to fear in heat or cold; what changes through the day is traffic NO₂, which peaks at the evening rush. Switch to Partner view to see how small the air effect is for one run.",
+  "ams.heat": "<b>Heat run.</b> A Dutch heatwave for a runner who is not heat-adapted. Morning is fine; from midday the heat stress crosses the Red line. Toggle Heat-adapted to see the bands move by 4.4 °C.",
+  "ams.pollen": "<b>Pollen run.</b> Grass pollen climbs after 8:00. With Hay fever on, the window closes before the peak; turn it off and the advice relaxes.",
+  "ams.cold": "<b>Cold run.</b> −6 °C at dawn and a 25 km/h wind. Cold narrows blood vessels and raises blood pressure, so the watch moves you to midday, starts you into the wind and tells you to warm up indoors first.",
+  "chn.live": "<b>Chennai today.</b> 24 °C and 90 % humidity at dawn. A heat-adapted runner is fine before 9:00; the old one-size limit would have said no all day. The air grid here is coarse and reads low.",
+  "chn.heat": "<b>Heat run.</b> Real weather from 6 May 2024: heat stress 28 °C at 5:00 and 34 °C by 11:00. Heat-adapted, a dawn run is fine if you drink. Switch Heat-adapted off and the same day becomes indoors only.",
+  "chn.bhogi": "<b>City run.</b> Bhogi morning: bonfire smoke pushes PM2.5 past 250 just when Chennai runners usually go out. The engine moves the run to the afternoon, when the air clears.",
+};
+
+const nowIn = tz => { const p = new Intl.DateTimeFormat("en-GB",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+  return +p.find(x=>x.type==="hour").value + +p.find(x=>x.type==="minute").value/60; };
+const fmtStamp = (iso, tz) => new Date(iso).toLocaleString("en-GB",{timeZone:tz,day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const LOC = () => LOCATIONS[S.loc];
+
+async function tryLive(key) {
+  const L = LOCATIONS[key], q = `latitude=${L.lat}&longitude=${L.lon}&timezone=${encodeURIComponent(L.tz)}&forecast_days=1`;
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 5000);
+    const pol = L.pollen ? ",grass_pollen,birch_pollen,alder_pollen,mugwort_pollen" : "";
+    const [w, a] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,relative_humidity_2m,shortwave_radiation,wind_speed_10m,wind_direction_10m`, {signal: ctl.signal}).then(r => r.json()),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${q}&hourly=pm10,pm2_5,nitrogen_dioxide,ozone${pol}&domains=${L.aqDomain}`, {signal: ctl.signal}).then(r => r.json())]);
+    const H = w.hourly, A = a.hourly, z = v => (v ?? 0);
+    const sum = i => ["grass_pollen","birch_pollen","alder_pollen","mugwort_pollen"].reduce((s,k) => s + z(A[k] && A[k][i]), 0);
+    Object.assign(DATA[key].live, { date: H.time[0].slice(0,10), fetched: new Date().toISOString(),
+      t: H.temperature_2m.map(z), rh: H.relative_humidity_2m.map(z), sw: H.shortwave_radiation.map(z), ws: H.wind_speed_10m.map(z), wd: H.wind_direction_10m.map(z),
+      pm10: A.pm10.map(z), pm25: A.pm2_5.map(z), no2: A.nitrogen_dioxide.map(z), o3: A.ozone.map(z), pollen: L.pollen ? A.time.map((_,i) => sum(i)) : null });
+    LIVE[key] = true;
+  } catch (e) {}
+  srcLine(); update();
+}
+function srcLine() {
+  const d = DATA[S.loc][S.scen], L = LOC();
+  $("src").innerHTML = S.scen !== "live" ? `<span class="dot"></span>${d.label}`
+    : LIVE[S.loc] ? `<span class="dot live"></span>Live: ${L.name}, fetched ${fmtStamp(d.fetched, L.tz)} local time`
+    : `<span class="dot"></span>${L.name} today: real readings captured ${fmtStamp(d.fetched, L.tz)} local time (live fetch is blocked inside the published link)`;
+}
+
+function conditions() {
+  const d = DATA[S.loc][S.scen], o = { date: d.date };
+  for (const k of ["t","rh","sw","ws","wd","pm10","pm25","no2","o3"]) o[k] = d[k].slice();
+  o.pollen = d.pollen ? d.pollen.map(x => x + S.pol) : null;
+  o.t = o.t.map(x => x + S.dt); o.rh = o.rh.map(x => Math.max(5, Math.min(100, x + S.drh)));
+  o.pm25 = o.pm25.map(x => x*S.pmx); o.pm10 = o.pm10.map(x => x*S.pmx); o.o3 = o.o3.map(x => x*S.o3); o.ws = o.ws.map(x => x*S.wsx);
+  return o;
+}
+const user = () => ({ pace: S.pace, minutes: S.dur, kg: S.kg, height: S.ht, acc: S.acc, cloth: S.cloth, hayfever: S.hay, now: S.now });
+
+function update() {
+  const t0 = performance.now(), d = conditions(), L = LOC();
+  R = ENG.evaluate(d, user(), L);
+  const ms = performance.now() - t0;
+  if (DATA[S.loc][S.scen].gridNote) R.reasons.forEach(r => { if (r.k === "Air") r.text += " Model grid only: city streets read higher."; });
+  // labels
+  $("nowV").textContent = ENG.fmtHM(S.now); $("paceV").textContent = ENG.fmtPace(S.pace) + "/km";
+  $("durV").textContent = S.dur + " min"; $("kgV").textContent = S.kg + " kg"; $("htV").textContent = Math.round(S.ht*100) + " cm";
+  $("dtV").textContent = (S.dt > 0 ? "+" : "") + S.dt + " °C"; $("drhV").textContent = (S.drh > 0 ? "+" : "") + S.drh + " %";
+  $("pmV").textContent = S.pmx.toFixed(2); $("o3V").textContent = S.o3.toFixed(1); $("polV").textContent = L.pollen ? S.pol + " /m³" : "n/a here"; $("wsV").textContent = S.wsx.toFixed(1);
+  $("acc").classList.toggle("on", S.acc); $("hay").classList.toggle("on", S.hay); $("cloth").value = S.cloth;
+  // glance
+  const dt = new Date(d.date + "T12:00:00");
+  $("g-date").textContent = dt.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}) + " · " + L.name;
+  $("g-time").textContent = ENG.fmtHM(S.now);
+  $("g-txt").textContent = R.indoor ? "Indoors today" : R.headline;
+  const left = Math.max(0, Math.min(1, (R.end - S.now)/8));
+  $("g-ring").setAttribute("stroke-dashoffset", (113*(1 - (R.indoor ? 1 : R.start > S.now + .5 ? 0.15 : left))).toFixed(1));
+  $("g-ring").setAttribute("stroke", R.indoor ? "#e0714f" : "#9fe8dd");
+  // plan
+  $("p-clock").textContent = ENG.fmtHM(S.now);
+  $("p-hl").textContent = R.headline; $("p-sub").textContent = R.sub;
+  const row = (i,t) => `<div class="row"><i>${i}</i><span>${t}</span></div>`;
+  if (R.indoor) {
+    $("p-rows").innerHTML = L.indoor.map((t,k) => row(["🏃","🏋","⏰"][k], t)).join("");
+    $("p-btns").innerHTML = `<button class="btn" onclick="go(2)">Why</button><button class="btn go" onclick="go(0)">OK</button>`;
+  } else {
+    const capP = R.capS ? ENG.paceOf(R.capS) : null;
+    let paceTxt;
+    if (R.mode === "short") paceTxt = capP ? `Max ${R.dlimPlan} min at ${ENG.fmtPace(S.pace)}, or ${S.dur} min at ${ENG.fmtPace(capP)}` : `Max ${R.dlimPlan} min, easy`;
+    else if (!capP || capP < S.pace - 0.5) paceTxt = `${S.dur} min at ${ENG.fmtPace(S.pace)} is fine`;
+    else paceTxt = `Keep slower than ${ENG.fmtPace(capP)}/km`;
+    const drinkTxt = R.drink === "Optional" ? "Water optional" : `Take ${R.drink}${L.drinkTip ? " · " + L.drinkTip : ""}`;
+    $("p-rows").innerHTML = row("⏱", paceTxt) + row("➚", `${R.direction.short} · ${R.route.name}`) + row("💧", drinkTxt);
+    $("p-btns").innerHTML = `<button class="btn" onclick="go(2)">Why</button><button class="btn go" onclick="startRun()">Start</button>`;
+  }
+  $("w-list").innerHTML = R.reasons.map(r => `<div class="it"><b>${r.k}</b><em>${r.tag}</em><div>${r.text}</div></div>`).join("");
+  $("story").innerHTML = STORIES[S.loc + "." + S.scen] || "";
+  inspector(d, ms);
+}
+
+function card(k, v, n) { return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ""}</div>`; }
+function inspector(d, ms) {
+  const b = R.best, L = LOC(), e = ENG.bandEdges(S.acc);
+  const capP = R.capS ? ENG.paceOf(R.capS) : null;
+  const alt = R.best.airAlt, saving = alt.P > b.P*1.05 ? Math.round((1 - b.P/Math.max(1e-9, alt.P))*100) : 0;
+  $("ms").textContent = `· recomputed 24 hours in ${ms.toFixed(1)} ms`;
+  $("cards").innerHTML = [
+    card("Best slot", `${b.h}:00`, R.indoor ? "No safe outdoor slot" : `Window ${ENG.fmtHM(R.start)}–${ENG.fmtHM(R.end)}`),
+    card("Heat stress", `${b.W.toFixed(1)} °C`, `WBGT · wet bulb ${b.tnw.toFixed(1)} · globe ${b.tg.toFixed(1)}`),
+    card("Your heat lines", `${e[1]} / ${e[2]} °C`, `Red / indoors · ${S.acc ? "heat-adapted" : "not heat-adapted"}`),
+    card("Time to 39 °C core", b.b.dlim >= 240 ? "No limit" : `${b.b.dlim} min`, `At ${ENG.fmtPace(S.pace)}/km · steady core ${b.b.Teq.toFixed(1)} °C`),
+    card("Fastest pace, " + S.dur + " min", capP ? ENG.fmtPace(capP) : "Walk only", "Inside the heat budget"),
+    card("Sweat", `${Math.round(b.b.sweatMlH)} ml/h`, `Needs ${Math.round(Math.max(0,b.b.Ereq))} W of ${Math.round(b.b.Emax)} W possible`),
+    card("Radiant temp", `${b.tmrt.toFixed(0)} °C`, `Sun, sky and ground on the body · air ${b.t.toFixed(1)} °C`),
+    card("PM2.5", `${Math.round(b.pm25)}`, `µg/m³ · band ${ENG.FLAGS[ENG.airBand(b.pm25,0)]} · peak ${Math.round(Math.max(...d.pm25))}`),
+    card("Ozone · NO₂", `${Math.round(b.o3)} · ${Math.round(b.no2)}`, "µg/m³ · WHO 100 · 25"),
+    card("Air term P", b.P.toFixed(4), (b.driver ? ENG.NAMES[b.driver] + " · " : "") + `run = ${(R.f*100).toFixed(1)}% of a day's breathing` + (saving > 5 ? ` · ${R.route.name} −${saving}%` : "")),
+    card("Heat term H", b.H.toFixed(3), `Above local reference ${R.W0} °C · day at p${Math.round(R.pct)}`),
+    card("Cardio load", `×${b.rr.toFixed(3)}`, `vs a cool, clean hour · worst ×${R.worst.rr.toFixed(3)}`),
+    card("Wind chill", b.t < 10 ? `${b.head.toFixed(0)} °C` : "n/a", b.t < 10 ? `Into the wind at your pace · breathing ${Math.round(R.breath)} W` : `Only applies below 10 °C · breathing ${Math.round(R.breath)} W`),
+    card("Pollen", d.pollen ? `${Math.round(b.pollen)}` : "n/a", d.pollen ? `grains/m³ · flag at 50${S.hay ? "" : " (hay fever off)"}` : "No forecast for this region"),
+  ].join("");
+  // strip
+  const W = 960, Hh = 150, top = 12, bot = 26, x0 = 6;
+  const vals = R.hours.map(h => h.W), mx = Math.max(e[2] + 2, ...vals) + 1, mn = Math.min(0, ...vals);
+  const y = v => top + (Hh - top - bot)*(1 - (v - mn)/(mx - mn)), bw = (W - x0*2)/24;
+  const col = ["#9fe8dd","#e8b04a","#e0714f","#2b2b2b"];
+  let s = R.indoor ? "" : `<rect x="${x0 + R.start*bw}" y="0" width="${Math.max(2,(R.end - R.start)*bw)}" height="${Hh-bot+4}" fill="#176a70" opacity=".12" rx="6"/>`;
+  R.hours.forEach((h,i) => { s += `<rect x="${x0 + i*bw + 3}" y="${y(h.W)}" width="${bw-6}" height="${Math.max(1, y(mn) - y(h.W))}" rx="3" fill="${col[h.flag]}"><title>${i}:00 · WBGT ${h.W.toFixed(1)} · PM2.5 ${Math.round(h.pm25)} · ${h.b.dlim >= 240 ? "no time limit" : h.b.dlim + " min to 39 °C"}</title></rect>`;
+    if (i % 3 === 0) s += `<text x="${x0 + i*bw + bw/2}" y="${Hh-8}" font-size="11" text-anchor="middle" fill="#6b7c80">${i}:00</text>`; });
+  [[e[1],"Red"],[e[2],"indoors"]].forEach(([v,t]) => { s += `<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#18343b" stroke-dasharray="5 4" stroke-width="1"/><text x="${W-6}" y="${y(v)-4}" font-size="11" text-anchor="end" fill="#18343b">${t} ${v} °C</text>`; });
+  s += `<line x1="${x0 + S.now*bw}" x2="${x0 + S.now*bw}" y1="0" y2="${Hh-bot+4}" stroke="#176a70" stroke-width="2"/><text x="${x0 + S.now*bw + 4}" y="11" font-size="11" fill="#176a70">now</text>`;
+  $("strip").innerHTML = s;
+  const EV = [
+    ["Heat stress from weather (Liljegren WBGT)", "Published method"],
+    ["Heat lines: ACSM bands; +4.4 °C when heat-adapted (ISO 7243); indoors line ≈ US Army Category 5", "Published standards"],
+    ["Body heat budget and the 39 °C core cap (simplified ISO 7933)", "Standard, simplified"],
+    ["Air effect per pollutant (Stafoggia 2023) at the local temperature percentile", "Published slopes"],
+    ["Air guard rails: India NAQI PM2.5 bands, EU ozone thresholds", "Published bands"],
+    ["Wind chill (Environment Canada) and the cold warm-up advice", "Index + mechanism"],
+    ["Pollen line at 50 grains/m³", "Published threshold"],
+    ["Local heat reference for the cardio term (Amsterdam 10 °C, Chennai 21.8 °C)", "Assumption"],
+    ["Clothing, route exposure and cold weights", "Demo values"],
+  ];
+  $("ev").innerHTML = EV.map(([a,t]) => `<div>${a}</div><div class="t${/Assumption|Demo/.test(t) ? " a" : ""}">${t}</div>`).join("");
+}
+
+function go(n) {
+  if (n === 3 && !run.on) { if (R.indoor) return go(1); return startRun(); }
+  if (n !== 3 && run.on && n !== 4) stopTimer();
+  S.screen = n;
+  document.querySelectorAll(".scr").forEach(e => e.classList.toggle("on", +e.dataset.s === n));
+  document.querySelectorAll("#steps button").forEach(b => b.classList.toggle("on", +b.dataset.g === n));
+  if (n === 4 && !$("s-hl").textContent) summary();
+}
+function startRun() {
+  Object.assign(run, { on: true, t: 0, km: 0, pace: S.pace, peak: 37, over: 0, turned: false, startH: Math.max(S.now, R.indoor ? S.now : R.start), base: 37, store: 0 });
+  $("s-hl").textContent = ""; go(3); tickRun(true); stopTimer(); run.on = true; run.timer = setInterval(() => tickRun(false), 1000);
+}
+function stopTimer() { clearInterval(run.timer); run.timer = null; run.on = false; }
+function nudge(dir) { run.pace = Math.max(3.5, Math.min(10, run.pace + dir*0.25)); tickRun(true); }
+function tickRun(noAdvance) {
+  const d = conditions(), L = LOC(), h = Math.min(23.9, run.startH + run.t/60), c = ENG.hourConditions(d, Math.floor(h), L);
+  const speed = 1000/(run.pace*60), b = ENG.budget(c, speed, user());
+  if (!noAdvance) { run.t += 1; run.km += speed*60/1000; run.base += (b.Teq - run.base)/10; run.store = Math.max(0, run.store + (b.S > 0 ? b.rise : -b.drain)); }
+  const core = run.base + run.store; run.peak = Math.max(run.peak, core);
+  const hb = ENG.heatBand(c.W, S.acc), ab = ENG.airBand(c.pm25*(L.routes[0].x.pm25||1), c.o3);
+  if (!noAdvance && (core >= 39 || hb === 3 || ab === 3)) run.over += 1;
+  $("r-clock").textContent = ENG.fmtHM(h);
+  $("r-pace").innerHTML = ENG.fmtPace(run.pace) + "<small>/km</small>";
+  const cap = ENG.maxSpeedFor(c, Math.max(10, S.dur - run.t), user());
+  $("r-cap").textContent = !cap ? "Heat: walk only" : ENG.paceOf(cap) < 3.6 ? "No heat cap on pace" : "Heat cap " + ENG.fmtPace(ENG.paceOf(cap)) + "/km";
+  $("r-bar").style.width = Math.min(100, run.t/S.dur*100) + "%";
+  $("r-el").textContent = run.t + " min"; $("r-km").textContent = run.km.toFixed(2) + " km"; $("r-core").textContent = "Core ≈ " + core.toFixed(1) + " °C";
+  let msg = "", cls = "";
+  if (core >= 39) { msg = "Walk now and cool down"; cls = "stop"; }
+  else if (core >= 38.7) { msg = "Body heat rising: ease off"; }
+  else if (hb === 3) { msg = "Too hot now: head home"; cls = "stop"; }
+  else if (ab >= 2) { msg = "Smoke thickening: cut it short"; }
+  else if (c.t < 5 && run.t <= 8) { msg = "Easy first km: let your heart warm up"; cls = "info"; }
+  else if (!run.turned && run.t >= S.dur/2 && R.direction.short !== "Any direction") { msg = "Halfway: turn now, tailwind home"; cls = "info"; if (run.t >= S.dur/2 + 3) run.turned = true; }
+  else if (R.drink !== "Optional" && run.t % 15 === 0 && run.t > 0) { msg = "Drink a few sips"; cls = "info"; }
+  const al = $("r-alert"); al.textContent = msg; al.className = "alert" + (msg ? " on " + cls : "");
+  if (!noAdvance && run.t >= S.dur) endRun();
+}
+function endRun() { stopTimer(); summary(); go(4); }
+function summary() {
+  const dur = run.t || S.dur, km = run.km || S.dur/S.pace;
+  const within = dur ? Math.round(100*(1 - run.over/dur)) : 100;
+  $("s-hl").textContent = within >= 95 ? "Well judged" : within >= 70 ? "Mostly inside your limits" : "Pushed it";
+  const loss = R.best.b.sweatMlH*dur/60;
+  $("s-rows").innerHTML = [["⏱", `${km.toFixed(2)} km · ${dur} min`], ["🌡", `Peak core ≈ ${(run.peak || 37).toFixed(1)} °C`],
+    ["✓", `${within}% of the run inside your limits`], ["💧", loss < 300 ? "No need to top up" : `Replace about ${Math.round(loss/50)*50} ml`]]
+    .map(([i,t]) => `<div class="row"><i>${i}</i><span>${t}</span></div>`).join("");
+}
+
+// ---- controls
+function scenButtons() {
+  $("scens").innerHTML = Object.entries(DATA[S.loc]).map(([k,v]) => `<button class="sc${k === S.scen ? " on" : ""}" data-k="${k}"><small>${v.type}</small><span>${v.label}</span></button>`).join("");
+  document.querySelectorAll(".sc").forEach(b => b.onclick = () => { S.scen = b.dataset.k; S.hay = !!DATA[S.loc][S.scen].hay || LOCATIONS[S.loc].persona.hay; setNow(); scenButtons(); srcLine(); syncInputs(); update(); go(1); });
+}
+function setNow() { const L = LOC(); S.now = S.scen === "live" ? Math.max(4, Math.min(21, Math.round(nowIn(L.tz)*4)/4)) : (S.loc === "chn" ? 5.25 : 6.5); }
+function setLoc(l) { S.loc = l; S.scen = "live"; const p = LOCATIONS[l].persona;
+  Object.assign(S, { kg: p.kg, ht: p.height, acc: p.acc, cloth: p.cloth, hay: p.hay, pace: p.pace, dur: p.dur, dt: 0, drh: 0, pmx: 1, o3: 1, pol: 0, wsx: 1 });
+  document.querySelectorAll("#locSeg button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
+  setNow(); scenButtons(); syncInputs(); srcLine(); update(); go(0); }
+const IN = { now: "now", pace: "pace", dur: "dur", kg: "kg", ht: "ht", dt: "dt", drh: "drh", pmx: "pmx", o3: "o3", pol: "pol", wsx: "wsx" };
+function syncInputs() { for (const [id,k] of Object.entries(IN)) $(id).value = S[k]; }
+for (const [id,k] of Object.entries(IN)) $(id).addEventListener("input", e => { S[k] = +e.target.value; update(); });
+$("cloth").onchange = e => { S.cloth = e.target.value; update(); };
+$("acc").onclick = () => { S.acc = !S.acc; update(); };
+$("hay").onclick = () => { S.hay = !S.hay; update(); };
+document.querySelectorAll("#locSeg button").forEach(b => b.onclick = () => setLoc(b.dataset.l));
+document.querySelectorAll("#viewSeg button").forEach(b => b.onclick = () => { document.querySelectorAll("#viewSeg button").forEach(x => x.classList.toggle("on", x === b)); document.body.className = b.dataset.v; });
+document.querySelectorAll("#steps button").forEach(b => b.onclick = () => go(+b.dataset.g));
+setLoc("ams"); tryLive("ams"); tryLive("chn");
+</script>
+</body>
+</html>

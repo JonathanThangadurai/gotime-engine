@@ -1,0 +1,193 @@
+{
+  "request": {
+    "location": {
+      "lat": 13.0827,
+      "lon": 80.2707
+    },
+    "activity": {
+      "type": "run",
+      "planned_duration_s": 2700,
+      "planned_pace_s_per_km": 380
+    },
+    "athlete": {
+      "mass_kg": 72,
+      "height_m": 1.8,
+      "heat_acclimatised": false
+    }
+  },
+  "response": {
+    "schema_version": "1.0.0",
+    "id": "rec_lvu6k480k0bi",
+    "generated_at": "2024-05-05T23:45:00.000Z",
+    "valid_until": "2024-05-06T00:00:00.000Z",
+    "location": {
+      "lat": 13.0827,
+      "lon": 80.2707,
+      "timezone": "Asia/Kolkata",
+      "label": "Chennai"
+    },
+    "activity": {
+      "type": "run",
+      "planned_duration_s": 2700,
+      "planned_pace_s_per_km": 380
+    },
+    "summary": {
+      "action": "indoor",
+      "level": 3,
+      "level_name": "black",
+      "window": null,
+      "headline": {
+        "code": "INDOOR_TODAY",
+        "params": {},
+        "text": "Train indoors today"
+      },
+      "detail": {
+        "code": "REASON_HEAT",
+        "params": {},
+        "text": "Too hot and humid for a safe run."
+      },
+      "notification": {
+        "title": "Train indoors today",
+        "body": "Too hot and humid for a safe run."
+      }
+    },
+    "guidance": {
+      "intensity": "easy",
+      "pace": {
+        "planned_s_per_km": 380,
+        "planned_pace_ok": false,
+        "fastest_safe_pace_s_per_km": null,
+        "max_duration_at_planned_s": null,
+        "pace_for_full_duration_s_per_km": null
+      },
+      "route": null,
+      "start_heading_deg": null,
+      "hydration": {
+        "fluid_ml": 0,
+        "sweat_rate_ml_per_h": 1036,
+        "electrolytes_recommended": false
+      },
+      "warm_up_indoors": false,
+      "indoor_alternatives": [
+        {
+          "code": "INDOOR_TREADMILL",
+          "params": {
+            "minutes": 40
+          },
+          "text": "Treadmill, 40 min easy"
+        },
+        {
+          "code": "INDOOR_CROSS_TRAINING",
+          "params": {},
+          "text": "Strength, stairs, spin or a swim"
+        },
+        {
+          "code": "TOMORROW_EARLY",
+          "params": {},
+          "text": "Tomorrow: go before the heat"
+        }
+      ]
+    },
+    "reasons": [
+      {
+        "factor": "heat",
+        "code": "HEAT_RISES",
+        "level": 3,
+        "evidence": "published_standard",
+        "params": {
+          "wbgt_c": 28.1,
+          "peak_wbgt_c": 34.7,
+          "peak_time": "11:00",
+          "indoor_line_c": 28
+        },
+        "text": "Heat stress 28.1 °C in your slot, 34.7 °C at 11:00. Indoors above 28 °C."
+      },
+      {
+        "factor": "wind",
+        "code": "WIND_START_INTO",
+        "level": 0,
+        "evidence": "physics",
+        "params": {
+          "speed_kmh": 19,
+          "from": "south",
+          "heading": null
+        },
+        "text": "19 km/h from the south. Start heading , into the wind; tailwind home."
+      },
+      {
+        "factor": "athlete",
+        "code": "ATHLETE_NOT_ADAPTED",
+        "level": 0,
+        "evidence": "athlete_input",
+        "params": {
+          "mass_kg": 72,
+          "height_cm": 180,
+          "clothing": "running_kit"
+        },
+        "text": "Not heat-adapted, 72 kg, 180 cm."
+      },
+      {
+        "factor": "air",
+        "code": "AIR_PEAK_LATER",
+        "level": 0,
+        "evidence": "published_slopes",
+        "params": {
+          "pollutant": "PM10",
+          "peak_ugm3": 60,
+          "peak_time": "11:00",
+          "window_ugm3": 70
+        },
+        "text": "PM10 60 µg/m³ at 11:00, 70 in your slot."
+      }
+    ],
+    "assumptions": [
+      {
+        "field": "athlete.clothing",
+        "value": "running_kit",
+        "basis": "population_default"
+      },
+      {
+        "field": "athlete.hay_fever",
+        "value": false,
+        "basis": "population_default"
+      }
+    ],
+    "data": {
+      "engine_version": "2.0.0",
+      "sources": [
+        {
+          "id": "era5-reanalysis",
+          "kind": "reanalysis",
+          "variables": [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "shortwave_radiation",
+            "wind_speed_10m",
+            "wind_direction_10m"
+          ],
+          "retrieved_at": null
+        },
+        {
+          "id": "gotime-synthetic",
+          "kind": "synthetic",
+          "variables": [
+            "pm2_5",
+            "pm10",
+            "nitrogen_dioxide",
+            "ozone"
+          ],
+          "retrieved_at": null
+        }
+      ],
+      "coverage": {
+        "pollen": "not_covered",
+        "air_quality": "model_grid"
+      }
+    },
+    "disclaimer": {
+      "code": "ADVISORY_NOT_MEDICAL",
+      "params": {},
+      "text": "Advisory only, not medical advice. Stop if you feel unwell."
+    }
+  }
+}

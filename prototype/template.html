@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GOTime watch prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#18343b;--teal:#176a70;--aqua:#9fe8dd;--paper:#fbf8f2;--line:#e4ddd0;--mute:#6b7c80;--warn:#e8b04a;--hot:#e0714f}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Instrument Sans",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+header{padding:18px 28px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em;margin-right:auto}
+.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--ink);padding:6px 14px;border-radius:999px;cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff}
+.src{font-size:13px;color:var(--mute);padding:6px 28px 0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mute);margin-right:6px;vertical-align:1px}
+.dot.live{background:#2fa36b}
+.scens{display:flex;gap:10px;flex-wrap:wrap;padding:14px 28px 0}
+.sc{font:inherit;text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;cursor:pointer;min-width:170px;color:var(--ink)}
+.sc small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin-bottom:2px}
+.sc span{font-size:14px;font-weight:600}
+.sc.on{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal) inset}
+main{display:grid;grid-template-columns:minmax(290px,360px) 1fr;gap:28px;padding:18px 28px 40px}
+@media (max-width:860px){main{grid-template-columns:1fr}}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:0 0 12px;font-weight:600}
+.ctl{margin:0 0 13px}
+.ctl label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.ctl label b{font-weight:600}
+input[type=range]{width:100%;accent-color:var(--teal)}
+select{width:100%;font:inherit;font-size:14px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.tog{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.tog button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.tog button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+details{margin-top:6px}
+summary{cursor:pointer;font-size:14px;color:var(--teal);font-weight:600;margin-bottom:10px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:16px}
+.watch{width:300px;height:356px;border-radius:84px;background:linear-gradient(145deg,#3a3f42,#1d2022);padding:16px;position:relative;box-shadow:0 30px 60px -20px rgba(24,52,59,.45)}
+.watch:before{content:"";position:absolute;right:-9px;top:96px;width:12px;height:52px;border-radius:6px;background:#2d3134}
+.watch:after{content:"";position:absolute;right:-6px;top:170px;width:7px;height:36px;border-radius:4px;background:#2d3134}
+.screen{width:100%;height:100%;border-radius:68px;background:#000;color:#fff;overflow:hidden;position:relative}
+.scr{position:absolute;inset:0;padding:28px 24px 20px;display:none;flex-direction:column}
+.scr.on{display:flex;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.clock{font-size:14px;color:#aab;text-align:right;font-weight:500}
+.big{font-size:56px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.comp{margin-top:auto;background:#151a1b;border-radius:20px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.comp:hover{background:#1c2426}
+.ring{width:44px;height:44px;flex:none}
+.k{font-size:11px;color:#9aa;text-transform:uppercase;letter-spacing:.07em}
+.hl{font-size:23px;font-weight:600;line-height:1.08;letter-spacing:-.01em;margin:4px 0 2px}
+.sub{font-size:13px;color:#aab;line-height:1.3}
+.rows{margin-top:9px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:9px;align-items:center;font-size:14px;line-height:1.2}
+.row i{font-style:normal;width:22px;height:22px;border-radius:50%;background:#152224;display:grid;place-items:center;font-size:12px;color:var(--aqua);flex:none}
+.btns{display:flex;gap:8px;margin-top:auto}
+.btn{flex:1;font:inherit;font-size:15px;font-weight:600;border:0;border-radius:999px;padding:10px 0;cursor:pointer;background:#1e2628;color:#fff}
+.btn.go{background:var(--aqua);color:#062b2e}
+.why{overflow:auto;margin:6px -6px 0;padding:0 6px;scrollbar-width:none}
+.why::-webkit-scrollbar{display:none}
+.why .it{border-bottom:1px solid #1d2426;padding:7px 0}
+.why .it b{font-size:13px;color:var(--aqua);font-weight:600}
+.why .it em{font-style:normal;font-size:10px;color:#8a9;border:1px solid #2a3537;border-radius:6px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.why .it div{font-size:12.5px;color:#dde;line-height:1.3;margin-top:2px}
+.pace{font-size:46px;font-weight:600;letter-spacing:-.03em;text-align:center;line-height:1;margin-top:4px}
+.pace small{font-size:15px;color:#9aa;font-weight:500;margin-left:2px}
+.cap{text-align:center;font-size:13px;color:#aab;margin-top:4px}
+.bar{height:8px;border-radius:4px;background:#1d2426;margin:10px 4px 6px;position:relative;overflow:hidden}
+.bar span{position:absolute;left:0;top:0;bottom:0;background:var(--aqua);border-radius:4px;transition:width .3s}
+.stats{display:flex;justify-content:space-between;font-size:12.5px;color:#cdd;padding:0 4px}
+.alert{background:var(--warn);color:#2a1d00;border-radius:14px;padding:7px 10px;font-size:13px;font-weight:600;margin-top:8px;text-align:center;display:none}
+.alert.on{display:block;animation:pulse 1s ease 2}
+.alert.info{background:var(--aqua);color:#062b2e}
+.alert.stop{background:var(--hot);color:#fff}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.pm{display:flex;gap:8px;margin-top:auto}
+.pm .btn{padding:8px 0;font-size:14px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.steps button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.steps button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.hint{font-size:13px;color:var(--mute);text-align:center;max-width:400px;line-height:1.45}
+.story{max-width:400px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;font-size:14px;line-height:1.45}
+.story b{font-weight:600}
+.insp{grid-column:1/-1}
+body.runner .insp{display:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.card{background:var(--paper);border-radius:12px;padding:10px 12px}
+.card .k{color:var(--mute)}
+.card .v{font-size:19px;font-weight:600;margin-top:2px}
+.card .n{font-size:12px;color:var(--mute);margin-top:2px;line-height:1.3}
+.strip{margin:18px 0 6px}
+.strip svg{width:100%;height:150px;display:block}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--mute);flex-wrap:wrap}
+.legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.legend span.nb:before{display:none}
+.ev{display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:13.5px;margin-top:10px;max-width:880px}
+.ev .t{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line);white-space:nowrap;justify-self:start}
+.ev .t.a{background:#fff4e0;border-color:#f0d9a8}
+.foot{font-size:12px;color:var(--mute);margin-top:14px;line-height:1.5}
+.ms{font-size:12px;color:var(--mute);text-transform:none;letter-spacing:0;font-weight:400}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);margin:20px 0 4px;font-weight:600}
+</style>
+</head>
+<body class="runner">
+<header>
+  <h1>GOTime · watch prototype</h1>
+  <div class="seg" id="locSeg"><button data-l="ams" class="on">Amsterdam</button><button data-l="chn">Chennai</button></div>
+  <div class="seg" id="viewSeg"><button data-v="runner" class="on">Runner view</button><button data-v="partner">Partner view</button></div>
+</header>
+<div class="src" id="src"><span class="dot"></span>Loading…</div>
+<div class="scens" id="scens"></div>
+<main>
+  <section class="panel">
+    <h2>Time</h2>
+    <div class="ctl"><label>Now <b id="nowV"></b></label><input id="now" type="range" min="4" max="21" step="0.25"></div>
+    <h2 style="margin-top:16px">Runner</h2>
+    <div class="ctl"><label>Planned pace <b id="paceV"></b></label><input id="pace" type="range" min="4" max="9" step="0.0833"></div>
+    <div class="ctl"><label>Duration <b id="durV"></b></label><input id="dur" type="range" min="20" max="120" step="5"></div>
+    <div class="ctl"><label>Body mass <b id="kgV"></b></label><input id="kg" type="range" min="45" max="110" step="1"></div>
+    <div class="ctl"><label>Height <b id="htV"></b></label><input id="ht" type="range" min="1.5" max="2.0" step="0.01"></div>
+    <div class="ctl"><label>Clothing</label><select id="cloth"><option value="kit">Running kit</option><option value="light">Full-length, light synthetic</option><option value="cotton">Full-length cotton</option></select></div>
+    <div class="tog"><button id="acc">Heat-adapted</button><button id="hay">Hay fever</button></div>
+    <details><summary>Push the conditions</summary>
+      <div class="ctl"><label>Temperature shift <b id="dtV"></b></label><input id="dt" type="range" min="-6" max="10" step="0.5" value="0"></div>
+      <div class="ctl"><label>Humidity shift <b id="drhV"></b></label><input id="drh" type="range" min="-30" max="20" step="5" value="0"></div>
+      <div class="ctl"><label>Particles (PM) × <b id="pmV"></b></label><input id="pmx" type="range" min="0.5" max="5" step="0.25" value="1"></div>
+      <div class="ctl"><label>Ozone × <b id="o3V"></b></label><input id="o3" type="range" min="0.5" max="2.5" step="0.1" value="1"></div>
+      <div class="ctl"><label>Pollen + <b id="polV"></b></label><input id="pol" type="range" min="0" max="200" step="10" value="0"></div>
+      <div class="ctl"><label>Wind × <b id="wsV"></b></label><input id="wsx" type="range" min="0" max="2.5" step="0.1" value="1"></div>
+    </details>
+  </section>
+
+  <section class="stage">
+    <div class="watch"><div class="screen">
+      <div class="scr" data-s="0">
+        <div class="clock" id="g-date"></div>
+        <div class="big" id="g-time" style="margin-top:10px"></div>
+        <div class="comp" onclick="go(1)">
+          <svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="#1d2a2c" stroke-width="5"/><circle id="g-ring" cx="22" cy="22" r="18" fill="none" stroke="#9fe8dd" stroke-width="5" stroke-linecap="round" transform="rotate(-90 22 22)" stroke-dasharray="113" stroke-dashoffset="40"/></svg>
+          <div><div class="k">GOTime</div><div style="font-size:16px;font-weight:600;line-height:1.15" id="g-txt"></div></div>
+        </div>
+      </div>
+      <div class="scr" data-s="1">
+        <div class="clock" id="p-clock"></div>
+        <div class="hl" id="p-hl"></div>
+        <div class="sub" id="p-sub"></div>
+        <div class="rows" id="p-rows"></div>
+        <div class="btns" id="p-btns"></div>
+      </div>
+      <div class="scr" data-s="2">
+        <div class="k" style="text-align:center">Why</div>
+        <div class="why" id="w-list"></div>
+        <div class="btns" style="margin-top:8px"><button class="btn" onclick="go(1)">Back</button></div>
+      </div>
+      <div class="scr" data-s="3">
+        <div class="clock" id="r-clock"></div>
+        <div class="pace" id="r-pace"></div>
+        <div class="cap" id="r-cap"></div>
+        <div class="bar"><span id="r-bar"></span></div>
+        <div class="stats"><span id="r-el"></span><span id="r-km"></span><span id="r-core"></span></div>
+        <div class="alert" id="r-alert"></div>
+        <div class="pm"><button class="btn" onclick="nudge(1)">Slower</button><button class="btn" onclick="endRun()">End</button><button class="btn" onclick="nudge(-1)">Faster</button></div>
+      </div>
+      <div class="scr" data-s="4">
+        <div class="k">Done</div>
+        <div class="hl" id="s-hl"></div>
+        <div class="rows" id="s-rows"></div>
+        <div class="btns"><button class="btn go" onclick="go(0)">Close</button></div>
+      </div>
+    </div></div>
+    <div class="steps" id="steps"><button data-g="0">1 Glance</button><button data-g="1">2 Plan</button><button data-g="2">3 Why</button><button data-g="3">4 Run</button><button data-g="4">5 Done</button></div>
+    <div class="story" id="story"></div>
+    <div class="hint">Tap the watch. During the run, one second is one minute; press Faster to push your body temperature and see the alert.</div>
+  </section>
+
+  <section class="panel insp">
+    <h2>What the engine sees <span class="ms" id="ms"></span></h2>
+    <div class="cards" id="cards"></div>
+    <div class="strip"><svg id="strip" viewBox="0 0 960 150" preserveAspectRatio="none"></svg></div>
+    <div class="legend"><span style="--c:#9fe8dd">Green</span><span style="--c:#e8b04a">Yellow</span><span style="--c:#e0714f">Red</span><span style="--c:#2b2b2b">Black: indoors</span><span style="--c:#176a70">Your window</span><span class="nb">Bars: heat stress (WBGT, °C), coloured by the worst of heat, air and cold · dashed lines: your Red and Black heat lines</span></div>
+    <h3>How sure each part is</h3>
+    <div class="ev" id="ev"></div>
+    <details><summary>Show the formulas</summary>
+      <div style="font-size:13px;line-height:1.6">
+        <p><b>Heat stress.</b> WBGT = 0.7·natural wet bulb + 0.2·globe + 0.1·air, each solved from temperature, humidity, sun angle and wind (Liljegren 2008).</p>
+        <p><b>Heat bands.</b> Not heat-adapted: 18 / 23 / 28 °C (ACSM). Heat-adapted: +4.4 °C, the ISO 7243 acclimatisation offset at running effort, so indoors above 32.4 °C (US Army Category 5 starts at 32.2 °C).</p>
+        <p><b>Heat budget</b> (simplified ISO 7933). Heat made M = MET·1.163·kg. Shed by air and radiation A·(h_c(T_skin − T_air) + 0.72·h_r(T_skin − T_radiant)), by breathing, and by sweat up to E_max = A·16.5·h_c·(p_skin − p_air), capped by maximum sweat (400 W/m², +25 % heat-adapted). Heat that cannot be shed is stored: core rises by S/(kg·3490) per second on top of the steady core 36.6 + 0.0036·M/A. The plan keeps the core below 39 °C.</p>
+        <p><b>Cardiovascular load.</b> RR = exp(H + P). H = 0.00508·max(0, WBGT − local reference). P = max over pollutants of β·f·max(0, C − WHO), β from Stafoggia 2023 at the local temperature percentile, f = (MET − 1.55)·minutes / (1.55·1440).</p>
+        <p><b>Air guard rails.</b> PM2.5 hourly above 60 / 120 / 250 µg/m³ (India NAQI bands), ozone above 180 / 240 (EU thresholds). <b>Cold.</b> Wind chill at your running airflow: −10 / −27 / −40 °C. <b>Pollen.</b> 50 grains/m³ with hay fever on.</p>
+      </div>
+    </details>
+    <p class="foot">Prototype for demonstration, not medical advice. Weather: Open-Meteo and ERA5; air: CAMS (Europe for Amsterdam, global for Chennai). Opened as a file on a computer, the page fetches today's forecast for the chosen city; inside the published link it uses today's readings captured on 13 Nov. Chennai's global air grid is coarse and reads low for city streets.</p>
+  </section>
+</main>
+<script>
+/*ENGINE*/
+/*DATA*/
+const $ = id => document.getElementById(id);
+const S = { loc: "ams", scen: "live", now: 7, pace: 6+20/60, dur: 45, kg: 72, ht: 1.8, cloth: "kit", acc: false, hay: false, dt: 0, drh: 0, pmx: 1, o3: 1, pol: 0, wsx: 1, screen: 0 };
+let DATA = JSON.parse(JSON.stringify(SCENARIOS)), R = null;
+const LIVE = { ams: false, chn: false };
+const run = { on: false, t: 0, km: 0, pace: 0, peak: 37, over: 0, timer: null, base: 37, store: 0 };
+const STORIES = {
+  "ams.live": "<b>City run.</b> A mild November day. The engine finds nothing to fear in heat or cold; what changes through the day is traffic NO₂, which peaks at the evening rush. Switch to Partner view to see how small the air effect is for one run.",
+  "ams.heat": "<b>Heat run.</b> A Dutch heatwave for a runner who is not heat-adapted. Morning is fine; from midday the heat stress crosses the Red line. Toggle Heat-adapted to see the bands move by 4.4 °C.",
+  "ams.pollen": "<b>Pollen run.</b> Grass pollen climbs after 8:00. With Hay fever on, the window closes before the peak; turn it off and the advice relaxes.",
+  "ams.cold": "<b>Cold run.</b> −6 °C at dawn and a 25 km/h wind. Cold narrows blood vessels and raises blood pressure, so the watch moves you to midday, starts you into the wind and tells you to warm up indoors first.",
+  "chn.live": "<b>Chennai today.</b> 24 °C and 90 % humidity at dawn. A heat-adapted runner is fine before 9:00; the old one-size limit would have said no all day. The air grid here is coarse and reads low.",
+  "chn.heat": "<b>Heat run.</b> Real weather from 6 May 2024: heat stress 28 °C at 5:00 and 34 °C by 11:00. Heat-adapted, a dawn run is fine if you drink. Switch Heat-adapted off and the same day becomes indoors only.",
+  "chn.bhogi": "<b>City run.</b> Bhogi morning: bonfire smoke pushes PM2.5 past 250 just when Chennai runners usually go out. The engine moves the run to the afternoon, when the air clears.",
+};
+
+const nowIn = tz => { const p = new Intl.DateTimeFormat("en-GB",{timeZone:tz,hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(new Date());
+  return +p.find(x=>x.type==="hour").value + +p.find(x=>x.type==="minute").value/60; };
+const fmtStamp = (iso, tz) => new Date(iso).toLocaleString("en-GB",{timeZone:tz,day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const LOC = () => LOCATIONS[S.loc];
+
+async function tryLive(key) {
+  const L = LOCATIONS[key], q = `latitude=${L.lat}&longitude=${L.lon}&timezone=${encodeURIComponent(L.tz)}&forecast_days=1`;
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 5000);
+    const pol = L.pollen ? ",grass_pollen,birch_pollen,alder_pollen,mugwort_pollen" : "";
+    const [w, a] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?${q}&hourly=temperature_2m,relative_humidity_2m,shortwave_radiation,wind_speed_10m,wind_direction_10m`, {signal: ctl.signal}).then(r => r.json()),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${q}&hourly=pm10,pm2_5,nitrogen_dioxide,ozone${pol}&domains=${L.aqDomain}`, {signal: ctl.signal}).then(r => r.json())]);
+    const H = w.hourly, A = a.hourly, z = v => (v ?? 0);
+    const sum = i => ["grass_pollen","birch_pollen","alder_pollen","mugwort_pollen"].reduce((s,k) => s + z(A[k] && A[k][i]), 0);
+    Object.assign(DATA[key].live, { date: H.time[0].slice(0,10), fetched: new Date().toISOString(),
+      t: H.temperature_2m.map(z), rh: H.relative_humidity_2m.map(z), sw: H.shortwave_radiation.map(z), ws: H.wind_speed_10m.map(z), wd: H.wind_direction_10m.map(z),
+      pm10: A.pm10.map(z), pm25: A.pm2_5.map(z), no2: A.nitrogen_dioxide.map(z), o3: A.ozone.map(z), pollen: L.pollen ? A.time.map((_,i) => sum(i)) : null });
+    LIVE[key] = true;
+  } catch (e) {}
+  srcLine(); update();
+}
+function srcLine() {
+  const d = DATA[S.loc][S.scen], L = LOC();
+  $("src").innerHTML = S.scen !== "live" ? `<span class="dot"></span>${d.label}`
+    : LIVE[S.loc] ? `<span class="dot live"></span>Live: ${L.name}, fetched ${fmtStamp(d.fetched, L.tz)} local time`
+    : `<span class="dot"></span>${L.name} today: real readings captured ${fmtStamp(d.fetched, L.tz)} local time (live fetch is blocked inside the published link)`;
+}
+
+function conditions() {
+  const d = DATA[S.loc][S.scen], o = { date: d.date };
+  for (const k of ["t","rh","sw","ws","wd","pm10","pm25","no2","o3"]) o[k] = d[k].slice();
+  o.pollen = d.pollen ? d.pollen.map(x => x + S.pol) : null;
+  o.t = o.t.map(x => x + S.dt); o.rh = o.rh.map(x => Math.max(5, Math.min(100, x + S.drh)));
+  o.pm25 = o.pm25.map(x => x*S.pmx); o.pm10 = o.pm10.map(x => x*S.pmx); o.o3 = o.o3.map(x => x*S.o3); o.ws = o.ws.map(x => x*S.wsx);
+  return o;
+}
+const user = () => ({ pace: S.pace, minutes: S.dur, kg: S.kg, height: S.ht, acc: S.acc, cloth: S.cloth, hayfever: S.hay, now: S.now });
+
+function update() {
+  const t0 = performance.now(), d = conditions(), L = LOC();
+  R = ENG.evaluate(d, user(), L);
+  const ms = performance.now() - t0;
+  if (DATA[S.loc][S.scen].gridNote) R.reasons.forEach(r => { if (r.k === "Air") r.text += " Model grid only: city streets read higher."; });
+  // labels
+  $("nowV").textContent = ENG.fmtHM(S.now); $("paceV").textContent = ENG.fmtPace(S.pace) + "/km";
+  $("durV").textContent = S.dur + " min"; $("kgV").textContent = S.kg + " kg"; $("htV").textContent = Math.round(S.ht*100) + " cm";
+  $("dtV").textContent = (S.dt > 0 ? "+" : "") + S.dt + " °C"; $("drhV").textContent = (S.drh > 0 ? "+" : "") + S.drh + " %";
+  $("pmV").textContent = S.pmx.toFixed(2); $("o3V").textContent = S.o3.toFixed(1); $("polV").textContent = L.pollen ? S.pol + " /m³" : "n/a here"; $("wsV").textContent = S.wsx.toFixed(1);
+  $("acc").classList.toggle("on", S.acc); $("hay").classList.toggle("on", S.hay); $("cloth").value = S.cloth;
+  // glance
+  const dt = new Date(d.date + "T12:00:00");
+  $("g-date").textContent = dt.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}) + " · " + L.name;
+  $("g-time").textContent = ENG.fmtHM(S.now);
+  $("g-txt").textContent = R.indoor ? "Indoors today" : R.headline;
+  const left = Math.max(0, Math.min(1, (R.end - S.now)/8));
+  $("g-ring").setAttribute("stroke-dashoffset", (113*(1 - (R.indoor ? 1 : R.start > S.now + .5 ? 0.15 : left))).toFixed(1));
+  $("g-ring").setAttribute("stroke", R.indoor ? "#e0714f" : "#9fe8dd");
+  // plan
+  $("p-clock").textContent = ENG.fmtHM(S.now);
+  $("p-hl").textContent = R.headline; $("p-sub").textContent = R.sub;
+  const row = (i,t) => `<div class="row"><i>${i}</i><span>${t}</span></div>`;
+  if (R.indoor) {
+    $("p-rows").innerHTML = L.indoor.map((t,k) => row(["🏃","🏋","⏰"][k], t)).join("");
+    $("p-btns").innerHTML = `<button class="btn" onclick="go(2)">Why</button><button class="btn go" onclick="go(0)">OK</button>`;
+  } else {
+    const capP = R.capS ? ENG.paceOf(R.capS) : null;
+    let paceTxt;
+    if (R.mode === "short") paceTxt = capP ? `Max ${R.dlimPlan} min at ${ENG.fmtPace(S.pace)}, or ${S.dur} min at ${ENG.fmtPace(capP)}` : `Max ${R.dlimPlan} min, easy`;
+    else if (!capP || capP < S.pace - 0.5) paceTxt = `${S.dur} min at ${ENG.fmtPace(S.pace)} is fine`;
+    else paceTxt = `Keep slower than ${ENG.fmtPace(capP)}/km`;
+    const drinkTxt = R.drink === "Optional" ? "Water optional" : `Take ${R.drink}${L.drinkTip ? " · " + L.drinkTip : ""}`;
+    $("p-rows").innerHTML = row("⏱", paceTxt) + row("➚", `${R.direction.short} · ${R.route.name}`) + row("💧", drinkTxt);
+    $("p-btns").innerHTML = `<button class="btn" onclick="go(2)">Why</button><button class="btn go" onclick="startRun()">Start</button>`;
+  }
+  $("w-list").innerHTML = R.reasons.map(r => `<div class="it"><b>${r.k}</b><em>${r.tag}</em><div>${r.text}</div></div>`).join("");
+  $("story").innerHTML = STORIES[S.loc + "." + S.scen] || "";
+  inspector(d, ms);
+}
+
+function card(k, v, n) { return `<div class="card"><div class="k">${k}</div><div class="v">${v}</div>${n ? `<div class="n">${n}</div>` : ""}</div>`; }
+function inspector(d, ms) {
+  const b = R.best, L = LOC(), e = ENG.bandEdges(S.acc);
+  const capP = R.capS ? ENG.paceOf(R.capS) : null;
+  const alt = R.best.airAlt, saving = alt.P > b.P*1.05 ? Math.round((1 - b.P/Math.max(1e-9, alt.P))*100) : 0;
+  $("ms").textContent = `· recomputed 24 hours in ${ms.toFixed(1)} ms`;
+  $("cards").innerHTML = [
+    card("Best slot", `${b.h}:00`, R.indoor ? "No safe outdoor slot" : `Window ${ENG.fmtHM(R.start)}–${ENG.fmtHM(R.end)}`),
+    card("Heat stress", `${b.W.toFixed(1)} °C`, `WBGT · wet bulb ${b.tnw.toFixed(1)} · globe ${b.tg.toFixed(1)}`),
+    card("Your heat lines", `${e[1]} / ${e[2]} °C`, `Red / indoors · ${S.acc ? "heat-adapted" : "not heat-adapted"}`),
+    card("Time to 39 °C core", b.b.dlim >= 240 ? "No limit" : `${b.b.dlim} min`, `At ${ENG.fmtPace(S.pace)}/km · steady core ${b.b.Teq.toFixed(1)} °C`),
+    card("Fastest pace, " + S.dur + " min", capP ? ENG.fmtPace(capP) : "Walk only", "Inside the heat budget"),
+    card("Sweat", `${Math.round(b.b.sweatMlH)} ml/h`, `Needs ${Math.round(Math.max(0,b.b.Ereq))} W of ${Math.round(b.b.Emax)} W possible`),
+    card("Radiant temp", `${b.tmrt.toFixed(0)} °C`, `Sun, sky and ground on the body · air ${b.t.toFixed(1)} °C`),
+    card("PM2.5", `${Math.round(b.pm25)}`, `µg/m³ · band ${ENG.FLAGS[ENG.airBand(b.pm25,0)]} · peak ${Math.round(Math.max(...d.pm25))}`),
+    card("Ozone · NO₂", `${Math.round(b.o3)} · ${Math.round(b.no2)}`, "µg/m³ · WHO 100 · 25"),
+    card("Air term P", b.P.toFixed(4), (b.driver ? ENG.NAMES[b.driver] + " · " : "") + `run = ${(R.f*100).toFixed(1)}% of a day's breathing` + (saving > 5 ? ` · ${R.route.name} −${saving}%` : "")),
+    card("Heat term H", b.H.toFixed(3), `Above local reference ${R.W0} °C · day at p${Math.round(R.pct)}`),
+    card("Cardio load", `×${b.rr.toFixed(3)}`, `vs a cool, clean hour · worst ×${R.worst.rr.toFixed(3)}`),
+    card("Wind chill", b.t < 10 ? `${b.head.toFixed(0)} °C` : "n/a", b.t < 10 ? `Into the wind at your pace · breathing ${Math.round(R.breath)} W` : `Only applies below 10 °C · breathing ${Math.round(R.breath)} W`),
+    card("Pollen", d.pollen ? `${Math.round(b.pollen)}` : "n/a", d.pollen ? `grains/m³ · flag at 50${S.hay ? "" : " (hay fever off)"}` : "No forecast for this region"),
+  ].join("");
+  // strip
+  const W = 960, Hh = 150, top = 12, bot = 26, x0 = 6;
+  const vals = R.hours.map(h => h.W), mx = Math.max(e[2] + 2, ...vals) + 1, mn = Math.min(0, ...vals);
+  const y = v => top + (Hh - top - bot)*(1 - (v - mn)/(mx - mn)), bw = (W - x0*2)/24;
+  const col = ["#9fe8dd","#e8b04a","#e0714f","#2b2b2b"];
+  let s = R.indoor ? "" : `<rect x="${x0 + R.start*bw}" y="0" width="${Math.max(2,(R.end - R.start)*bw)}" height="${Hh-bot+4}" fill="#176a70" opacity=".12" rx="6"/>`;
+  R.hours.forEach((h,i) => { s += `<rect x="${x0 + i*bw + 3}" y="${y(h.W)}" width="${bw-6}" height="${Math.max(1, y(mn) - y(h.W))}" rx="3" fill="${col[h.flag]}"><title>${i}:00 · WBGT ${h.W.toFixed(1)} · PM2.5 ${Math.round(h.pm25)} · ${h.b.dlim >= 240 ? "no time limit" : h.b.dlim + " min to 39 °C"}</title></rect>`;
+    if (i % 3 === 0) s += `<text x="${x0 + i*bw + bw/2}" y="${Hh-8}" font-size="11" text-anchor="middle" fill="#6b7c80">${i}:00</text>`; });
+  [[e[1],"Red"],[e[2],"indoors"]].forEach(([v,t]) => { s += `<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#18343b" stroke-dasharray="5 4" stroke-width="1"/><text x="${W-6}" y="${y(v)-4}" font-size="11" text-anchor="end" fill="#18343b">${t} ${v} °C</text>`; });
+  s += `<line x1="${x0 + S.now*bw}" x2="${x0 + S.now*bw}" y1="0" y2="${Hh-bot+4}" stroke="#176a70" stroke-width="2"/><text x="${x0 + S.now*bw + 4}" y="11" font-size="11" fill="#176a70">now</text>`;
+  $("strip").innerHTML = s;
+  const EV = [
+    ["Heat stress from weather (Liljegren WBGT)", "Published method"],
+    ["Heat lines: ACSM bands; +4.4 °C when heat-adapted (ISO 7243); indoors line ≈ US Army Category 5", "Published standards"],
+    ["Body heat budget and the 39 °C core cap (simplified ISO 7933)", "Standard, simplified"],
+    ["Air effect per pollutant (Stafoggia 2023) at the local temperature percentile", "Published slopes"],
+    ["Air guard rails: India NAQI PM2.5 bands, EU ozone thresholds", "Published bands"],
+    ["Wind chill (Environment Canada) and the cold warm-up advice", "Index + mechanism"],
+    ["Pollen line at 50 grains/m³", "Published threshold"],
+    ["Local heat reference for the cardio term (Amsterdam 10 °C, Chennai 21.8 °C)", "Assumption"],
+    ["Clothing, route exposure and cold weights", "Demo values"],
+  ];
+  $("ev").innerHTML = EV.map(([a,t]) => `<div>${a}</div><div class="t${/Assumption|Demo/.test(t) ? " a" : ""}">${t}</div>`).join("");
+}
+
+function go(n) {
+  if (n === 3 && !run.on) { if (R.indoor) return go(1); return startRun(); }
+  if (n !== 3 && run.on && n !== 4) stopTimer();
+  S.screen = n;
+  document.querySelectorAll(".scr").forEach(e => e.classList.toggle("on", +e.dataset.s === n));
+  document.querySelectorAll("#steps button").forEach(b => b.classList.toggle("on", +b.dataset.g === n));
+  if (n === 4 && !$("s-hl").textContent) summary();
+}
+function startRun() {
+  Object.assign(run, { on: true, t: 0, km: 0, pace: S.pace, peak: 37, over: 0, turned: false, startH: Math.max(S.now, R.indoor ? S.now : R.start), base: 37, store: 0 });
+  $("s-hl").textContent = ""; go(3); tickRun(true); stopTimer(); run.on = true; run.timer = setInterval(() => tickRun(false), 1000);
+}
+function stopTimer() { clearInterval(run.timer); run.timer = null; run.on = false; }
+function nudge(dir) { run.pace = Math.max(3.5, Math.min(10, run.pace + dir*0.25)); tickRun(true); }
+function tickRun(noAdvance) {
+  const d = conditions(), L = LOC(), h = Math.min(23.9, run.startH + run.t/60), c = ENG.hourConditions(d, Math.floor(h), L);
+  const speed = 1000/(run.pace*60), b = ENG.budget(c, speed, user());
+  if (!noAdvance) { run.t += 1; run.km += speed*60/1000; run.base += (b.Teq - run.base)/10; run.store = Math.max(0, run.store + (b.S > 0 ? b.rise : -b.drain)); }
+  const core = run.base + run.store; run.peak = Math.max(run.peak, core);
+  const hb = ENG.heatBand(c.W, S.acc), ab = ENG.airBand(c.pm25*(L.routes[0].x.pm25||1), c.o3);
+  if (!noAdvance && (core >= 39 || hb === 3 || ab === 3)) run.over += 1;
+  $("r-clock").textContent = ENG.fmtHM(h);
+  $("r-pace").innerHTML = ENG.fmtPace(run.pace) + "<small>/km</small>";
+  const cap = ENG.maxSpeedFor(c, Math.max(10, S.dur - run.t), user());
+  $("r-cap").textContent = !cap ? "Heat: walk only" : ENG.paceOf(cap) < 3.6 ? "No heat cap on pace" : "Heat cap " + ENG.fmtPace(ENG.paceOf(cap)) + "/km";
+  $("r-bar").style.width = Math.min(100, run.t/S.dur*100) + "%";
+  $("r-el").textContent = run.t + " min"; $("r-km").textContent = run.km.toFixed(2) + " km"; $("r-core").textContent = "Core ≈ " + core.toFixed(1) + " °C";
+  let msg = "", cls = "";
+  if (core >= 39) { msg = "Walk now and cool down"; cls = "stop"; }
+  else if (core >= 38.7) { msg = "Body heat rising: ease off"; }
+  else if (hb === 3) { msg = "Too hot now: head home"; cls = "stop"; }
+  else if (ab >= 2) { msg = "Smoke thickening: cut it short"; }
+  else if (c.t < 5 && run.t <= 8) { msg = "Easy first km: let your heart warm up"; cls = "info"; }
+  else if (!run.turned && run.t >= S.dur/2 && R.direction.short !== "Any direction") { msg = "Halfway: turn now, tailwind home"; cls = "info"; if (run.t >= S.dur/2 + 3) run.turned = true; }
+  else if (R.drink !== "Optional" && run.t % 15 === 0 && run.t > 0) { msg = "Drink a few sips"; cls = "info"; }
+  const al = $("r-alert"); al.textContent = msg; al.className = "alert" + (msg ? " on " + cls : "");
+  if (!noAdvance && run.t >= S.dur) endRun();
+}
+function endRun() { stopTimer(); summary(); go(4); }
+function summary() {
+  const dur = run.t || S.dur, km = run.km || S.dur/S.pace;
+  const within = dur ? Math.round(100*(1 - run.over/dur)) : 100;
+  $("s-hl").textContent = within >= 95 ? "Well judged" : within >= 70 ? "Mostly inside your limits" : "Pushed it";
+  const loss = R.best.b.sweatMlH*dur/60;
+  $("s-rows").innerHTML = [["⏱", `${km.toFixed(2)} km · ${dur} min`], ["🌡", `Peak core ≈ ${(run.peak || 37).toFixed(1)} °C`],
+    ["✓", `${within}% of the run inside your limits`], ["💧", loss < 300 ? "No need to top up" : `Replace about ${Math.round(loss/50)*50} ml`]]
+    .map(([i,t]) => `<div class="row"><i>${i}</i><span>${t}</span></div>`).join("");
+}
+
+// ---- controls
+function scenButtons() {
+  $("scens").innerHTML = Object.entries(DATA[S.loc]).map(([k,v]) => `<button class="sc${k === S.scen ? " on" : ""}" data-k="${k}"><small>${v.type}</small><span>${v.label}</span></button>`).join("");
+  document.querySelectorAll(".sc").forEach(b => b.onclick = () => { S.scen = b.dataset.k; S.hay = !!DATA[S.loc][S.scen].hay || LOCATIONS[S.loc].persona.hay; setNow(); scenButtons(); srcLine(); syncInputs(); update(); go(1); });
+}
+function setNow() { const L = LOC(); S.now = S.scen === "live" ? Math.max(4, Math.min(21, Math.round(nowIn(L.tz)*4)/4)) : (S.loc === "chn" ? 5.25 : 6.5); }
+function setLoc(l) { S.loc = l; S.scen = "live"; const p = LOCATIONS[l].persona;
+  Object.assign(S, { kg: p.kg, ht: p.height, acc: p.acc, cloth: p.cloth, hay: p.hay, pace: p.pace, dur: p.dur, dt: 0, drh: 0, pmx: 1, o3: 1, pol: 0, wsx: 1 });
+  document.querySelectorAll("#locSeg button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
+  setNow(); scenButtons(); syncInputs(); srcLine(); update(); go(0); }
+const IN = { now: "now", pace: "pace", dur: "dur", kg: "kg", ht: "ht", dt: "dt", drh: "drh", pmx: "pmx", o3: "o3", pol: "pol", wsx: "wsx" };
+function syncInputs() { for (const [id,k] of Object.entries(IN)) $(id).value = S[k]; }
+for (const [id,k] of Object.entries(IN)) $(id).addEventListener("input", e => { S[k] = +e.target.value; update(); });
+$("cloth").onchange = e => { S.cloth = e.target.value; update(); };
+$("acc").onclick = () => { S.acc = !S.acc; update(); };
+$("hay").onclick = () => { S.hay = !S.hay; update(); };
+document.querySelectorAll("#locSeg button").forEach(b => b.onclick = () => setLoc(b.dataset.l));
+document.querySelectorAll("#viewSeg button").forEach(b => b.onclick = () => { document.querySelectorAll("#viewSeg button").forEach(x => x.classList.toggle("on", x === b)); document.body.className = b.dataset.v; });
+document.querySelectorAll("#steps button").forEach(b => b.onclick = () => go(+b.dataset.g));
+setLoc("ams"); tryLive("ams"); tryLive("chn");
+</script>
+</body>
+</html>

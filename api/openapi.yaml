@@ -1,0 +1,449 @@
+openapi: 3.1.0
+info:
+  title: GOTime Recommendation API
+  version: 1.0.0
+  summary: When, how hard and where to run, given heat, air, pollen, cold, wind and the athlete.
+  description: |
+    One call returns a decision a partner can show as-is (summary), the guidance behind it,
+    ranked reasons with their evidence level, and optionally the hour-by-hour timeline.
+
+    Conventions (same as Strava and Garmin FIT where they overlap):
+    - SI units, unit in the field name: `_s`, `_m`, `_mps`, `_s_per_km`, `_c`, `_ugm3`, `_ml`, `_deg`, `_pct`.
+    - Times are ISO 8601 with the location's UTC offset; `timezone` is an IANA name.
+    - Every decision is a stable code plus `params`. `text` is optional, rendered in `lang`, and safe to ignore.
+    - `null` means "not applicable / no limit", never "missing data". Missing data is reported in `data.coverage`.
+    - Levels: 0 green, 1 yellow, 2 red, 3 black (black = do not run outdoors).
+    - Additive changes only within a major version. Unknown enum values must be treated as the nearest known level.
+    Advisory only; not medical advice.
+servers:
+  - url: https://api.gotime.example/v1
+    description: Placeholder; the prototype runs locally (see README).
+security:
+  - bearer: []
+paths:
+  /recommendations:
+    post:
+      operationId: createRecommendation
+      summary: Plan a run for the rest of today
+      parameters:
+        - $ref: "#/components/parameters/AcceptLanguage"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecommendationRequest" }
+      responses:
+        "200":
+          description: Recommendation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recommendation" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+        "429": { $ref: "#/components/responses/Problem" }
+    get:
+      operationId: getRecommendation
+      summary: Same as POST, with query parameters only (for simple clients and watch apps)
+      parameters:
+        - { name: lat, in: query, required: true, schema: { type: number, minimum: -90, maximum: 90 } }
+        - { name: lon, in: query, required: true, schema: { type: number, minimum: -180, maximum: 180 } }
+        - { name: duration_s, in: query, schema: { type: integer, minimum: 300, maximum: 14400, default: 2700 } }
+        - { name: pace_s_per_km, in: query, schema: { type: integer, minimum: 150, maximum: 900, default: 380 } }
+        - { name: include, in: query, schema: { type: string, example: "hours" } }
+        - $ref: "#/components/parameters/AcceptLanguage"
+      responses:
+        "200":
+          description: Recommendation
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Recommendation" }
+        "400": { $ref: "#/components/responses/Problem" }
+        "422": { $ref: "#/components/responses/Problem" }
+  /live:
+    post:
+      operationId: liveStep
+      summary: In-run guidance, called every 30-60 s during an activity
+      description: Stateless. Send back the `state` string from the previous response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LiveRequest" }
+      responses:
+        "200":
+          description: Live guidance
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LiveResponse" }
+        "400": { $ref: "#/components/responses/Problem" }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer }
+  parameters:
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      description: Language for optional `text` fields. Codes are language-free. v1 ships en-GB.
+      schema: { type: string, default: en-GB }
+  responses:
+    Problem:
+      description: Error (RFC 9457 problem details)
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    # ---------- shared ----------
+    Level:
+      type: integer
+      enum: [0, 1, 2, 3]
+      description: 0 green, 1 yellow, 2 red, 3 black (indoors).
+    LevelName:
+      type: string
+      enum: [green, yellow, red, black]
+    Evidence:
+      type: string
+      description: How solid the basis for this item is.
+      enum: [published_standard, published_method, published_slopes, published_threshold, mechanism, physics, assumption, demo_value, athlete_input]
+    Message:
+      type: object
+      required: [code, params]
+      properties:
+        code: { type: string, pattern: "^[A-Z][A-Z0-9_]+$", examples: [GO_BEFORE] }
+        params:
+          type: object
+          additionalProperties: { type: [string, number, boolean, "null"] }
+        text: { type: string, description: Rendered in the requested language. Optional. }
+      additionalProperties: false
+    Window:
+      type: object
+      required: [start, end]
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+      additionalProperties: false
+    LatLon:
+      type: object
+      required: [lat, lon]
+      properties:
+        lat: { type: number, minimum: -90, maximum: 90 }
+        lon: { type: number, minimum: -180, maximum: 180 }
+
+    # ---------- request ----------
+    RecommendationRequest:
+      type: object
+      required: [location, activity]
+      properties:
+        location: { $ref: "#/components/schemas/LatLon" }
+        now: { type: string, format: date-time, description: Defaults to server time. }
+        activity:
+          type: object
+          required: [type, planned_duration_s]
+          properties:
+            type: { type: string, enum: [run, walk], description: "Maps from Strava sport_type Run/TrailRun/Walk and FIT sport running/walking." }
+            planned_duration_s: { type: integer, minimum: 300, maximum: 14400 }
+            planned_pace_s_per_km: { type: integer, minimum: 150, maximum: 900 }
+            planned_speed_mps: { type: number, minimum: 1.1, maximum: 6.7, description: Alternative to pace. }
+          additionalProperties: false
+        athlete:
+          type: object
+          description: All optional. Defaults are listed in the response under `assumptions`.
+          properties:
+            mass_kg: { type: number, minimum: 30, maximum: 200 }
+            height_m: { type: number, minimum: 1.2, maximum: 2.3 }
+            heat_acclimatised: { type: boolean }
+            clothing: { type: string, enum: [running_kit, full_length_light, full_length_cotton] }
+            hay_fever: { type: boolean }
+          additionalProperties: false
+        route:
+          type: object
+          description: Optional. v1 uses it for the start heading; v1.1 adds shade, slope and wind along the route.
+          properties:
+            id: { type: string }
+            polyline: { type: string, description: "Encoded polyline (Google format, as Strava map.summary_polyline)." }
+            geojson:
+              type: object
+              description: GeoJSON LineString, [lon, lat] order.
+          additionalProperties: false
+        include:
+          type: array
+          items: { type: string, enum: [hours, debug] }
+      additionalProperties: false
+
+    # ---------- response ----------
+    Recommendation:
+      type: object
+      required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, reasons, assumptions, data, disclaimer]
+      properties:
+        schema_version: { type: string, const: "1.0.0" }
+        id: { type: string, description: Pass to /live to link a run to its plan. }
+        generated_at: { type: string, format: date-time }
+        valid_until: { type: string, format: date-time, description: Re-fetch after this time; forecasts update hourly. }
+        location:
+          type: object
+          required: [lat, lon, timezone]
+          properties:
+            lat: { type: number }
+            lon: { type: number }
+            timezone: { type: string, examples: [Europe/Amsterdam] }
+            label: { type: string }
+          additionalProperties: false
+        activity:
+          type: object
+          required: [type, planned_duration_s, planned_pace_s_per_km]
+          properties:
+            type: { type: string, enum: [run, walk] }
+            planned_duration_s: { type: integer }
+            planned_pace_s_per_km: { type: integer }
+          additionalProperties: false
+        summary: { $ref: "#/components/schemas/Summary" }
+        guidance: { $ref: "#/components/schemas/Guidance" }
+        reasons:
+          type: array
+          description: Most important first.
+          items: { $ref: "#/components/schemas/Reason" }
+        hours:
+          type: array
+          description: Only when include=hours. Remaining hours of today.
+          items: { $ref: "#/components/schemas/Hour" }
+        assumptions:
+          type: array
+          description: Defaults the engine filled in because the request did not say.
+          items:
+            type: object
+            required: [field, value, basis]
+            properties:
+              field: { type: string, examples: [athlete.heat_acclimatised] }
+              value: { type: [string, number, boolean] }
+              basis: { type: string, examples: [local_climate, population_default] }
+            additionalProperties: false
+        data: { $ref: "#/components/schemas/DataInfo" }
+        disclaimer: { $ref: "#/components/schemas/Message" }
+      additionalProperties: false
+
+    Summary:
+      type: object
+      description: Everything a notification, watch complication or activity card needs.
+      required: [action, level, level_name, window, headline, detail, notification]
+      properties:
+        action:
+          type: string
+          enum: [go_now, go_later, go_short, indoor]
+          description: go_short = go, but shorter or slower than planned.
+        level: { $ref: "#/components/schemas/Level" }
+        level_name: { $ref: "#/components/schemas/LevelName" }
+        window:
+          oneOf: [{ $ref: "#/components/schemas/Window" }, { type: "null" }]
+          description: null when action is indoor.
+        headline: { $ref: "#/components/schemas/Message" }
+        detail: { $ref: "#/components/schemas/Message" }
+        notification:
+          type: object
+          required: [title, body]
+          properties:
+            title: { type: string, maxLength: 40 }
+            body: { type: string, maxLength: 120 }
+          additionalProperties: false
+      additionalProperties: false
+
+    Guidance:
+      type: object
+      required: [intensity, pace, route, start_heading_deg, hydration, warm_up_indoors, indoor_alternatives]
+      properties:
+        intensity: { type: string, enum: [normal, easy] }
+        pace:
+          type: object
+          required: [planned_s_per_km, planned_pace_ok, fastest_safe_pace_s_per_km, max_duration_at_planned_s, pace_for_full_duration_s_per_km]
+          properties:
+            planned_s_per_km: { type: integer }
+            planned_pace_ok: { type: boolean }
+            fastest_safe_pace_s_per_km:
+              type: [integer, "null"]
+              description: Do not run faster than this for the planned duration. null = no practical heat cap.
+            max_duration_at_planned_s:
+              type: [integer, "null"]
+              description: Longest safe run at the planned pace. null = no heat limit within 4 hours.
+            pace_for_full_duration_s_per_km:
+              type: [integer, "null"]
+              description: Pace that makes the full planned duration safe. null when the planned pace already is.
+          additionalProperties: false
+        route:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [id, name, air_dose_saving_pct, compared_with]
+              properties:
+                id: { type: string }
+                name: { type: string }
+                air_dose_saving_pct: { type: [integer, "null"], description: Lower extra air-pollution dose than the compared route. }
+                compared_with: { type: [string, "null"] }
+              additionalProperties: false
+        start_heading_deg:
+          type: [integer, "null"]
+          description: Start heading (0 = north, clockwise) so the first half is into the wind. null = wind too light to matter.
+        hydration:
+          type: object
+          required: [fluid_ml, sweat_rate_ml_per_h, electrolytes_recommended]
+          properties:
+            fluid_ml: { type: integer, description: To carry or drink during the run; 0 = optional. }
+            sweat_rate_ml_per_h: { type: integer }
+            electrolytes_recommended: { type: boolean }
+          additionalProperties: false
+        warm_up_indoors: { type: boolean }
+        indoor_alternatives:
+          type: array
+          items: { $ref: "#/components/schemas/Message" }
+      additionalProperties: false
+
+    Reason:
+      type: object
+      required: [factor, code, level, evidence, params]
+      properties:
+        factor: { type: string, enum: [heat, air, pollen, cold, wind, athlete] }
+        code: { type: string, pattern: "^[A-Z][A-Z0-9_]+$" }
+        level: { $ref: "#/components/schemas/Level" }
+        evidence: { $ref: "#/components/schemas/Evidence" }
+        params:
+          type: object
+          additionalProperties: { type: [string, number, boolean, "null"] }
+        text: { type: string }
+      additionalProperties: false
+
+    Hour:
+      type: object
+      required: [start, level, level_name, in_window, heat, heat_budget, air, cold, pollen, wind, cardio_load_rr]
+      properties:
+        start: { type: string, format: date-time }
+        level: { $ref: "#/components/schemas/Level" }
+        level_name: { $ref: "#/components/schemas/LevelName" }
+        in_window: { type: boolean }
+        heat:
+          type: object
+          required: [wbgt_c, level, air_temp_c, relative_humidity_pct, radiant_temp_c]
+          properties:
+            wbgt_c: { type: number }
+            level: { $ref: "#/components/schemas/Level" }
+            air_temp_c: { type: number }
+            relative_humidity_pct: { type: number }
+            radiant_temp_c: { type: number }
+          additionalProperties: false
+        heat_budget:
+          type: object
+          required: [max_duration_at_planned_s, sweat_rate_ml_per_h, core_steady_c]
+          properties:
+            max_duration_at_planned_s: { type: [integer, "null"] }
+            sweat_rate_ml_per_h: { type: integer }
+            core_steady_c: { type: number }
+          additionalProperties: false
+        air:
+          type: object
+          required: [pm25_ugm3, pm10_ugm3, no2_ugm3, o3_ugm3, level, dominant]
+          properties:
+            pm25_ugm3: { type: number }
+            pm10_ugm3: { type: number }
+            no2_ugm3: { type: number }
+            o3_ugm3: { type: number }
+            level: { $ref: "#/components/schemas/Level" }
+            dominant: { type: [string, "null"], enum: [pm25, pm10, no2, o3, null] }
+          additionalProperties: false
+        cold:
+          type: object
+          required: [wind_chill_c, level]
+          properties:
+            wind_chill_c: { type: [number, "null"], description: null above 10 °C, where wind chill is undefined. }
+            level: { $ref: "#/components/schemas/Level" }
+          additionalProperties: false
+        pollen:
+          type: object
+          required: [grains_m3, level]
+          properties:
+            grains_m3: { type: [number, "null"] }
+            level: { oneOf: [{ $ref: "#/components/schemas/Level" }, { type: "null" }] }
+          additionalProperties: false
+        wind:
+          type: object
+          required: [speed_mps, from_deg]
+          properties:
+            speed_mps: { type: number }
+            from_deg: { type: integer }
+          additionalProperties: false
+        cardio_load_rr: { type: number, description: Relative cardiovascular load vs a cool, clean hour (population estimate). }
+      additionalProperties: false
+
+    DataInfo:
+      type: object
+      required: [engine_version, sources, coverage]
+      properties:
+        engine_version: { type: string }
+        sources:
+          type: array
+          items:
+            type: object
+            required: [id, kind, variables]
+            properties:
+              id: { type: string, examples: [open-meteo-forecast, cams-europe] }
+              kind: { type: string, enum: [forecast, model, observation, reanalysis, synthetic] }
+              variables: { type: array, items: { type: string } }
+              retrieved_at: { type: [string, "null"], format: date-time }
+            additionalProperties: false
+        coverage:
+          type: object
+          description: What could not be assessed here.
+          properties:
+            pollen: { type: string, enum: [covered, not_covered] }
+            air_quality: { type: string, enum: [station_corrected, model_grid] }
+          additionalProperties: { type: string }
+      additionalProperties: false
+
+    # ---------- live ----------
+    LiveRequest:
+      type: object
+      required: [location, elapsed_s, speed_mps]
+      properties:
+        recommendation_id: { type: string }
+        location: { $ref: "#/components/schemas/LatLon" }
+        elapsed_s: { type: integer, minimum: 0 }
+        planned_duration_s: { type: integer, minimum: 300, maximum: 14400 }
+        speed_mps: { type: number, minimum: 0, description: Current (smoothed) speed. }
+        heart_rate_bpm: { type: [integer, "null"], description: Accepted in v1, used from v1.1. }
+        athlete: { $ref: "#/components/schemas/RecommendationRequest/properties/athlete" }
+        state: { type: [string, "null"], description: Opaque; echo back from the previous response. }
+      additionalProperties: false
+    LiveResponse:
+      type: object
+      required: [schema_version, at, core_estimate_c, core_status, fastest_safe_pace_s_per_km, alert, state]
+      properties:
+        schema_version: { type: string, const: "1.0.0" }
+        at: { type: string, format: date-time }
+        core_estimate_c: { type: number, maximum: 40.5, description: Modelled from the heat budget (v1); from heart rate in v1.1. Capped at 40.5, beyond which the model is not meaningful. }
+        core_status: { type: string, enum: [normal, rising, at_limit] }
+        fastest_safe_pace_s_per_km: { type: [integer, "null"] }
+        alert:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [code, level, params]
+              properties:
+                code: { type: string, enum: [WALK_AND_COOL, EASE_OFF, HEAD_HOME_HEAT, AIR_WORSENING, EASY_START_COLD, TURN_FOR_TAILWIND, DRINK] }
+                level: { $ref: "#/components/schemas/Level" }
+                params: { type: object }
+                text: { type: string }
+                haptic: { type: string, enum: [none, single, double, urgent] }
+              additionalProperties: false
+        state: { type: string }
+      additionalProperties: false
+
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, examples: ["https://api.gotime.example/problems/unsupported-location"] }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        invalid_params:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              reason: { type: string }

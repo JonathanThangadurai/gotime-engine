@@ -13,3 +13,6 @@ outputs/*
 !outputs/backtest_2026_summary.md
 !outputs/cams_correction_by_hour.csv
 !outputs/cams_correction_info.json
+
+# Node
+node_modules/

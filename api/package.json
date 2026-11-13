@@ -1,0 +1,20 @@
+{
+  "name": "gotime-api",
+  "version": "1.0.0",
+  "description": "GOTime Recommendation API v1 prototype",
+  "main": "server.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "examples": "node build_examples.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "js-yaml": "^5.5.0"
+  }
+}
