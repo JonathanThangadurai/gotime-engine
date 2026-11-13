@@ -17,7 +17,7 @@
     ]
   },
   "response": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "id": "rec_m5u9is80k0bi",
     "generated_at": "2025-01-12T23:45:00.000Z",
     "valid_until": "2025-01-13T00:00:00.000Z",
@@ -132,6 +132,17 @@
         "text": "Heat-adapted, 70 kg, 175 cm."
       }
     ],
+    "tips": [
+      {
+        "code": "TIP_RUN_BY_FEEL",
+        "evidence": "published_research",
+        "params": {
+          "dew_point_c": 22.9
+        },
+        "text": "Muggy today: run by feel. Your watch pace will be slower, and that is fine.",
+        "skip_if": null
+      }
+    ],
     "assumptions": [
       {
         "field": "athlete.mass_kg",
@@ -155,7 +166,7 @@
       }
     ],
     "data": {
-      "engine_version": "2.0.0",
+      "engine_version": "2.1.0",
       "sources": [
         {
           "id": "era5-reanalysis",

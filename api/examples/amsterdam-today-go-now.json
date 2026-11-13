@@ -12,7 +12,7 @@
     "athlete": {}
   },
   "response": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "id": "rec_mwepbjc0c9kp",
     "generated_at": "2026-11-13T08:15:00.000Z",
     "valid_until": "2026-11-13T09:00:00.000Z",
@@ -123,6 +123,7 @@
         "text": "Not heat-adapted, 70 kg, 175 cm."
       }
     ],
+    "tips": [],
     "assumptions": [
       {
         "field": "athlete.mass_kg",
@@ -151,7 +152,7 @@
       }
     ],
     "data": {
-      "engine_version": "2.0.0",
+      "engine_version": "2.1.0",
       "sources": [
         {
           "id": "open-meteo-forecast",

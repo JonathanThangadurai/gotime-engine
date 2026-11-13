@@ -59,7 +59,7 @@ export function makeRun(personaId: ReadonlySignal<PersonaId>) {
 
   const recommendation = computed(() => recommend(inputs(nowHour.value)));
   /** What the engine says at the wake time: the basis of last night's message and of the day's reference hour. */
-  const plan = computed(() => recommend(inputs(planHour.value)));
+  const plan = computed(() => recommend({ ...inputs(planHour.value), request: { ...request.value, context: "evening_before" } }));
   const planDay = computed(() => evaluateDay(inputs(planHour.value)));
   const day = computed(() => evaluateDay(inputs(nowHour.value)));
   const action = computed(() => recommendation.value.summary.action);

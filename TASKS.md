@@ -59,6 +59,14 @@ Live: https://jonathanthangadurai.github.io/gotime-engine/ (not indexed; `demo/`
 - [ ] Native Dutch proofread of `demo/src/copy/nl-NL.json`
 - [ ] Open the public link on an iPhone and an Android phone: install to the home screen, check offline
 
+## Later (needs new inputs)
+"What pros do" tips that today's engine inputs cannot support yet (the six that can are live: `tips[]`, API 1.1).
+- [ ] Heat-ready tracker: days of heat exposure towards adaptation (needs run history)
+- [ ] First-hot-day tip: the first warm day after a cool spell (needs the recent days' weather)
+- [ ] Hot-bath plan before hot races (needs a planned race or trip; `skip_if`: heart condition or pregnant)
+- [ ] Training air budget towards a race (needs the race date)
+- [ ] Personal sweat test (needs a weigh-in before and after a run)
+
 ## 5. Science and validation (parked)
 - [ ] Multi-season back-tests (2018, 2019, 2022, 2025) and a common-sense benchmark
 - [ ] Methods document and model card

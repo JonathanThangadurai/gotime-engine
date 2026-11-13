@@ -15,7 +15,7 @@
     }
   },
   "response": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "id": "rec_mys9ugg0c9kp",
     "generated_at": "2027-01-12T05:30:00.000Z",
     "valid_until": "2027-01-12T06:00:00.000Z",
@@ -139,6 +139,18 @@
         "text": "Not heat-adapted, 72 kg, 180 cm."
       }
     ],
+    "tips": [
+      {
+        "code": "TIP_COLD_WARMUP",
+        "evidence": "published_consensus",
+        "params": {
+          "air_temp_c": -3.4,
+          "wind_chill_c": -12.1
+        },
+        "text": "Freezing today: warm up 10 minutes indoors, start slowly, buff over your mouth.",
+        "skip_if": null
+      }
+    ],
     "assumptions": [
       {
         "field": "athlete.heat_acclimatised",
@@ -157,7 +169,7 @@
       }
     ],
     "data": {
-      "engine_version": "2.0.0",
+      "engine_version": "2.1.0",
       "sources": [
         {
           "id": "gotime-synthetic",

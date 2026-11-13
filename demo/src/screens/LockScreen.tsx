@@ -35,6 +35,7 @@ export function EveningLock() {
           <header><AppIcon /><span>{t("APP_NAME")}</span><span class="notif-when">{t("NOTIF_NOW")}</span></header>
           <p class="notif-title">{t(v.title.code, v.title.params)}</p>
           <p class="notif-body">{t(v.body.code, v.body.params)}</p>
+          {v.tip && <p class="notif-tip" data-testid="tip"><span>{t("TIP_LABEL")}:</span> {t(v.tip.code, v.tip.params)}</p>}
           {v.slot && (calendarAdded.value
             ? <p class="notif-done" role="status">✓ {t("CALENDAR_ADDED", { day, ...v.slot })}</p>
             : <button type="button" class="notif-action" onClick={() => { calendarAdded.value = true; }}>{t("ADD_TO_CALENDAR")}</button>)}

@@ -295,5 +295,14 @@
   "UT_CONSENT_EXPORT": "Na afloop zet de begeleider de antwoorden van deze telefoon over, zonder namen, voor het onderzoek.",
   "UT_CONSENT_STOP": "Je kunt op elk moment stoppen, zonder reden.",
   "UT_CONSENT_START": "Akkoord, begin",
-  "UT_STUDY": "Onderzoek"
+  "UT_STUDY": "Onderzoek",
+  "TIP_LABEL": "Wat profs doen",
+  "EVIDENCE_published_consensus": "Gepubliceerde consensus",
+  "TIP_COLD_HARD_INDOORS": "Onder −15 °C: doe de zware training vandaag binnen.",
+  "TIP_HEAT_NOT_ADAPTED": "Nog niet gewend aan hitte: houd het rustig en iets korter. Na ongeveer een week kan je lichaam het beter aan.",
+  "TIP_PRECOOL": "Een koele douche vlak voordat je gaat maakt de eerste kilometers makkelijker.",
+  "TIP_HYDRATE_EVENING": "Morgen warm: drink vanavond gewoon en neem een glas water voordat je gaat.",
+  "TIP_RUN_BY_FEEL": "Benauwd vandaag: loop op gevoel. Je tempo op je horloge is lager, en dat is prima.",
+  "TIP_COLD_WARMUP": "Vriesweer vandaag: warm 10 minuten binnen op, begin rustig, buff voor je mond.",
+  "EVIDENCE_published_research": "Gepubliceerd onderzoek"
 }

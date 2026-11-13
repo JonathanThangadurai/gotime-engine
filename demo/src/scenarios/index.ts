@@ -23,6 +23,9 @@ const ERA5: Source[] = [
 export const SCENARIOS: Scenario[] = [
   { id: "ams-heat", city: "ams", dataKey: "heat", label: "Heatwave", personas: ["sanne"], defaultTime: "06:45",
     routeId: "vondelpark", sources: SYNTHETIC },
+  // Icy winter morning (synthetic): cold until 10:00, a freezing-day tip.
+  { id: "ams-cold", city: "ams", dataKey: "cold", label: "Icy morning", personas: ["sanne"], defaultTime: "06:30",
+    routeId: "vondelpark", sources: SYNTHETIC },
   // Same morning, two runners: Arjun (heat-adapted, local) goes early; Sanne (visitor) is sent indoors.
   { id: "chn-heat", city: "chn", dataKey: "heat", label: "May heat", personas: ["arjun", "sanne"], defaultTime: "05:15",
     routeId: "marina", sources: ERA5 },

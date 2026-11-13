@@ -10,6 +10,7 @@ export interface RecommendationRequest {
   activity: { type: "run" | "walk"; planned_duration_s: number; planned_pace_s_per_km: number };
   athlete: { mass_kg?: number; height_m?: number; heat_acclimatised?: boolean; clothing?: string; hay_fever?: boolean };
   include?: "hours"[];
+  context?: "now" | "evening_before";   // since 1.1: evening_before enables evening-only tips
 }
 
 export interface Reason {
@@ -20,6 +21,9 @@ export interface Reason {
   params: Record<string, string | number | null>;
   text?: string;
 }
+
+/** "What pros do" (since 1.1): at most one per recommendation. */
+export interface Tip { code: string; evidence: string; params: Record<string, string | number | null>; text?: string; skip_if?: Message | null }
 
 export interface HourOut {
   start: string;
@@ -62,6 +66,7 @@ export interface Recommendation {
     indoor_alternatives: Message[];
   };
   reasons: Reason[];
+  tips?: Tip[];
   hours?: HourOut[];
   disclaimer: Message;
 }

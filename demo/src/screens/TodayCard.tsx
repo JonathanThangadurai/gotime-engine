@@ -23,6 +23,12 @@ export function TodayCard({ view, onWhy, kitChoice }: { view: TodayView; onWhy: 
           <li class="row" key={c.kind} data-testid={`row-${c.kind}`}><Icon name={c.kind} /><span>{t(c.code, c.params)}</span></li>
         ))}
       </ul>
+      {view.tip && (
+        <div class="tip-row" data-testid="tip">
+          <p class="tip-label">{t("TIP_LABEL")}</p>
+          <p class="tip-text">{t(view.tip.code, view.tip.params)}</p>
+        </div>
+      )}
       {kitChoice && (
         <fieldset class="q kit">
           <legend>{t("KIT_LABEL")}</legend>

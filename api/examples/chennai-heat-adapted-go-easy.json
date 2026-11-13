@@ -16,7 +16,7 @@
     }
   },
   "response": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "id": "rec_lvu6k480k0bi",
     "generated_at": "2024-05-05T23:45:00.000Z",
     "valid_until": "2024-05-06T00:00:00.000Z",
@@ -132,6 +132,17 @@
         "text": "PM10 60 µg/m³ at 11:00, 70 in your slot."
       }
     ],
+    "tips": [
+      {
+        "code": "TIP_PRECOOL",
+        "evidence": "published_research",
+        "params": {
+          "heat_level": 2
+        },
+        "text": "A cool shower just before you go makes the first kilometres easier.",
+        "skip_if": null
+      }
+    ],
     "assumptions": [
       {
         "field": "athlete.clothing",
@@ -145,7 +156,7 @@
       }
     ],
     "data": {
-      "engine_version": "2.0.0",
+      "engine_version": "2.1.0",
       "sources": [
         {
           "id": "era5-reanalysis",

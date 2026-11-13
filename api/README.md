@@ -38,6 +38,11 @@ Watch apps and simple clients can use `GET /v1/recommendations?lat=52.37&lon=4.8
 
 **3. Optionally show `guidance` and `reasons`.** Guidance covers pace, route, start heading, fluid and indoor options. Reasons are ranked, and each one has an evidence level.
 
+**4. Optionally show `tips[]` (since 1.1).** "What pros do": at most one tip, pro-level guidance in an everyday dose
+(for example `TIP_PRECOOL`, "A cool shower just before you go makes the first kilometres easier."), with its evidence
+level and an optional `skip_if`. Show it quietly below the main advice. Send `"context": "evening_before"` when the
+request is for the message the evening before; that enables the evening-only tip `TIP_HYDRATE_EVENING`.
+
 During a run, call `POST /v1/live` every 30-60 s with elapsed time and speed, and echo back `state`. Show `alert` with its `haptic` pattern.
 
 ## Rules partners can rely on

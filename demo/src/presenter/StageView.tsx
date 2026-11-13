@@ -59,7 +59,7 @@ function lensPayload(run: Run): { title: string; body: unknown } {
       body: { notification: run.plan.value.summary.notification, window: run.plan.value.summary.window,
         sent: eveningView(run.plan.value, run.persona.value.usualHour, run.planComparison.value).notify } };
     case "glance": return { title: "Watch or lock-screen glance: summary", body: { action: summary.action, level_name: summary.level_name, window: summary.window, headline: summary.headline } };
-    case "today": case "indoor": return { title: "POST /v1/recommendations: summary and guidance", body: { schema_version, summary, guidance } };
+    case "today": case "indoor": return { title: "POST /v1/recommendations: summary, guidance and tips", body: { schema_version, summary, guidance, tips: rec.tips } };
     case "why": return { title: "reasons[] (ranked, with evidence)", body: reasons };
     case "route": return { title: "guidance.route and start heading", body: { route: guidance.route, start_heading_deg: guidance.start_heading_deg } };
     case "run": {

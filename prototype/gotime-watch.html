@@ -201,6 +201,7 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute
 // Air: Stafoggia 2023 Table S3 slopes x run dose share, at the LOCAL temperature percentile; India NAQI / EU bands as guard rails.
 // Cardio heat term: Rowland 2020 slope above a LOCAL reference (adaptation shift). Cold: wind chill at running airflow,
 // breathing heat loss, warm-up rule. Pollen: Scholten 50 grains/m3.
+// Tips ("what pros do"): at most one per day, from the run hours' conditions; see pickTip().
 const ENG = (() => {
   const C_REF = { pm25: 15, pm10: 45, no2: 25, o3: 100 };
   const NAMES = { pm25: "PM2.5", pm10: "PM10", no2: "NO₂", o3: "Ozone" };
@@ -216,6 +217,7 @@ const ENG = (() => {
     if (x >= rows[n-1][0]) return rows[n-1][1];
     for (let i = 1; i < n; i++) if (x <= rows[i][0]) { const [x0,y0] = rows[i-1], [x1,y1] = rows[i]; return y0 + (y1-y0)*(x-x0)/(x1-x0); } };
   const esK = T => 0.6112 * Math.exp(17.62 * T / (243.12 + T));          // kPa, T in C
+  const dewPoint = (T, RH) => { const g = Math.log(Math.max(1, RH)/100) + 17.62*T/(243.12+T); return 243.12*g/(17.62-g); };
 
   // ---------- sun ----------
   function cosZenith(lat, lon, tz, dateStr, hourMid) {
@@ -332,6 +334,31 @@ const ENG = (() => {
              pm25: d.pm25[h], pm10: d.pm10[h], no2: d.no2[h], o3: d.o3[h], pollen: d.pollen ? d.pollen[h] : null };
   }
 
+  // "What pros do": pro-level guidance in an everyday dose, at most one per day, first match in this priority.
+  // Uses only today's inputs, over the hours the planned run covers (start to start + duration; the best hour on an
+  // indoor day). u.evening: the recommendation is for the message the evening before.
+  //  1 TIP_COLD_HARD_INDOORS  air temp <= -15 C                                    published_consensus (FIS)
+  //  2 TIP_HEAT_NOT_ADAPTED   heat band >= 1 and athlete not acclimatised           published_consensus (Racinais 2015)
+  //  3 TIP_PRECOOL            heat band >= 2, not an indoor day                      published_research (Choo 2018)
+  //  4 TIP_HYDRATE_EVENING    evening message and heat band >= 1                     published_consensus (Racinais 2015)
+  //  5 TIP_RUN_BY_FEEL        heat band >= 1 and dew point >= 16 C                  published_research
+  //  6 TIP_COLD_WARMUP        air temp < 0 C or wind chill (running airflow) <= -10 C   published_consensus (FIS)
+  function pickTip(hours, start, u, indoor, best) {
+    const h0 = Math.floor(start), h1 = Math.max(h0, Math.ceil(start + u.minutes/60) - 1);
+    const span = indoor ? [best] : hours.filter(x => x.h >= h0 && x.h <= h1);
+    if (!span.length) return null;
+    const hb = Math.max(...span.map(x => x.hb)), tMin = Math.min(...span.map(x => x.t)), chill = Math.min(...span.map(x => x.head));
+    const dew = Math.max(...span.map(x => dewPoint(x.t, x.rh)));
+    const r = x => Math.round(x*10)/10;
+    if (tMin <= -15) return { code: "TIP_COLD_HARD_INDOORS", evidence: "published_consensus", params: { air_temp_c: r(tMin) } };
+    if (hb >= 1 && !u.acc) return { code: "TIP_HEAT_NOT_ADAPTED", evidence: "published_consensus", params: { heat_level: hb } };
+    if (hb >= 2 && !indoor) return { code: "TIP_PRECOOL", evidence: "published_research", params: { heat_level: hb } };
+    if (u.evening && hb >= 1) return { code: "TIP_HYDRATE_EVENING", evidence: "published_consensus", params: { heat_level: hb } };
+    if (hb >= 1 && dew >= 16) return { code: "TIP_RUN_BY_FEEL", evidence: "published_research", params: { dew_point_c: r(dew) } };
+    if (tMin < 0 || chill <= -10) return { code: "TIP_COLD_WARMUP", evidence: "published_consensus", params: { air_temp_c: r(tMin), wind_chill_c: r(chill) } };
+    return null;
+  }
+
   function evaluate(d, u, loc) {
     const speed = 1000/(u.pace*60), met = metFromSpeed(speed), kmh = speed*3.6;
     const f = Math.max(0, (met - 1.55)*u.minutes/(1.55*1440));
@@ -424,9 +451,10 @@ const ENG = (() => {
     reasons.push({ k: "Wind", code: direction.short === "Any direction" ? "WIND_LIGHT" : "WIND_START_INTO", v: 0.5, tag: "Physics", text: `${Math.round(best.ws)} km/h from the ${compass(best.wd)}. ${direction.text}` });
     reasons.push({ k: "You", code: u.acc ? "ATHLETE_ADAPTED" : "ATHLETE_NOT_ADAPTED", v: 0, tag: "Your settings", text: `${u.acc ? "Heat-adapted" : "Not heat-adapted"}, ${u.kg} kg, ${(u.height*100).toFixed(0)} cm, ${(CLOTH[u.cloth]||CLOTH.kit).label.toLowerCase()}.` });
     reasons.sort((a,b) => b.v - a.v);
-    return { hours, best, worst, start, end, s, e, headline, sub, hc, sc, mode, along, direction, route, drink, loss, capS, dlimPlan, met, f, pct, W0, reasons, kmh, speed, breath, why, indoor };
+    const tip = pickTip(hours, start, u, indoor, best);
+    return { hours, best, worst, start, end, s, e, headline, sub, hc, sc, mode, along, direction, route, drink, loss, capS, dlimPlan, met, f, pct, W0, reasons, kmh, speed, breath, why, indoor, tip };
   }
-  return { evaluate, budget, maxSpeedFor, hourConditions, wbgtLiljegren, cosZenith, paceOf, fmtPace, fmtHM, compass, FLAGS, NAMES, C_REF, heatBand, bandEdges, metFromSpeed, CLOTH, wct, airBand };
+  return { evaluate, pickTip, dewPoint, budget, maxSpeedFor, hourConditions, wbgtLiljegren, cosZenith, paceOf, fmtPace, fmtHM, compass, FLAGS, NAMES, C_REF, heatBand, bandEdges, metFromSpeed, CLOTH, wct, airBand };
 })();
 // ===== Locations and scenarios =====
 const rep = v => Array(24).fill(v);

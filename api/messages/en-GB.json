@@ -44,5 +44,11 @@
   "DRINK": "Drink a few sips",
   "ADVISORY_NOT_MEDICAL": "Advisory only, not medical advice. Stop if you feel unwell.",
   "ATHLETE_ADAPTED": "Heat-adapted, {mass_kg} kg, {height_cm} cm.",
-  "ATHLETE_NOT_ADAPTED": "Not heat-adapted, {mass_kg} kg, {height_cm} cm."
+  "ATHLETE_NOT_ADAPTED": "Not heat-adapted, {mass_kg} kg, {height_cm} cm.",
+  "TIP_COLD_HARD_INDOORS": "Below −15 °C: do the hard session indoors today.",
+  "TIP_HEAT_NOT_ADAPTED": "Not used to heat yet: keep it easy and a bit shorter. In about a week your body copes better.",
+  "TIP_PRECOOL": "A cool shower just before you go makes the first kilometres easier.",
+  "TIP_HYDRATE_EVENING": "Hot tomorrow: drink normally tonight and have a glass of water before you go.",
+  "TIP_RUN_BY_FEEL": "Muggy today: run by feel. Your watch pace will be slower, and that is fine.",
+  "TIP_COLD_WARMUP": "Freezing today: warm up 10 minutes indoors, start slowly, buff over your mouth."
 }

@@ -1,6 +1,6 @@
 // Turns a contract Recommendation into what the consumer screens show. Every value comes from the response:
 // no advice is computed here, only selected and formatted.
-import { ENG, type EngineDay, type Message, type Recommendation, type Reason, type TracePoint } from "./index";
+import { ENG, type EngineDay, type Message, type Recommendation, type Reason, type Tip, type TracePoint } from "./index";
 import { cfFamily, cfParams, type Comparison } from "./reference";
 
 export interface Chip { kind: "pace" | "start" | "water"; code: string; params: Record<string, string | number> }
@@ -17,10 +17,12 @@ export interface TodayView {
   timeline: Timeline | null;
   chips: Chip[];
   usualNote: Coded | null;    // "Skip your usual 5:30 run today: smoke." (from the API's hourly levels)
+  tip: Tip | null;            // "What pros do": never more than one
 }
 export interface WhyView {
   reasons: Reason[];
   counterfactual: { code: string; params: Record<string, string | number> } | null;
+  tip: Tip | null;
   disclaimer: string;      // message code, rendered in the current language
 }
 
@@ -82,6 +84,7 @@ export function todayView(rec: Recommendation, nowHour: number, usualHour?: numb
     timeline: timelineOf(rec, nowHour),
     chips,
     usualNote: usualSlotNote(rec, usualHour, nowHour),
+    tip: rec.tips?.[0] ?? null,
   };
 }
 
@@ -89,7 +92,7 @@ export function todayView(rec: Recommendation, nowHour: number, usualHour?: numb
 export function whyView(rec: Recommendation, cmp: Comparison | null, max = 3): WhyView {
   const counterfactual = rec.summary.action !== "indoor" && cmp && cmp.ran && cmp.worthSaying
     ? { code: `CF_WHY_${cfFamily(cmp)}`, params: cfParams(cmp) } : null;
-  return { reasons: rec.reasons.slice(0, max), counterfactual, disclaimer: rec.disclaimer.code };
+  return { reasons: rec.reasons.slice(0, max), counterfactual, tip: rec.tips?.[0] ?? null, disclaimer: rec.disclaimer.code };
 }
 
 // ---------------------------------------------------------------- step 2 views
@@ -101,11 +104,12 @@ const CONDITION_FACTORS = ["heat", "air", "cold", "pollen"];
 export interface Coded { code: string; params: Record<string, string | number> }
 
 /** Evening heads-up: change-only. Sent only when the usual run time does not fit tomorrow's window. */
-export interface EveningView { notify: boolean; title: Coded; body: Coded; slot: { start: string; end: string } | null }
+export interface EveningView { notify: boolean; title: Coded; body: Coded; slot: { start: string; end: string } | null; tip: Tip | null }
 export function eveningView(plan: Recommendation, usualHour: number, cmp?: Comparison | null): EveningView {
   const s = plan.summary, dur = durationH(plan);
   const title = { code: `TOMORROW.${s.headline.code}`, params: s.headline.params as Record<string, string | number> };
-  if (s.action === "indoor" || !s.window) return { notify: true, title, body: { code: "TOMORROW_BODY_indoor", params: {} }, slot: null };
+  const tip = plan.tips?.[0] ?? null;
+  if (s.action === "indoor" || !s.window) return { notify: true, title, body: { code: "TOMORROW_BODY_indoor", params: {} }, slot: null, tip };
   const st = hourOf(s.window.start), en = hourOf(s.window.end);
   const notify = !(usualHour >= st && usualHour + dur <= en);
   const top = plan.reasons.find(r => CONDITION_FACTORS.includes(r.factor));
@@ -117,7 +121,7 @@ export function eveningView(plan: Recommendation, usualHour: number, cmp?: Compa
   const ref = cmp && cmp.kind === "usual" && cmp.worthSaying ? { code: `CF_EVENING_${cfFamily(cmp)}`, params: cfParams(cmp) } : null;
   const body = ref ?? usual ?? (usualHour < st ? { code: s.detail.code, params: s.detail.params as Record<string, string | number> }
     : { code: `TOMORROW_BODY_${top ? top.factor : "default"}`, params: {} });
-  return { notify, title, body,
+  return { notify, title, body, tip,
     slot: { start: ENG.fmtHM(a), end: ENG.fmtHM(a + dur) } };
 }
 

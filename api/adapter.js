@@ -1,8 +1,8 @@
-// GOTime API adapter: request -> engine -> schema-valid Recommendation / LiveResponse (schema 1.0.0)
+// GOTime API adapter: request -> engine -> schema-valid Recommendation / LiveResponse (schema 1.1.0)
 const ENG = require("./engine.js");
 const { LOCATIONS } = require("./locations.js");
 const MSG = { "en-GB": require("./messages/en-GB.json") };
-const SCHEMA_VERSION = "1.0.0", ENGINE_VERSION = "2.0.0";
+const SCHEMA_VERSION = "1.1.0", ENGINE_VERSION = "2.1.0";
 
 const render = (code, params, lang) => {
   const cat = MSG[lang] || MSG["en-GB"], t = cat[code];
@@ -53,6 +53,7 @@ function toEngineUser(req, L, nowHour) {
     cloth: CLOTH_IN[take("athlete.clothing", a.clothing, "running_kit", "population_default")],
     hayfever: take("athlete.hay_fever", a.hay_fever, false, "population_default"),
     now: nowHour,
+    evening: req.context === "evening_before",
   };
   return { u, assumptions, paceS: pace };
 }
@@ -122,7 +123,10 @@ function recommend(req, ctx) {
     activity: { type: req.activity.type, planned_duration_s: req.activity.planned_duration_s, planned_pace_s_per_km: paceS },
     summary: { action, level: b.flag, level_name: LEVELS[b.flag], window: indoor ? null : { start: at(r.start), end: at(r.end) }, headline, detail, notification: { title, body } },
     guidance: { intensity: b.flag >= 2 ? "easy" : "normal", pace, route, start_heading_deg: heading, hydration, warm_up_indoors: !indoor && b.t < 5, indoor_alternatives: indoorAlt },
-    reasons, assumptions,
+    reasons,
+    tips: r.tip ? [{ code: r.tip.code, evidence: r.tip.evidence, params: r.tip.params,
+      ...(lang && render(r.tip.code, r.tip.params, lang) ? { text: render(r.tip.code, r.tip.params, lang) } : {}), skip_if: null }] : [],
+    assumptions,
     data: { engine_version: ENGINE_VERSION, sources: ctx.sources, coverage: ctx.coverage },
     disclaimer: msg("ADVISORY_NOT_MEDICAL", {}, lang),
   };

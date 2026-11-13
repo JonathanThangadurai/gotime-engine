@@ -14,7 +14,7 @@
     }
   },
   "response": {
-    "schema_version": "1.0.0",
+    "schema_version": "1.1.0",
     "id": "rec_mpezs9c0c9kp",
     "generated_at": "2026-05-21T04:30:00.000Z",
     "valid_until": "2026-05-21T05:00:00.000Z",
@@ -138,6 +138,7 @@
         "text": "NO₂ 14 µg/m³ at 13:00, 34 in your slot."
       }
     ],
+    "tips": [],
     "assumptions": [
       {
         "field": "athlete.mass_kg",
@@ -161,7 +162,7 @@
       }
     ],
     "data": {
-      "engine_version": "2.0.0",
+      "engine_version": "2.1.0",
       "sources": [
         {
           "id": "gotime-synthetic",

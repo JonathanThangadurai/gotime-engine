@@ -4,7 +4,7 @@ import { t } from "../copy";
 /** One thin line from now to the end of the running day; the window in teal, a dot for now. */
 export function Timeline({ tl }: { tl: TL }) {
   const pct = (x: number) => `${(x * 100).toFixed(2)}%`;
-  const endNearDayEnd = tl.end > 0.82, showStart = tl.start > 0.2 && tl.end - tl.start > 0.15;
+  const endNearDayEnd = tl.end > 0.82, showStart = tl.start > 0.32 && tl.end - tl.start > 0.15;
   return (
     <div class="tl" role="img" aria-label={t("TIMELINE_ARIA", { start: tl.startLabel, end: tl.endLabel, now: tl.now, day_end: tl.dayEnd })}
       data-testid="timeline">

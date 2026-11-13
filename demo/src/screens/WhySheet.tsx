@@ -29,6 +29,16 @@ export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view:
               </div>
             </li>
           ))}
+          {view.tip && (
+            <li class="reason" data-testid="why-tip">
+              <Icon name="check" />
+              <div>
+                <p class="reason-title">{t("TIP_LABEL")}</p>
+                <p class="reason-text">{t(view.tip.code, view.tip.params)}</p>
+                <p class="evidence"><span class="dot" aria-hidden="true" />{t(`EVIDENCE_${view.tip.evidence}`)}</p>
+              </div>
+            </li>
+          )}
         </ul>
         <button class="row row-link numbers-link" type="button" onClick={onNumbers} data-testid="numbers-link">
           <span>{t("SHOW_NUMBERS")}</span><Icon name="chevron" />

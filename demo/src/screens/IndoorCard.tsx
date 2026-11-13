@@ -6,7 +6,7 @@ const ALT_ICON: Record<string, string> = { INDOOR_TREADMILL: "pace", INDOOR_CROS
 
 /** Indoor branch of the Today card: the engine said "indoor". Options, never a dead end; the streak is kept. */
 export function IndoorCard({ rec, onWhy }: { rec: Recommendation; onWhy: () => void }) {
-  const s = rec.summary, o = { action: s.action };
+  const s = rec.summary, o = { action: s.action }, tip = rec.tips?.[0] ?? null;
   return (
     <section class="gt gt-module" data-testid="indoor-card">
       <p class="gt-label">{t("MODULE_LABEL")}</p>
@@ -19,6 +19,12 @@ export function IndoorCard({ rec, onWhy }: { rec: Recommendation; onWhy: () => v
         ))}
         <li class="row"><Icon name="check" /><span>{t("INDOOR_STREAK")}</span></li>
       </ul>
+      {tip && (
+        <div class="tip-row" data-testid="tip">
+          <p class="tip-label">{t("TIP_LABEL")}</p>
+          <p class="tip-text">{t(tip.code, tip.params)}</p>
+        </div>
+      )}
       <button class="row row-link" type="button" onClick={onWhy} data-testid="why-button">
         <span>{t("WHY_ROW")}</span><Icon name="chevron" />
       </button>

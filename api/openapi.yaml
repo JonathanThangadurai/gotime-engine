@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: GOTime Recommendation API
-  version: 1.0.0
+  version: 1.1.0
   summary: When, how hard and where to run, given heat, air, pollen, cold, wind and the athlete.
   description: |
     One call returns a decision a partner can show as-is (summary), the guidance behind it,
@@ -103,7 +103,7 @@ components:
     Evidence:
       type: string
       description: How solid the basis for this item is.
-      enum: [published_standard, published_method, published_slopes, published_threshold, mechanism, physics, assumption, demo_value, athlete_input]
+      enum: [published_standard, published_method, published_slopes, published_threshold, published_consensus, published_research, mechanism, physics, assumption, demo_value, athlete_input]
     Message:
       type: object
       required: [code, params]
@@ -167,6 +167,11 @@ components:
         include:
           type: array
           items: { type: string, enum: [hours, debug] }
+        context:
+          type: string
+          enum: [now, evening_before]
+          default: now
+          description: "Since 1.1. `evening_before`: the request is for tomorrow's plan, sent the evening before (enables evening-only tips)."
       additionalProperties: false
 
     # ---------- response ----------
@@ -174,7 +179,7 @@ components:
       type: object
       required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, reasons, assumptions, data, disclaimer]
       properties:
-        schema_version: { type: string, const: "1.0.0" }
+        schema_version: { type: string, const: "1.1.0" }
         id: { type: string, description: Pass to /live to link a run to its plan. }
         generated_at: { type: string, format: date-time }
         valid_until: { type: string, format: date-time, description: Re-fetch after this time; forecasts update hourly. }
@@ -201,6 +206,12 @@ components:
           type: array
           description: Most important first.
           items: { $ref: "#/components/schemas/Reason" }
+        tips:
+          type: array
+          description: >-
+            Since 1.1. "What pros do": pro-level guidance in an everyday dose, from the run hours' conditions.
+            The engine returns at most one. Show it quietly, below the main advice.
+          items: { $ref: "#/components/schemas/Tip" }
         hours:
           type: array
           description: Only when include=hours. Remaining hours of today.
@@ -292,6 +303,21 @@ components:
         indoor_alternatives:
           type: array
           items: { $ref: "#/components/schemas/Message" }
+      additionalProperties: false
+
+    Tip:
+      type: object
+      required: [code, evidence, params]
+      properties:
+        code: { type: string, pattern: "^[A-Z][A-Z0-9_]+$", examples: [TIP_PRECOOL] }
+        evidence: { $ref: "#/components/schemas/Evidence" }
+        params:
+          type: object
+          additionalProperties: { type: [string, number, boolean, "null"] }
+        text: { type: string }
+        skip_if:
+          description: Who should not follow this tip (for example a medical condition); null when it applies to everyone.
+          anyOf: [{ $ref: "#/components/schemas/Message" }, { type: "null" }]
       additionalProperties: false
 
     Reason:
@@ -412,7 +438,7 @@ components:
       type: object
       required: [schema_version, at, core_estimate_c, core_status, fastest_safe_pace_s_per_km, alert, state]
       properties:
-        schema_version: { type: string, const: "1.0.0" }
+        schema_version: { type: string, const: "1.1.0" }
         at: { type: string, format: date-time }
         core_estimate_c: { type: number, maximum: 40.5, description: Modelled from the heat budget (v1); from heart rate in v1.1. Capped at 40.5, beyond which the model is not meaningful. }
         core_status: { type: string, enum: [normal, rising, at_limit] }
