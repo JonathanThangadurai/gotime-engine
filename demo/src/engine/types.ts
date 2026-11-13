@@ -29,12 +29,14 @@ export interface HourOut {
   heat: { wbgt_c: number; level: number; air_temp_c: number };
   air: { level: number; dominant: string | null };
   pollen: { grains_m3: number | null; level: number | null };
+  wind: { speed_mps: number; from_deg: number };
 }
 
 export interface Recommendation {
   schema_version: string;
   generated_at: string;
   location: { lat: number; lon: number; timezone: string; label: string };
+  activity: { type: string; planned_duration_s: number; planned_pace_s_per_km: number };
   summary: {
     action: Action;
     level: number;

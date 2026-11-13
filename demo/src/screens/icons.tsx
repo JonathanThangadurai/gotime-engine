@@ -10,6 +10,8 @@ const P: Record<string, string> = {
   cold: "M12 2v20M4 6l16 12M20 6L4 18M9 3l3 3 3-3M9 21l3-3 3 3",
   athlete: "M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm-7 16c1-4 4-6 7-6s6 2 7 6",
   chevron: "M9 5l7 7-7 7",
+  check: "M5 12l5 5 9-10",
+  back: "M15 5l-7 7 7 7",
 };
 export const Icon = ({ name, class: cls = "icon" }: { name: string; class?: string }) => (
   <svg class={cls} viewBox="0 0 24 24" aria-hidden="true"><path d={P[name] ?? ""} /></svg>

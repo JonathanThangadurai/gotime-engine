@@ -1,22 +1,32 @@
 // Stored scenarios the presenter can pick. Weather and air arrays live in api/locations.js (shared with the API).
 import type { CityKey, Source } from "../engine";
+import type { Persona } from "./personas";
 
 export interface Scenario {
   id: string;
   city: CityKey;
   dataKey: string;          // key in SCENARIOS[city] (api/locations.js)
   label: string;
-  defaultPersona: "sanne" | "arjun";
-  defaultTime: string;      // local HH:MM at which the script opens the Today card
+  personas: Persona["id"][]; // first = default
+  defaultTime: string;      // local HH:MM when the runner wakes and opens the app; also the plan time for the evening message
   dateLabel: string;
+  eveningLabel: string;     // the evening before
+  routeId: string;
   sources: Source[];
 }
 
 const SYNTHETIC: Source[] = [{ id: "gotime-synthetic", kind: "synthetic", variables: ["all"], retrieved_at: null }];
+const ERA5: Source[] = [
+  { id: "era5-reanalysis", kind: "reanalysis", variables: ["temperature_2m", "relative_humidity_2m", "shortwave_radiation", "wind_speed_10m", "wind_direction_10m"], retrieved_at: null },
+  { id: "gotime-synthetic", kind: "synthetic", variables: ["pm2_5", "pm10", "nitrogen_dioxide", "ozone"], retrieved_at: null },
+];
 
 export const SCENARIOS: Scenario[] = [
-  { id: "ams-heat", city: "ams", dataKey: "heat", label: "Heatwave", defaultPersona: "sanne", defaultTime: "06:45",
-    dateLabel: "Saturday 27 June", sources: SYNTHETIC },
+  { id: "ams-heat", city: "ams", dataKey: "heat", label: "Heatwave", personas: ["sanne"], defaultTime: "06:45",
+    dateLabel: "Saturday 27 June", eveningLabel: "Friday 26 June", routeId: "vondelpark", sources: SYNTHETIC },
+  // Indoor branch (plan section 3: "Chennai visitor in May"): Sanne, not heat-adapted, visiting on 6 May 2024.
+  { id: "chn-heat-visitor", city: "chn", dataKey: "heat", label: "May heat, visitor", personas: ["sanne"], defaultTime: "05:15",
+    dateLabel: "Monday 6 May", eveningLabel: "Sunday 5 May", routeId: "marina", sources: ERA5 },
 ];
 
 export const CITY_LABEL: Record<CityKey, string> = { ams: "Amsterdam", chn: "Chennai" };

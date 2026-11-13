@@ -1,7 +1,7 @@
 // Phone layout: full-screen app, no visible controls. Presenter drawer: long press the page header (1 s) or tap with
 // three fingers. Swipe left or right along the bottom edge to step moments.
 import { useRef } from "preact/hooks";
-import { HostApp } from "../host/HostApp";
+import { DeviceScreen } from "../host/HostApp";
 import { drawerOpen, goNext, goPrev } from "./state";
 import { Settings, Stepper } from "./Controls";
 
@@ -21,7 +21,7 @@ export function PhoneView() {
   };
   return (
     <div class="phone" data-layout="phone" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <div class="device device-full" data-testid="device"><HostApp /></div>
+      <div class="device device-full" data-testid="device"><DeviceScreen /></div>
       {drawerOpen.value && (
         <div class="drawer-scrim" onClick={() => { drawerOpen.value = false; }}>
           <aside class="drawer" data-testid="drawer" role="dialog" aria-label="Presenter controls" onClick={e => e.stopPropagation()}>

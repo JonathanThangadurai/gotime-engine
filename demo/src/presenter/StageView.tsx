@@ -1,6 +1,6 @@
 // Laptop or projector layout: phone frame on the left, moment panel on the right, presenter bar at the bottom.
 import { useEffect, useRef, useState } from "preact/hooks";
-import { HostApp } from "../host/HostApp";
+import { DeviceScreen } from "../host/HostApp";
 import { CITY_LABEL } from "../scenarios";
 import { barHidden, city, currentMoment, moment, scenario } from "./state";
 import { Settings, Stepper } from "./Controls";
@@ -28,13 +28,13 @@ export function StageView() {
   return (
     <div class={`stage${barHidden.value ? " bar-hidden" : ""}`} data-layout="stage">
       <header class="stage-top">
-        <span><b>GOTime demo</b> · Shell (step 1)</span>
+        <span><b>GOTime demo</b> · Journey (step 2)</span>
         <span>{CITY_LABEL[city.value]} · {scenario.value.label}</span>
       </header>
       <div class="stage-body">
         <div class="phone-holder" ref={holder}>
           <div class="phone-frame" style={{ width: PHONE_W + 2 * BEZEL, height: PHONE_H + 2 * BEZEL, transform: `scale(${scale})` }}>
-            <div class="device" data-testid="device"><HostApp /></div>
+            <div class="device" data-testid="device"><DeviceScreen /></div>
           </div>
         </div>
         <aside class="stage-panel" aria-live="polite">

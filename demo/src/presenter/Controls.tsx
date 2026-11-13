@@ -1,7 +1,7 @@
-import { MOMENTS, isBuilt } from "../journey/machine";
+import { MOMENTS, isReachable } from "../journey/machine";
 import { CITY_LABEL, SCENARIOS, scenarioById } from "../scenarios";
 import { PERSONAS } from "../scenarios/personas";
-import { city, moment, personaId, reset, scenarioId, time, goNext, goPrev } from "./state";
+import { action, city, moment, personaId, reset, scenario, scenarioId, time, goNext, goPrev } from "./state";
 
 const CIRCLED = "①②③④⑤⑥⑦⑧⑨";
 
@@ -10,8 +10,9 @@ export function Stepper() {
     <div class="stepper" role="group" aria-label="Moments">
       <button type="button" class="step-arrow" onClick={goPrev} aria-label="Previous moment">◀</button>
       {MOMENTS.map((m, i) => (
-        <button type="button" key={m.id} class={`step${moment.value === i ? " current" : ""}`} disabled={!isBuilt(i)}
-          aria-current={moment.value === i ? "step" : undefined} title={isBuilt(i) ? m.title : `${m.title} (step ${m.step})`}
+        <button type="button" key={m.id} class={`step${moment.value === i ? " current" : ""}`} disabled={!isReachable(i, action.value)}
+          aria-current={moment.value === i ? "step" : undefined}
+          title={m.placeholder ? `${m.title} (step ${m.step})` : isReachable(i, action.value) ? m.title : `${m.title} (not on an indoor day)`}
           onClick={() => { moment.value = i; }}>
           <span aria-hidden="true">{CIRCLED[i]}</span> {m.label}
         </button>
@@ -28,7 +29,6 @@ export function Settings() {
         <span class="field-label">City</span>
         {(["ams", "chn"] as const).map(c => (
           <button type="button" key={c} class={city.value === c ? "on" : ""} disabled={!SCENARIOS.some(s => s.city === c)}
-            title={c === "chn" ? "Chennai arrives in step 3" : undefined}
             onClick={() => { const s = SCENARIOS.find(x => x.city === c); if (s) { scenarioId.value = s.id; reset(); } }}>
             {c.toUpperCase()}
           </button>
@@ -43,7 +43,7 @@ export function Settings() {
       <label>
         <span class="field-label">Persona</span>
         <select value={personaId.value} onChange={e => { personaId.value = (e.target as HTMLSelectElement).value as "sanne"; }}>
-          {Object.values(PERSONAS).filter(p => p.city === city.value).map(p => <option value={p.id} key={p.id}>{p.name}</option>)}
+          {scenario.value.personas.map(id => PERSONAS[id]).map(p => <option value={p.id} key={p.id}>{p.name}</option>)}
         </select>
       </label>
       <label>

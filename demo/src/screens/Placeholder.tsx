@@ -1,10 +1,8 @@
-import { t } from "../copy";
-
-export function Placeholder({ title, step, indoor }: { title: string; step: number; indoor?: boolean }) {
+export function Placeholder({ title, text }: { title: string; text: string }) {
   return (
-    <div class="placeholder">
+    <div class="placeholder" data-testid="placeholder">
       <h2>{title}</h2>
-      <p>{indoor ? t("INDOOR_NOT_BUILT") : t("NOT_BUILT", { step })}</p>
+      <p>{text}</p>
     </div>
   );
 }
