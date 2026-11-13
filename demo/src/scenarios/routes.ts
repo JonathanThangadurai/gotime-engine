@@ -1,4 +1,4 @@
-// Demo routes drawn on OpenStreetMap. Vondelpark follows the OSM park edge; the Marina path is hand-traced and is
+// Demo routes drawn on OpenStreetMap. Vondelpark follows the OSM running loop; the Marina path is hand-traced and is
 // checked when Chennai outdoor days arrive (step 3); the engine only uses the route name, axis and traffic factors from api/locations.js.
 export interface RouteEnd { at: [number, number]; label: string }
 export interface DemoRoute {
@@ -12,15 +12,18 @@ export interface DemoRoute {
 
 export const ROUTES: Record<string, DemoRoute> = {
   vondelpark: {
-    // Park edge from OpenStreetMap (relation 17080648, ODbL, © OpenStreetMap contributors), simplified to 35 m.
+    // The main asphalt running loop (OSM ways highway=pedestrian, surface=asphalt, name=Vondelpark; ODbL,
+    // © OpenStreetMap contributors). Outermost cycle of that path network, simplified to 8 m: 3.36 km.
     id: "vondelpark", name: "Vondelpark", axis: 60,
-    a: { at: [52.35656, 4.85566], label: "Start at the Amstelveenseweg end" },
-    b: { at: [52.36154, 4.88213], label: "Start at the Stadhouderskade end" },
+    a: { at: [52.356, 4.85548], label: "Start at the Amstelveenseweg end" },
+    b: { at: [52.36023, 4.87582], label: "Start at the Van Baerlestraat end" },
     path: [
-      [52.35656, 4.85566], [52.35878, 4.86448], [52.35941, 4.86486], [52.35892, 4.86566], [52.36119, 4.87418], [52.36058, 4.87663],
-      [52.36108, 4.8772], [52.36078, 4.87745], [52.36183, 4.8813], [52.36154, 4.88213], [52.36034, 4.87681], [52.35918, 4.87508],
-      [52.35847, 4.87515], [52.35643, 4.86757], [52.35469, 4.86677], [52.3557, 4.86367], [52.35565, 4.86192], [52.354, 4.8588],
-      [52.35282, 4.85918], [52.35258, 4.85847], [52.3534, 4.8579], [52.35429, 4.85871], [52.35485, 4.85762], [52.35656, 4.85566],
+      [52.356, 4.85548], [52.35571, 4.85559], [52.3553, 4.85611], [52.35498, 4.85593], [52.35516, 4.85698], [52.35511, 4.85823],
+      [52.3552, 4.85912], [52.35589, 4.86164], [52.35608, 4.86284], [52.35631, 4.86598], [52.35615, 4.86637], [52.35636, 4.86623],
+      [52.35683, 4.86789], [52.35744, 4.86917], [52.35752, 4.87059], [52.35795, 4.87163], [52.3582, 4.8731], [52.35847, 4.87395],
+      [52.35891, 4.87452], [52.35956, 4.87482], [52.36023, 4.87582], [52.36059, 4.87523], [52.36084, 4.87441], [52.36052, 4.873],
+      [52.3599, 4.87239], [52.35965, 4.87149], [52.35913, 4.87055], [52.35886, 4.8692], [52.35858, 4.86872], [52.3582, 4.8686],
+      [52.35793, 4.86789], [52.35812, 4.86696], [52.35874, 4.86587], [52.35878, 4.8653], [52.35644, 4.85595], [52.356, 4.85548],
     ],
   },
   marina: {
@@ -47,4 +50,14 @@ export function startEnd(route: DemoRoute, headingDeg: number | null): RouteEnd 
   if (headingDeg === null) return route.a;
   const diff = Math.abs(((headingDeg - route.axis + 540) % 360) - 180);
   return diff <= 90 ? route.a : route.b;
+}
+
+const NUM_WORD = ["", "One", "Two", "Three", "Four", "Five", "Six"];
+/** Lap message from the engine's pace and the planned duration: whole laps that fit. */
+export function lapMessage(route: DemoRoute, minutes: number, paceSPerKm: number): { code: string; params: Record<string, string | number> } {
+  const loop = lengthKm(route.path), km = minutes * 60 / paceSPerKm, laps = Math.floor(km / loop + 1e-9);
+  const base = { name: route.name, loop_km: loop.toFixed(1), minutes };
+  if (laps < 1) return { code: "ROUTE_LOOP_SHORT", params: base };
+  if (laps === 1) return { code: "ROUTE_LOOP_ONE", params: base };
+  return { code: "ROUTE_LOOP", params: { ...base, laps_word: NUM_WORD[laps] ?? String(laps) } };
 }

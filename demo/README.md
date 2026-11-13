@@ -12,8 +12,7 @@ npm run build        # static output in dist/
 
 - The engine is not copied. `vite.config.mts` wraps `api/engine.js`, `api/locations.js` and `api/adapter.js` (CommonJS)
   as ES modules at build time; `src/engine/` calls `adapter.recommend()` exactly as `api/build_examples.js` does, so the
-  demo shows the real contract response. `adapter.live()` needs Node's Buffer; the same plugin supplies a small
-  base64url stand-in in the browser. `tests/unit/engine.test.ts` checks it against every file in `api/examples/`.
+  demo shows the real contract response. `tests/unit/engine.test.ts` checks it against every file in `api/examples/`.
 - Text: consumer wording in `src/copy/en-GB.json`, keyed by API codes (plus `CODE.go_now` variants) and demo chrome codes;
   numbers rounded to whole units. Codes without a copy entry fall back to `api/messages/en-GB.json`, which stays untouched.
 - Look: calm, minimal, native (system UI font, white, ink `#18343b`, teal `#176a70` as the only accent, hairlines `#edf0f0`).

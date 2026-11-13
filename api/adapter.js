@@ -31,6 +31,11 @@ function localClock(instantISO, L) {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tzName, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(d).map(x => [x.type, x.value]));
   return { date: `${p.year}-${p.month}-${p.day}`, hour: (+p.hour % 24) + +p.minute / 60 };
 }
+// base64url for the opaque /live state, with web-standard APIs only (Node 16+ and browsers; no Buffer)
+const toB64u = str => { let bin = ""; for (const b of new TextEncoder().encode(str)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const fromB64u = s => { const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/"));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); };
 const slug = s => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // ---------- request -> engine inputs ----------
@@ -137,7 +142,7 @@ function recommend(req, ctx) {
 // ---------- live step ----------
 function live(req, ctx) {
   const { data, L, lang } = ctx;
-  const prev = req.state ? JSON.parse(Buffer.from(req.state, "base64url").toString()) : { base: 37, store: 0, t: 0, turned: false };
+  const prev = req.state ? JSON.parse(fromB64u(req.state)) : { base: 37, store: 0, t: 0, turned: false };
   const clock = localClock(ctx.nowISO, L);
   const durS = req.planned_duration_s || 2700;
   const { u } = toEngineUser({ activity: { type: "run", planned_duration_s: durS, planned_speed_mps: Math.max(1.1, req.speed_mps) }, athlete: req.athlete }, L, clock.hour);
@@ -158,7 +163,7 @@ function live(req, ctx) {
   else if (ab >= 2) alert = A("AIR_WORSENING", 2, "double");
   else if (c.t < 5 && req.elapsed_s <= 480) alert = A("EASY_START_COLD", 1, "single");
   else if (!turned && req.elapsed_s >= durS / 2 && c.ws >= 10) { alert = A("TURN_FOR_TAILWIND", 0, "single"); turned = true; }
-  const state = Buffer.from(JSON.stringify({ base, store, t: req.elapsed_s, turned })).toString("base64url");
+  const state = toB64u(JSON.stringify({ base, store, t: req.elapsed_s, turned }));
   return { schema_version: SCHEMA_VERSION, at: new Date(ctx.nowISO).toISOString(), core_estimate_c: r1(core), core_status: status, fastest_safe_pace_s_per_km: capPace, alert, state };
 }
 

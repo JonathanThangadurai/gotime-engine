@@ -38,7 +38,7 @@ export const ENG = engineModule as {
   compass(deg: number): string;
 };
 
-interface Location { name: string; tz: string; lat: number; lon: number; W0: number; tzFor(date: string): number }
+interface Location { name: string; tz: string; lat: number; lon: number; W0: number; drinkTip: string; tzFor(date: string): number }
 interface ScenarioData { label: string; date: string; pollen: number[] | null }
 const { LOCATIONS, SCENARIOS } = locationsModule as {
   LOCATIONS: Record<CityKey, Location>;

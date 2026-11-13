@@ -12,6 +12,7 @@ export function AfterCard({ view }: { view: AfterView }) {
       <p class="gt-label">{t("AFTER_LABEL")}</p>
       <h2 class="gt-decision">{t(view.title.code)}</h2>
       {view.sub && <p class="gt-sub">{t(view.sub.code)}</p>}
+      {view.planned && <p class="gt-confirm" data-testid="as-planned"><Icon name="check" />{t(view.planned.code, view.planned.params)}</p>}
       <ul class="rows">
         {view.rows.map(r => <li class="row" key={r.code}><Icon name={r.icon} /><span>{t(r.code, r.params)}</span></li>)}
       </ul>

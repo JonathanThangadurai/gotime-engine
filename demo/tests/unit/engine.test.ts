@@ -4,7 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { recommend, type CityKey, type Recommendation, type RecommendationRequest } from "../../src/engine";
 import { todayView, whyView, clockOf } from "../../src/engine/view";
-import { t } from "../../src/copy";
+import { t as tRaw } from "../../src/copy";
+// copy uses non-breaking spaces between numbers and units; compare with plain spaces
+const t = (...a: Parameters<typeof tRaw>) => tRaw(...a).replace(/\u00a0/g, " ");
 import copy from "../../src/copy/en-GB.json";
 import { PERSONAS } from "../../src/scenarios/personas";
 import { scenarioById, parseTime } from "../../src/scenarios";

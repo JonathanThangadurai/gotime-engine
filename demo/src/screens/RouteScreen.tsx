@@ -4,7 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ENG, type Recommendation } from "../engine";
 import { t } from "../copy";
-import { lengthKm, startEnd, type DemoRoute } from "../scenarios/routes";
+import { lapMessage, startEnd, type DemoRoute } from "../scenarios/routes";
 import { Icon } from "./icons";
 
 const OSM = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
@@ -42,7 +42,7 @@ function RouteMap({ route, heading, windFrom }: { route: DemoRoute; heading: num
 
 export function RouteScreen({ rec, route, onStart }: { rec: Recommendation; route: DemoRoute; onStart: () => void }) {
   const g = rec.guidance, heading = g.start_heading_deg, minutes = Math.round(rec.activity.planned_duration_s / 60);
-  const loop = lengthKm(route.path), km = minutes * 60 / g.pace.planned_s_per_km, laps = Math.round(km / loop);
+  const lap = lapMessage(route, minutes, g.pace.planned_s_per_km);
   const startHour = rec.summary.window ? +rec.summary.window.start.slice(11, 13) : null;
   const windHour = rec.hours?.find(h => +h.start.slice(11, 13) === startHour) ?? rec.hours?.[0];
   const windFrom = windHour ? windHour.wind.from_deg : null;
@@ -54,7 +54,7 @@ export function RouteScreen({ rec, route, onStart }: { rec: Recommendation; rout
         <ul class="rows">
           <li class="row"><Icon name="start" /><span>{heading === null ? t("ROUTE_START_ANY", { start_point: start.label })
             : t("ROUTE_START", { start_point: start.label, heading: ENG.compass(heading) })}</span></li>
-          <li class="row"><Icon name="pace" /><span>{t(laps <= 1 ? "ROUTE_LOOP_ONE" : "ROUTE_LOOP", { name: route.name, loop_km: loop.toFixed(1), laps, minutes })}</span></li>
+          <li class="row"><Icon name="pace" /><span>{t(lap.code, lap.params)}</span></li>
           {g.route?.air_dose_saving_pct && g.route.compared_with && (
             <li class="row"><Icon name="air" /><span>{t("ROUTE_AIR", { compared_with: g.route.compared_with, saving_pct: g.route.air_dose_saving_pct })}</span></li>
           )}

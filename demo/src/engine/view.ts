@@ -127,29 +127,42 @@ export const firstAlertMinute = (trace: TracePoint[]): number =>
   trace.find(p => p.live.alert)?.minute ?? Math.floor((trace.length - 1) / 2);
 
 /** After the run. The counterfactual compares the hour run in with the engine's worst hour of the day. */
-export interface AfterView { indoor: boolean; title: Coded; sub: Coded | null; rows: (Coded & { icon: string })[] }
+export interface AfterView {
+  indoor: boolean;
+  title: Coded;
+  sub: Coded | null;
+  planned: Coded | null;                     // "You went at 6:45, as planned."
+  rows: (Coded & { icon: string })[];
+  estimates: { peak_core_c: number } | null; // partner lens / numbers view only, labelled "estimated"
+}
 const r50 = (ml: number) => Math.round(ml / 50) * 50;
-export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint[]): AfterView {
+/** plan: last night's recommendation (the planned window); drink: local drink advice, if any. */
+export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint[], plan?: Recommendation, drink?: string): AfterView {
   const worst = day.worst, time = ENG.fmtHM(worst.h);
   if (rec.summary.action === "indoor") {
-    return { indoor: true, title: { code: "AFTER_INDOOR_TITLE", params: {} }, sub: { code: "AFTER_INDOOR_SUB", params: {} },
-      rows: [{ icon: "heat", code: "AFTER_INDOOR_AVOIDED", params: { peak_c: worst.W, time } }] };
+    return { indoor: true, title: { code: "AFTER_INDOOR_TITLE", params: {} }, sub: { code: "AFTER_INDOOR_SUB", params: {} }, planned: null,
+      rows: [{ icon: "heat", code: "AFTER_INDOOR_AVOIDED", params: { peak_c: worst.W, time } }], estimates: null };
   }
   const minutes = trace.length - 1, startH = trace[0].clock, ran = day.hours[Math.floor(startH)];
   const pace = rec.guidance.pace.planned_s_per_km, km = (minutes * 60 / pace).toFixed(1);
   const serious = trace.some(p => p.live.alert && p.live.alert.level >= 2);
-  const peakCore = Math.max(...trace.map(p => p.live.core_estimate_c));
   const loss = ran.b.sweatMlH * minutes / 60, worstLoss = worst.b.sweatMlH * minutes / 60;
-  const rows: AfterView["rows"] = [{ icon: "pace", code: "AFTER_RUN", params: { km, minutes } }];
+  const rows: AfterView["rows"] = [];
   const delta = worst.W - ran.W;
   if (delta >= 1) rows.push({ icon: "heat", code: "AFTER_HEAT_AVOIDED", params: { time, delta_c: delta } });
-  if (worstLoss - loss >= 100) rows.push({ icon: "water", code: "AFTER_SWEAT", params: { ml: r50(loss), time, worst_ml: r50(worstLoss) } });
-  rows.push({ icon: "athlete", code: "AFTER_CORE", params: { core_c: peakCore } });
-  rows.push(loss >= 300 ? { icon: "water", code: "AFTER_WATER", params: { ml: r50(loss) } } : { icon: "water", code: "AFTER_WATER_NONE", params: {} });
+  rows.push({ icon: "pace", code: "AFTER_RUN", params: { km, minutes } });
+  const topUp = loss >= 300, compare = worstLoss - loss >= 100;
+  const water = `AFTER_WATER_${topUp ? "DRINK" : "NONE"}${compare ? "_CMP" : ""}${topUp && drink ? "_LOCAL" : ""}`;
+  rows.push({ icon: "water", code: water, params: { ml: r50(loss), time, worst_ml: r50(worstLoss), ...(drink ? { drink } : {}) } });
+  let planned: Coded | null = null;
+  const w = plan?.summary.window;
+  if (w && startH >= hourOf(w.start) - 1e-9 && startH < hourOf(w.end)) planned = { code: "AFTER_AS_PLANNED", params: { start: ENG.fmtHM(startH) } };
   return {
     indoor: false,
     title: { code: serious ? "AFTER_TITLE_MIXED" : "AFTER_TITLE_GOOD", params: {} },
     sub: delta >= 1 || worst.ab > ran.ab ? { code: worst.hb >= worst.ab ? "AFTER_SUB_HEAT" : "AFTER_SUB_AIR", params: {} } : null,
+    planned,
     rows,
+    estimates: { peak_core_c: Math.max(...trace.map(p => p.live.core_estimate_c)) },
   };
 }

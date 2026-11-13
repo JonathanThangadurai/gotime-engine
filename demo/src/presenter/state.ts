@@ -1,6 +1,6 @@
 // Presenter state (signals). Everything the drawer, stage bar and keyboard change lives here.
 import { computed, signal } from "@preact/signals";
-import { evaluateDay, recommend, runTrace, type CityKey, type RecommendationRequest } from "../engine";
+import { evaluateDay, location, recommend, runTrace, type CityKey, type RecommendationRequest } from "../engine";
 import { quarterUp, firstAlertMinute, hourOf } from "../engine/view";
 import { PERSONAS, type Persona } from "../scenarios/personas";
 import { parseTime, scenarioById, SCENARIOS } from "../scenarios";
@@ -35,6 +35,8 @@ export const request = computed<Omit<RecommendationRequest, "location">>(() => {
 });
 const inputs = (hour: number) => ({ city: scenario.value.city, scenario: scenario.value.dataKey, localHour: hour, request: request.value, sources: scenario.value.sources });
 
+/** Local drink advice for the city (api/locations.js drinkTip), empty when none. */
+export const drinkTip = computed(() => location(scenario.value.city).drinkTip || undefined);
 export const nowHour = computed(() => parseTime(time.value));
 export const recommendation = computed(() => recommend(inputs(nowHour.value)));
 /** What the engine would say at the usual wake time: the basis of last night's message. */

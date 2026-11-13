@@ -24,12 +24,6 @@ function apiCommonJs(): Plugin {
       return {
         code: `${imports}
 const module = { exports: {} }; let exports = module.exports;
-// adapter.live() encodes its state with Buffer (Node); a minimal base64url stand-in for the browser
-const Buffer = globalThis.Buffer ?? { from(s, enc) {
-  const swap = (x, a, b) => x.split(a).join(b);
-  const str = enc === "base64url" ? decodeURIComponent(escape(atob(swap(swap(s, "-", "+"), "_", "/")))) : String(s);
-  return { toString: e => e === "base64url" ? swap(swap(swap(btoa(unescape(encodeURIComponent(str))), "+", "-"), "/", "_"), "=", "") : str };
-} };
 const require = (p) => { const m = ({ ${table} })[p]; if (m === undefined) throw new Error("Not bundled: " + p); return m; };
 ${code}
 export default module.exports;

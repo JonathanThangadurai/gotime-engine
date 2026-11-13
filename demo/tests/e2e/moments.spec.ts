@@ -42,6 +42,7 @@ const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
     await expect(p.getByTestId("credits")).toHaveText(CREDITS_DATA); } },
   { name: "05-route", check: async p => {
     await expect(p.getByTestId("route")).toContainText("Start at the Amstelveenseweg end, heading north-east");
+    await expect(p.getByTestId("route")).toContainText("Two laps fit your 45 minutes");
     await expect(p.locator(".leaflet-control-attribution")).toContainText("OpenStreetMap");
     await expect(p.locator(".leaflet-control-attribution")).toContainText(CREDITS_DATA);
     // tiles come from openstreetmap.org; wait for them when online, do not fail offline
@@ -53,7 +54,11 @@ const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
     const card = p.getByTestId("after-card");
     await expect(card).toContainText("Well judged");
     await expect(card).toContainText("You dodged the hottest hour.");
-    await expect(card).toContainText("At 15:00 it would have been 9 °C hotter in heat stress terms."); } },
+    await expect(card.locator(".row").first()).toHaveText("At 15:00, heat stress would have been 9 °C higher.");
+    await expect(card).toContainText("You went at 6:45, as planned.");
+    await expect(card).toContainText("You sweated about 150 ml, no need to top up. At 15:00 it would have been about 750 ml.");
+    await expect(card).toContainText("Compared with your usual run, it felt…");
+    await expect(card).not.toContainText("38 °C"); } },
   { name: "08-week", check: async p => { await expect(p.getByTestId("placeholder")).toContainText("step 4"); } },
 ];
 
