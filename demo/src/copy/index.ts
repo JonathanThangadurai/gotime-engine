@@ -12,6 +12,7 @@ function derive(code: string, params: Record<string, unknown>, lang: string): Re
     const k = params.speed_kmh;   // Beaufort: up to 3 (19 km/h) light, 4 moderate, 5 fresh, above strong
     out.wind_word = t(`WIND_WORD_${k <= 19 ? 0 : k <= 28 ? 1 : k <= 38 ? 2 : 3}`, {}, { lang });
   }
+  if (typeof params.clothing === "string") out.clothing_word = t(`KIT_LOWER_${params.clothing}`, {}, { lang });
   return out;
 }
 

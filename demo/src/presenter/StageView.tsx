@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { DeviceScreen } from "../host/HostApp";
 import { CITY_LABEL } from "../scenarios";
-import { barHidden, city, currentMoment, moment, scenario } from "./state";
+import { barHidden, city, currentMoment, moment, persona, plan, scenario } from "./state";
+import { eveningView } from "../engine/view";
+import { t } from "../copy";
 import { Settings, Stepper } from "./Controls";
 import { Credits } from "./Credits";
 
@@ -44,6 +46,9 @@ export function StageView() {
             <dt>What the runner sees</dt><dd>{m.sees}</dd>
             <dt>Principle at work</dt><dd>{m.principle}</dd>
           </dl>
+          {m.id === "evening" && !eveningView(plan.value, persona.value.usualHour).notify && (
+            <p class="panel-note" data-testid="no-message">{t("NO_MESSAGE")}</p>
+          )}
           <p class="panel-later">Partner lens (P) and speaker notes (N) arrive in step 4.</p>
         </aside>
       </div>

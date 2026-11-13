@@ -7,6 +7,7 @@ import { t } from "../copy";
 import { lapMessage, startEnd, type DemoRoute } from "../scenarios/routes";
 import { Icon } from "./icons";
 
+const COMPASS_DEG: Record<string, number> = { north: 0, "north-east": 45, east: 90, "south-east": 135, south: 180, "south-west": 225, west: 270, "north-west": 315 };
 const OSM = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 function arrowIcon(deg: number, cls: string) {
@@ -43,9 +44,9 @@ function RouteMap({ route, heading, windFrom }: { route: DemoRoute; heading: num
 export function RouteScreen({ rec, route, onStart }: { rec: Recommendation; route: DemoRoute; onStart: () => void }) {
   const g = rec.guidance, heading = g.start_heading_deg, minutes = Math.round(rec.activity.planned_duration_s / 60);
   const lap = lapMessage(route, minutes, g.pace.planned_s_per_km);
-  const startHour = rec.summary.window ? +rec.summary.window.start.slice(11, 13) : null;
-  const windHour = rec.hours?.find(h => +h.start.slice(11, 13) === startHour) ?? rec.hours?.[0];
-  const windFrom = windHour ? windHour.wind.from_deg : null;
+  // the wind the advice is based on: the API's wind reason (best hour), as on the Why sheet
+  const wind = rec.reasons.find(r => r.factor === "wind");
+  const windFrom = wind && typeof wind.params.from === "string" ? COMPASS_DEG[wind.params.from] ?? null : null;
   const start = startEnd(route, heading);
   return (
     <div class="host-scroll" data-testid="route">

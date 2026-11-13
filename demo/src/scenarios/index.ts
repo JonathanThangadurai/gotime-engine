@@ -24,6 +24,12 @@ const ERA5: Source[] = [
 export const SCENARIOS: Scenario[] = [
   { id: "ams-heat", city: "ams", dataKey: "heat", label: "Heatwave", personas: ["sanne"], defaultTime: "06:45",
     dateLabel: "Saturday 27 June", eveningLabel: "Friday 26 June", routeId: "vondelpark", sources: SYNTHETIC },
+  // Same morning, two runners: Arjun (heat-adapted, local) goes early; Sanne (visitor) is sent indoors.
+  { id: "chn-heat", city: "chn", dataKey: "heat", label: "May heat", personas: ["arjun", "sanne"], defaultTime: "05:15",
+    dateLabel: "Monday 6 May", eveningLabel: "Sunday 5 May", routeId: "marina", sources: ERA5 },
+  // Bhogi: bonfire smoke at dawn, so Arjun's usual 5:30 slot is the worst of the day.
+  { id: "chn-bhogi", city: "chn", dataKey: "bhogi", label: "Bhogi smoke", personas: ["arjun"], defaultTime: "05:15",
+    dateLabel: "Monday 13 January", eveningLabel: "Sunday 12 January", routeId: "marina", sources: ERA5 },
   // Indoor branch (plan section 3: "Chennai visitor in May"): Sanne, not heat-adapted, visiting on 6 May 2024.
   { id: "chn-heat-visitor", city: "chn", dataKey: "heat", label: "May heat, visitor", personas: ["sanne"], defaultTime: "05:15",
     dateLabel: "Monday 6 May", eveningLabel: "Sunday 5 May", routeId: "marina", sources: ERA5 },

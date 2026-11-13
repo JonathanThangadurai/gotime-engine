@@ -41,6 +41,11 @@ button { cursor: pointer; }
 .gt-sub { margin: 0; font-size: 15px; color: var(--muted); }
 .gt-confirm { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 15px; color: var(--teal); font-weight: 500; }
 .gt-confirm .icon { width: 18px; height: 18px; }
+.gt-note { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 15px; font-weight: 500; }
+.gt-note .icon { width: 18px; height: 18px; color: var(--teal); }
+.kit { margin-top: 16px; }
+.kit .seg-row button { font-size: 14px; padding: 0 6px; }
+.panel-note { margin-top: 24px; padding: 12px 14px; border-left: 3px solid var(--aqua); font-size: 17px; }
 .tl { margin: 22px 0 6px; }
 .tl-track { position: relative; height: 6px; border-radius: 3px; background: var(--hairline); }
 .tl-window { position: absolute; top: 0; bottom: 0; border-radius: 3px; background: var(--teal); }
@@ -50,6 +55,7 @@ button { cursor: pointer; }
 .tl-lab.accent { color: var(--teal); font-weight: 600; }
 .tl-lab.mid { transform: translateX(-50%); }
 .tl-lab.end { right: 0; color: var(--muted); }
+.tl-lab.end.accent { color: var(--teal); }
 .rows { list-style: none; margin: 10px 0 0; padding: 0; }
 .row { display: flex; align-items: center; gap: 16px; min-height: 52px; padding: 4px 0; border-bottom: 1px solid var(--hairline); font-size: 16px; }
 .row .icon { color: var(--teal); }

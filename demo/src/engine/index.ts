@@ -29,7 +29,7 @@ const adapter = adapterModule as {
   render(code: string, params: Record<string, unknown>, lang: string): string | undefined;
 };
 /** One hour as the engine sees it (subset of ENG.evaluate().hours[]). */
-export interface EngineHour { h: number; W: number; t: number; hb: number; ab: number; flag: number; b: { sweatMlH: number; dlim: number } }
+export interface EngineHour { h: number; W: number; t: number; hb: number; ab: number; flag: number; pm25: number; o3: number; b: { sweatMlH: number; dlim: number } }
 export interface EngineDay { best: EngineHour; worst: EngineHour; hours: EngineHour[]; indoor: boolean; hc: { code: string } }
 export const ENG = engineModule as {
   evaluate(d: unknown, u: Record<string, unknown>, L: unknown): EngineDay;

@@ -27,7 +27,7 @@ export interface HourOut {
   level_name: LevelName;
   in_window: boolean;
   heat: { wbgt_c: number; level: number; air_temp_c: number };
-  air: { level: number; dominant: string | null };
+  air: { level: number; dominant: string | null; pm25_ugm3: number; o3_ugm3: number };
   pollen: { grains_m3: number | null; level: number | null };
   wind: { speed_mps: number; from_deg: number };
 }

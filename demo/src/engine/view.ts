@@ -15,10 +15,11 @@ export interface TodayView {
   window: { start: string; end: string } | null;
   timeline: Timeline | null;
   chips: Chip[];
+  usualNote: Coded | null;    // "Skip your usual 5:30 run today: smoke." (from the API's hourly levels)
 }
 export interface WhyView {
   reasons: Reason[];
-  counterfactual: { code: string; params: { delta_c: number; peak_time: string } } | null;
+  counterfactual: { code: string; params: Record<string, string | number> } | null;
   disclaimer: string;
 }
 
@@ -36,8 +37,24 @@ export function timelineOf(rec: Recommendation, nowHour: number): Timeline | nul
     startLabel: clockOf(w.start), endLabel: clockOf(w.end) };
 }
 
-/** nowHour: the local clock the presenter set (decimal hours). */
-export function todayView(rec: Recommendation, nowHour: number): TodayView {
+/**
+ * When the runner's usual start time falls outside today's window and that hour is hard going, name it.
+ * Uses only the API's hourly levels (hours[].air / heat), so it is the engine's judgement, said personally.
+ */
+export function usualSlotNote(rec: Recommendation, usualHour: number | undefined, fromHour: number): Coded | null {
+  const w = rec.summary.window;
+  if (usualHour === undefined || !w || usualHour < fromHour - 0.5) return null;
+  if (usualHour >= hourOf(w.start) && usualHour < hourOf(w.end)) return null;
+  const h = rec.hours?.find(x => +x.start.slice(11, 13) === Math.floor(usualHour));
+  if (!h) return null;
+  const time = ENG.fmtHM(usualHour);
+  if (h.air.level >= 2 && h.air.level >= h.heat.level) return { code: h.air.pm25_ugm3 > 60 ? "SKIP_USUAL_SMOKE" : "SKIP_USUAL_AIR", params: { time } };
+  if (h.heat.level >= 2) return { code: "SKIP_USUAL_HEAT", params: { time } };
+  return null;
+}
+
+/** nowHour: the local clock the presenter set (decimal hours). drink: local drink advice, if any. */
+export function todayView(rec: Recommendation, nowHour: number, usualHour?: number, drink?: string): TodayView {
   const { summary: s, guidance: g } = rec;
   const chips: Chip[] = [];
   if (s.action !== "indoor") {
@@ -51,7 +68,8 @@ export function todayView(rec: Recommendation, nowHour: number): TodayView {
       ? { kind: "start", code: "CHIP_START_ANY", params: {} }
       : { kind: "start", code: "CHIP_START", params: { heading: ENG.compass(g.start_heading_deg) } });
     chips.push(g.hydration.fluid_ml > 0
-      ? { kind: "water", code: "CHIP_WATER", params: { ml: g.hydration.fluid_ml } }
+      ? drink ? { kind: "water", code: "CHIP_WATER_LOCAL", params: { ml: g.hydration.fluid_ml, drink } }
+        : { kind: "water", code: "CHIP_WATER", params: { ml: g.hydration.fluid_ml } }
       : { kind: "water", code: "CHIP_WATER_NONE", params: {} });
   }
   return {
@@ -62,15 +80,21 @@ export function todayView(rec: Recommendation, nowHour: number): TodayView {
     window: s.window ? { start: clockOf(s.window.start), end: clockOf(s.window.end) } : null,
     timeline: timelineOf(rec, nowHour),
     chips,
+    usualNote: usualSlotNote(rec, usualHour, nowHour),
   };
 }
 
 export function whyView(rec: Recommendation, max = 3): WhyView {
-  const heat = rec.reasons.find(r => r.factor === "heat");
+  const top = rec.reasons.find(r => r.factor === "heat" || r.factor === "air");
   let counterfactual: WhyView["counterfactual"] = null;
-  if (rec.summary.action !== "indoor" && heat && heat.code === "HEAT_RISES" && typeof heat.params.peak_wbgt_c === "number" && typeof heat.params.wbgt_c === "number") {
-    const delta = Math.round((heat.params.peak_wbgt_c - heat.params.wbgt_c) * 10) / 10;
-    if (delta >= 1) counterfactual = { code: "COUNTERFACTUAL_HEAT", params: { delta_c: delta, peak_time: String(heat.params.peak_time) } };
+  const p = top?.params ?? {};
+  if (rec.summary.action === "indoor" || !top) counterfactual = null;
+  else if (top.code === "HEAT_RISES" && typeof p.peak_wbgt_c === "number" && typeof p.wbgt_c === "number") {
+    const delta = Math.round((p.peak_wbgt_c - p.wbgt_c) * 10) / 10;
+    if (delta >= 1) counterfactual = { code: "COUNTERFACTUAL_HEAT", params: { delta_c: delta, peak_time: String(p.peak_time) } };
+  } else if ((top.code === "AIR_PM_EPISODE" || top.code === "AIR_PEAK_LATER") && typeof p.peak_ugm3 === "number") {
+    counterfactual = { code: top.code === "AIR_PM_EPISODE" ? "COUNTERFACTUAL_SMOKE" : "COUNTERFACTUAL_AIR",
+      params: { peak_time: String(p.peak_time), peak_ugm3: p.peak_ugm3, window_ugm3: Number(p.window_ugm3), pollutant: String(p.pollutant ?? "") } };
   }
   return { reasons: rec.reasons.slice(0, max), counterfactual, disclaimer: rec.disclaimer.text ?? rec.disclaimer.code };
 }
@@ -93,7 +117,12 @@ export function eveningView(plan: Recommendation, usualHour: number): EveningVie
   const notify = !(usualHour >= st && usualHour + dur <= en);
   const top = plan.reasons.find(r => CONDITION_FACTORS.includes(r.factor));
   const a = quarterUp(st);
-  return { notify, title, body: { code: `TOMORROW_BODY_${top ? top.factor : "default"}`, params: {} },
+  // window opens after the usual time: say why the usual slot is out; otherwise say what happens after the window
+  const note = usualHour < st ? usualSlotNote(plan, usualHour, 0) : null;
+  const usual = note ? { code: `${note.code}_TOMORROW`, params: note.params } : null;
+  const body = usual ?? (usualHour < st ? { code: s.detail.code, params: s.detail.params as Record<string, string | number> }
+    : { code: `TOMORROW_BODY_${top ? top.factor : "default"}`, params: {} });
+  return { notify, title, body,
     slot: { start: ENG.fmtHM(a), end: ENG.fmtHM(a + dur) } };
 }
 
@@ -149,7 +178,10 @@ export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint
   const loss = ran.b.sweatMlH * minutes / 60, worstLoss = worst.b.sweatMlH * minutes / 60;
   const rows: AfterView["rows"] = [];
   const delta = worst.W - ran.W;
-  if (delta >= 1) rows.push({ icon: "heat", code: "AFTER_HEAT_AVOIDED", params: { time, delta_c: delta } });
+  const heatRow = delta >= 1 ? { icon: "heat", code: "AFTER_HEAT_AVOIDED", params: { time, delta_c: delta } } : null;
+  const airRow = worst.ab > ran.ab && worst.pm25 > 60
+    ? { icon: "air", code: "AFTER_SMOKE_AVOIDED", params: { time, worst_ugm3: worst.pm25, ran_ugm3: ran.pm25 } } : null;
+  for (const r of worst.hb >= worst.ab ? [heatRow, airRow] : [airRow, heatRow]) if (r) rows.push(r);
   rows.push({ icon: "pace", code: "AFTER_RUN", params: { km, minutes } });
   const topUp = loss >= 300, compare = worstLoss - loss >= 100;
   const water = `AFTER_WATER_${topUp ? "DRINK" : "NONE"}${compare ? "_CMP" : ""}${topUp && drink ? "_LOCAL" : ""}`;

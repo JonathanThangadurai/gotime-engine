@@ -101,19 +101,25 @@ test("Why sheet via the button, and back", async ({ page }) => {
   await expect(page.getByTestId("today-card")).toBeVisible();
 });
 
-async function switchToChennai(page: Page, project: string) {
-  if (project === "phone") {
-    const hold = page.getByTestId("presenter-hold");
-    await hold.dispatchEvent("pointerdown"); await page.waitForTimeout(1100); await hold.dispatchEvent("pointerup");
-    await page.getByTestId("drawer").getByRole("button", { name: "CHN" }).click();   // switching resets and closes the drawer
-    await expect(page.getByTestId("drawer")).toBeHidden();
-  } else {
-    await page.getByRole("button", { name: "CHN" }).click();
-  }
+async function openDrawer(page: Page) {
+  const hold = page.getByTestId("presenter-hold");
+  await hold.dispatchEvent("pointerdown"); await page.waitForTimeout(1100); await hold.dispatchEvent("pointerup");
+  await expect(page.getByTestId("drawer")).toBeVisible();
+}
+/** Pick a scenario from the presenter controls (stage bar, or the drawer on the phone). */
+async function pickScenario(page: Page, project: string, city: "AMS" | "CHN", label: string) {
+  if (project === "phone") await openDrawer(page);
+  const scope = project === "phone" ? page.getByTestId("drawer") : page.getByTestId("presenter-bar");
+  await scope.getByRole("button", { name: city }).click();          // switching resets; the drawer closes
+  if (project === "phone") await openDrawer(page);
+  await (project === "phone" ? page.getByTestId("drawer") : page.getByTestId("presenter-bar"))
+    .getByRole("combobox").first().selectOption({ label });
+  if (project === "phone") await page.keyboard.press("Escape").catch(() => {});
+  await page.mouse.click(5, 5);                                      // close the drawer (scrim) on the phone
 }
 
 test("indoor branch appears when the engine returns indoor, and skips route and run", async ({ page }, info) => {
-  await switchToChennai(page, info.project.name);
+  await pickScenario(page, info.project.name, "CHN", "May heat, visitor");
   await page.keyboard.press("4");
   await expect(page.getByTestId("indoor-card")).toBeVisible();
   await expect(page.getByTestId("headline")).toHaveText("Train indoors today");
@@ -151,4 +157,58 @@ test("phone view: long press on the page header opens the presenter drawer", asy
   await hold.dispatchEvent("pointerup");
   await expect(page.getByTestId("drawer")).toBeVisible();
   await shot(page, "drawer", info.project.name);
+});
+
+// ---------------------------------------------------------------- step 3: Chennai
+test("C switches city and re-runs the engine", async ({ page }) => {
+  await page.keyboard.press("4");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");
+  await page.keyboard.press("c");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 7:00");      // Arjun, 6 May 2024, 5:15
+  await expect(page.getByText("Monday 6 May")).toBeVisible();
+  await page.keyboard.press("c");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");
+});
+
+test("Chennai May heat: Arjun goes early with local drink advice and a kit choice", async ({ page }, info) => {
+  await page.keyboard.press("c");
+  await page.keyboard.press("4");
+  await expect(page.getByTestId("row-water")).toContainText("ORS or neer mor");
+  await shot(page, "chn-03-today-arjun", info.project.name);
+  await page.getByTestId("kit-full_length_cotton").click();
+  await expect(page.getByTestId("headline")).toHaveText("Run before 6:00");
+  await shot(page, "chn-03-today-arjun-cotton", info.project.name);
+});
+
+test("Bhogi: skip the early slot", async ({ page }, info) => {
+  await page.keyboard.press("c");
+  await page.keyboard.press("s");                                                 // May heat -> Bhogi smoke
+  await page.keyboard.press("2");
+  await expect(page.getByTestId("notification")).toContainText("Tomorrow: run after 15:00");
+  await expect(page.getByTestId("notification")).toContainText("Skip your usual 5:30 run: thick smoke at that hour.");
+  await shot(page, "chn-01-evening-bhogi", info.project.name);
+  await page.keyboard.press("4");
+  await expect(page.getByTestId("headline")).toHaveText("Run after 15:00");
+  await expect(page.getByTestId("usual-note")).toHaveText("Skip your usual 5:30 run today: smoke.");
+  await shot(page, "chn-03-today-bhogi", info.project.name);
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByTestId("counterfactual")).toContainText("You skip the smoke.");
+  await shot(page, "chn-04-why-bhogi", info.project.name);
+  await page.keyboard.press("6");
+  await expect(page.getByTestId("route")).toContainText("Marina promenade, 2.8 km each way. There and back once fits your 45 minutes");
+  await page.locator(".leaflet-tile-loaded").first().waitFor({ timeout: 8000 }).catch(() => {});
+  await shot(page, "chn-05-route-bhogi", info.project.name);
+  await page.keyboard.press("8");
+  await expect(page.getByTestId("after-card")).toContainText("You missed the worst of the air.");
+  await expect(page.getByTestId("after-card").locator(".row").first()).toContainText("smoke and dust would have been");
+  await shot(page, "chn-07-after-bhogi", info.project.name);
+});
+
+test("evening: Arjun on the May morning gets no message (change-only)", async ({ page }, info) => {
+  test.skip(info.project.name !== "stage", "the presenter note is in the stage panel");
+  await page.keyboard.press("c");
+  await page.keyboard.press("2");
+  await expect(page.getByTestId("notification")).toHaveCount(0);
+  await expect(page.getByTestId("no-message")).toBeVisible();
+  await shot(page, "chn-01-evening-silent", info.project.name);
 });

@@ -67,7 +67,7 @@ function HostApp() {
 
   let body;
   if (id === "onboarding") body = <Onboarding />;
-  else if (id === "today" || id === "why") body = <Home><TodayCard view={todayView(rec, nowHour.value)} onWhy={toWhy} /></Home>;
+  else if (id === "today" || id === "why") body = <Home><TodayCard view={todayView(rec, nowHour.value, p.usualHour, drinkTip.value)} onWhy={toWhy} kitChoice={p.kitChoice} /></Home>;
   else if (id === "indoor") body = <Home><IndoorCard rec={rec} onWhy={toWhy} /></Home>;
   else if (id === "route") body = <RouteScreen rec={rec} route={ROUTES[scenario.value.routeId]} onStart={goNext} />;
   else if (id === "after") body = <Home lastRun={false}><AfterCard view={afterView(rec, day.value, trace.value, plan.value, drinkTip.value)} /></Home>;
