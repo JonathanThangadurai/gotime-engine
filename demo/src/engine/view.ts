@@ -1,16 +1,19 @@
 // Turns a contract Recommendation into what the consumer screens show. Every value comes from the response:
 // no advice is computed here, only selected and formatted.
-import { ENG, type Recommendation, type Reason } from "./index";
+import { ENG, type Message, type Recommendation, type Reason } from "./index";
 
 export interface Chip { kind: "pace" | "start" | "water"; code: string; params: Record<string, string | number> }
-export interface HourBar { hour: number; level: number; inWindow: boolean }
+/** Thin timeline from now to the end of the running day: positions are fractions 0-1 of that span. */
+export interface Timeline { now: string; dayEnd: string; start: number; end: number; startLabel: string; endLabel: string }
+const DAY_END_H = 22;
 
 export interface TodayView {
   action: Recommendation["summary"]["action"];
-  headline: string;
-  detail: string;
+  headline: string;          // API text, kept for parity checks
+  headlineMsg: Message;      // code + params, rendered through the demo copy
+  detailMsg: Message;
   window: { start: string; end: string } | null;
-  hours: HourBar[];
+  timeline: Timeline | null;
   chips: Chip[];
 }
 export interface WhyView {
@@ -21,9 +24,20 @@ export interface WhyView {
 
 /** "2026-06-27T06:45:00+02:00" -> "6:45" (local clock, engine style without a leading zero). */
 export const clockOf = (iso: string): string => { const [h, m] = iso.slice(11, 16).split(":"); return `${+h}:${m}`; };
+const hourOf = (iso: string): number => +iso.slice(11, 13) + +iso.slice(14, 16) / 60;
 export const paceText = (sPerKm: number): string => ENG.fmtPace(sPerKm / 60);
 
-export function todayView(rec: Recommendation): TodayView {
+export function timelineOf(rec: Recommendation, nowHour: number): Timeline | null {
+  const w = rec.summary.window;
+  const span = Math.max(DAY_END_H, w ? hourOf(w.end) : 0) - nowHour;
+  if (!w || span <= 0) return null;
+  const pos = (h: number) => Math.min(1, Math.max(0, (h - nowHour) / span));
+  return { now: ENG.fmtHM(nowHour), dayEnd: ENG.fmtHM(nowHour + span), start: pos(hourOf(w.start)), end: pos(hourOf(w.end)),
+    startLabel: clockOf(w.start), endLabel: clockOf(w.end) };
+}
+
+/** nowHour: the local clock the presenter set (decimal hours). */
+export function todayView(rec: Recommendation, nowHour: number): TodayView {
   const { summary: s, guidance: g } = rec;
   const chips: Chip[] = [];
   if (s.action !== "indoor") {
@@ -40,15 +54,13 @@ export function todayView(rec: Recommendation): TodayView {
       ? { kind: "water", code: "CHIP_WATER", params: { ml: g.hydration.fluid_ml } }
       : { kind: "water", code: "CHIP_WATER_NONE", params: {} });
   }
-  const hours = (rec.hours ?? [])
-    .map(h => ({ hour: +h.start.slice(11, 13), level: h.level, inWindow: h.in_window }))
-    .filter(h => h.hour >= 5 && h.hour <= 22);
   return {
     action: s.action,
     headline: s.headline.text ?? s.headline.code,
-    detail: s.detail.text ?? s.detail.code,
+    headlineMsg: s.headline,
+    detailMsg: s.detail,
     window: s.window ? { start: clockOf(s.window.start), end: clockOf(s.window.end) } : null,
-    hours,
+    timeline: timelineOf(rec, nowHour),
     chips,
   };
 }

@@ -17,7 +17,7 @@ function expectedHeadline(hour: number): string {
 
 const SHOTS = "tests/screenshots";
 const shot = (page: Page, name: string, project: string) => page.screenshot({ path: `${SHOTS}/${project}-${name}.png` });
-const CREDITS = "Weather and air: Open-Meteo / ERA5 (CC BY 4.0) · Map © OpenStreetMap contributors";
+const CREDITS_DATA = "Weather and air: Open-Meteo / ERA5 (CC BY 4.0)";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("./");
@@ -27,8 +27,10 @@ test.beforeEach(async ({ page }) => {
 
 test("moment 4 Today card shows the API headline", async ({ page }, info) => {
   await expect(page.getByTestId("headline")).toHaveText(expectedHeadline(6.75));
-  await expect(page.locator(".gt-chip")).toHaveCount(3);
-  await expect(page.getByText(CREDITS)).toBeVisible();
+  await expect(page.locator(".rows .row")).toHaveCount(3);
+  await expect(page.getByTestId("row-water")).toHaveText("Water optional");
+  await expect(page.getByTestId("timeline")).toBeVisible();
+  if (info.project.name === "phone") await expect(page.getByText(CREDITS_DATA)).toHaveCount(0);   // not on the home screen
   await shot(page, "04-today", info.project.name);
 });
 
@@ -37,9 +39,10 @@ test("moment 5 Why sheet via the button, and back", async ({ page }, info) => {
   const sheet = page.getByTestId("why-sheet");
   await expect(sheet).toBeVisible();
   await expect(sheet.locator(".reason")).toHaveCount(3);
-  await expect(page.getByTestId("counterfactual")).toContainText("cooler in heat stress terms");
+  await expect(page.getByTestId("counterfactual")).toHaveText("You miss the hottest part of the day. At 15:00, heat stress is 9 °C higher.");
+  await expect(sheet.getByTestId("credits")).toHaveText(CREDITS_DATA);
   await shot(page, "05-why", info.project.name);
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Done" }).click();
   await expect(sheet).toBeHidden();
 });
 
@@ -72,17 +75,17 @@ test("stage view: presenter bar hides with H", async ({ page }, info) => {
   await shot(page, "04-today-bar-hidden", info.project.name);
 });
 
-test("phone view: long press on the logo opens the presenter drawer", async ({ page }, info) => {
+test("phone view: long press on the page header opens the presenter drawer", async ({ page }, info) => {
   test.skip(info.project.name !== "phone", "phone only");
   await expect(page.locator("[data-layout=phone]")).toBeVisible();
   await expect(page.getByTestId("drawer")).toBeHidden();
-  const logo = page.getByTestId("host-logo");
+  const logo = page.getByTestId("presenter-hold");
   await logo.dispatchEvent("pointerdown");
   await page.waitForTimeout(1100);
   await logo.dispatchEvent("pointerup");
   await expect(page.getByTestId("drawer")).toBeVisible();
   await shot(page, "drawer", info.project.name);
   await page.getByRole("button", { name: "Next moment" }).click();
-  await page.getByRole("button", { name: "Done" }).click();
+  await page.getByTestId("drawer").getByRole("button", { name: "Done" }).click();
   await expect(page.getByTestId("why-sheet")).toBeVisible();
 });

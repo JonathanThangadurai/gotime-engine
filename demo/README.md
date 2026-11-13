@@ -13,8 +13,10 @@ npm run build        # static output in dist/
 - The engine is not copied. `vite.config.mts` wraps `api/engine.js`, `api/locations.js` and `api/adapter.js` (CommonJS)
   as ES modules at build time; `src/engine/` calls `adapter.recommend()` exactly as `api/build_examples.js` does, so the
   demo shows the real contract response. `tests/unit/engine.test.ts` checks it against every file in `api/examples/`.
-- Text: API message codes (`api/messages/en-GB.json`) first, then demo chrome (`src/text/en-GB.json`).
-- Keys: → / ← step moments, 1-9 jump, H hides the presenter bar, R resets. Phone: long-press the Stride logo (1 s) or
+- Text: consumer wording in `src/copy/en-GB.json`, keyed by API codes (plus `CODE.go_now` variants) and demo chrome codes;
+  numbers rounded to whole units. Codes without a copy entry fall back to `api/messages/en-GB.json`, which stays untouched.
+- Look: calm, minimal, native (system UI font, white, ink `#18343b`, teal `#176a70` as the only accent, hairlines `#edf0f0`).
+- Keys: → / ← step moments, 1-9 jump, H hides the presenter bar, R resets. Phone: long-press the page header (date, "Today", avatar) for 1 s or
   tap with three fingers for the presenter drawer; swipe along the bottom edge to step.
 - Node: works on Node 18.12+. The `overrides` in package.json (lru-cache 11.0.2, @rollup/plugin-terser 0.4.4) keep the
   PWA service-worker build working on Node 18; they can go once the machine runs Node 20+.

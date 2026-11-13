@@ -1,4 +1,4 @@
-import { t } from "../text";
+import { t } from "../copy";
 
 export function Placeholder({ title, step, indoor }: { title: string; step: number; indoor?: boolean }) {
   return (

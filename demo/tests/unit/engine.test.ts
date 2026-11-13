@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { recommend, type CityKey, type Recommendation, type RecommendationRequest } from "../../src/engine";
 import { todayView, whyView, clockOf } from "../../src/engine/view";
+import { t } from "../../src/copy";
+import copy from "../../src/copy/en-GB.json";
 import { PERSONAS } from "../../src/scenarios/personas";
 import { scenarioById, parseTime } from "../../src/scenarios";
 
@@ -36,7 +38,9 @@ describe("engine wrapper matches api/examples", () => {
       expect(rec.summary.action).toBe(ex.response.summary.action);
       expect(rec.summary.window).toEqual(ex.response.summary.window);
       expect(rec.reasons).toEqual(ex.response.reasons);
-      expect(todayView(rec).headline).toBe(ex.response.summary.headline.text);
+      const v = todayView(rec, 12);
+      expect(v.headline).toBe(ex.response.summary.headline.text);
+      expect(t(v.headlineMsg.code, v.headlineMsg.params)).toBe(ex.response.summary.headline.text);
     });
   }
 });
@@ -48,19 +52,27 @@ describe("Amsterdam heatwave, Sanne at 06:45", () => {
   it("gives a go-before headline from the engine", () => {
     expect(rec.summary.action).toBe("go_now");
     expect(rec.summary.headline.code).toBe("GO_BEFORE");
-    expect(todayView(rec).headline).toBe(`Run before ${rec.summary.headline.params.end}`);
+    expect(todayView(rec, 6.75).headline).toBe(`Run before ${rec.summary.headline.params.end}`);
   });
-  it("builds three chips from guidance", () => {
-    const v = todayView(rec);
+  it("builds three rows from guidance", () => {
+    const v = todayView(rec, 6.75);
     expect(v.chips.map(c => c.kind)).toEqual(["pace", "start", "water"]);
-    expect(v.chips[0]).toMatchObject({ code: "CHIP_PACE_OK", params: { pace: "6:20" } });
+    expect(t(v.chips[0].code, v.chips[0].params)).toBe("6:20/km is fine");
+    expect(t(v.chips[2].code, v.chips[2].params)).toBe("Water optional");
     expect(v.window).toEqual({ start: clockOf(rec.summary.window!.start), end: clockOf(rec.summary.window!.end) });
   });
-  it("window bar covers the rest of the day and marks the window", () => {
-    const v = todayView(rec);
-    expect(v.hours[0].hour).toBe(6);
-    expect(v.hours.at(-1)!.hour).toBe(22);
-    expect(v.hours.filter(h => h.inWindow).length).toBeGreaterThan(0);
+  it("timeline runs from now to 22:00 with the window in it", () => {
+    const tl = todayView(rec, 6.75).timeline!;
+    expect(tl).toMatchObject({ now: "6:45", dayEnd: "22:00", start: 0, endLabel: "11:00" });
+    expect(tl.end).toBeCloseTo((11 - 6.75) / (22 - 6.75), 5);
+  });
+  it("consumer copy rounds numbers to whole units", () => {
+    const heat = rec.reasons[0];
+    expect(t(heat.code, heat.params, { action: "go_now" })).toBe("16 °C heat stress now, 26 °C at 15:00. Above 28 °C we suggest training indoors.");
+    const cf = whyView(rec).counterfactual!;
+    expect(t(cf.code, cf.params)).toBe("You miss the hottest part of the day. At 15:00, heat stress is 9 °C higher.");
+    const wind = rec.reasons.find(r => r.factor === "wind")!;
+    expect(t(wind.code, wind.params)).toBe("Light north-east wind. Start into it, and it is behind you on the way home.");
   });
   it("why sheet: three ranked reasons and an engine-derived counterfactual", () => {
     const w = whyView(rec);
@@ -71,7 +83,16 @@ describe("Amsterdam heatwave, Sanne at 06:45", () => {
     expect(w.counterfactual?.params.delta_c).toBeCloseTo((heat.params.peak_wbgt_c as number) - (heat.params.wbgt_c as number), 1);
   });
   it("never shows mortality or relative risk wording", () => {
-    const words = JSON.stringify([todayView(rec), whyView(rec)]).toLowerCase();
+    const words = JSON.stringify([todayView(rec, 6.75), whyView(rec), copy]).toLowerCase();
     for (const banned of ["mortality", "relative risk", "heart attack", "death", "cardio_load"]) expect(words).not.toContain(banned);
+  });
+});
+
+describe("demo copy catalogue", () => {
+  it("has no contractions (British English rule)", () => {
+    for (const [k, v] of Object.entries(copy)) if (!k.startsWith("_")) expect(v, k).not.toMatch(/\b\w+['’](s|t|re|ll|ve|d|m)\b/i);
+  });
+  it("overrides the API contraction without touching api/messages", () => {
+    expect(t("BEST_WINDOW")).toBe("This is your best window today.");
   });
 });

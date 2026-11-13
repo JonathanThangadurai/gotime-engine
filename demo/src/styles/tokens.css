@@ -1,22 +1,17 @@
-/* FerryWellCo tokens. One accent (teal / aqua) is reserved for the runner's own plan. */
+/* Calm, minimal, native: white, one ink, one accent (teal) for the runner's own plan, hairline dividers. */
 :root {
+  --bg: #ffffff;
   --ink: #18343b;
-  --ink-2: #4b6268;          /* muted text, 6.1:1 on paper */
-  --teal: #176a70;           /* accent: the runner's plan, 6.0:1 on paper */
+  --muted: #637478;          /* secondary text: 4.9:1 on white (the specified #6b7c80 is 4.4:1, under WCAG AA) */
+  --teal: #176a70;           /* the only accent, 6.3:1 on white */
+  --hairline: #edf0f0;
+  --hairline-strong: #d9dfdf;
+  --fill: #f3f5f5;           /* avatar, section band */
+  /* stage view and presenter controls (unchanged) */
   --aqua: #9fe8dd;
-  --aqua-soft: #e3f6f2;
-  --paper: #fbf8f2;
-  --card: #ffffff;
-  --line: #e2ddd2;
   --stage-bg: #10262b;
   --stage-panel: #193a41;
   --stage-text: #e9f3f1;
   --stage-muted: #a9c2c0;
-  /* condition levels: also encoded by bar height and text, never by colour alone */
-  --lvl0: #7fbf98;
-  --lvl1: #e6bd4f;
-  --lvl2: #d4683f;
-  --lvl3: #2a2523;
-  --radius: 18px;
-  --font: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Segoe UI", system-ui, sans-serif;
 }

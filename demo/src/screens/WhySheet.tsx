@@ -1,38 +1,39 @@
 import type { WhyView } from "../engine/view";
-import { t } from "../text";
+import type { Action } from "../engine";
+import { t } from "../copy";
+import { Icon } from "./icons";
 
-/** Bottom sheet: ranked reasons in plain words, an evidence tag on each, and the counterfactual. */
-export function WhySheet({ view, subtitle, onClose }: { view: WhyView; subtitle: string; onClose: () => void }) {
+/** Bottom sheet: the benefit first, then plain reasons with a quiet evidence line, then disclaimer and credits. */
+export function WhySheet({ view, action, subtitle, onClose }: { view: WhyView; action: Action; subtitle: string; onClose: () => void }) {
   return (
     <div class="sheet-scrim" onClick={onClose}>
       <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="why-title" data-testid="why-sheet"
         onClick={e => e.stopPropagation()}>
         <div class="sheet-grip" aria-hidden="true" />
         <header class="sheet-head">
-          <div>
-            <h2 id="why-title">{t("WHY_TITLE")}</h2>
-            <p class="sheet-sub">{subtitle}</p>
-          </div>
-          <button type="button" class="icon-btn" onClick={onClose} aria-label={t("CLOSE")}>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
+          <h2 id="why-title">{t("WHY_TITLE")}</h2>
+          <button type="button" class="text-btn" onClick={onClose}>{t("DONE")}</button>
         </header>
-        <ol class="reasons">
-          {view.reasons.map((r, i) => (
+        <p class="sheet-sub">{subtitle}</p>
+        {view.counterfactual && (
+          <p class="benefit" data-testid="counterfactual">{t(view.counterfactual.code, view.counterfactual.params)}</p>
+        )}
+        <ul class="reasons">
+          {view.reasons.map(r => (
             <li class="reason" key={r.code}>
-              <span class="reason-rank" aria-hidden="true">{i + 1}</span>
+              <Icon name={r.factor} />
               <div>
-                <p class="reason-factor">{t(`FACTOR_${r.factor}`)}</p>
-                <p class="reason-text">{r.text ?? t(r.code, r.params)}</p>
-                <p class="evidence">{t(`EVIDENCE_${r.evidence}`)}</p>
+                <p class="reason-title">{t(`FACTOR_${r.factor}`)}</p>
+                <p class="reason-text">{t(r.code, r.params, { action })}</p>
+                <p class="evidence"><span class="dot" aria-hidden="true" />{t(`EVIDENCE_${r.evidence}`)}</p>
               </div>
             </li>
           ))}
-        </ol>
-        {view.counterfactual && (
-          <p class="counterfactual" data-testid="counterfactual">{t(view.counterfactual.code, view.counterfactual.params)}</p>
-        )}
-        <p class="disclaimer">{view.disclaimer}</p>
+        </ul>
+        <footer class="sheet-foot">
+          <p>{view.disclaimer}</p>
+          <p data-testid="credits">{t("CREDITS_DATA")}</p>
+        </footer>
       </section>
     </div>
   );

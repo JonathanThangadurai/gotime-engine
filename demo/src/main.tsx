@@ -1,9 +1,5 @@
 import { render } from "preact";
 import { signal } from "@preact/signals";
-import "@fontsource/instrument-sans/400.css";
-import "@fontsource/instrument-sans/500.css";
-import "@fontsource/instrument-sans/600.css";
-import "@fontsource/instrument-sans/700.css";
 import "./styles/tokens.css";
 import "./styles/components.css";
 import { StageView } from "./presenter/StageView";

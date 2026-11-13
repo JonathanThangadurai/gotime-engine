@@ -12,7 +12,6 @@
     "screenshots": "playwright test"
   },
   "dependencies": {
-    "@fontsource/instrument-sans": "^5.3.0",
     "@preact/signals": "^2.11.4",
     "preact": "^10.29.8"
   },
