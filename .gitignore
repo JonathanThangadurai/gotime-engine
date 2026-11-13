@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Downloaded data and caches (reproducible from the connectors)
+data/
+climatology/
+
+# Run outputs (keep the back-test findings and the CAMS correction table)
+outputs/*
+!outputs/backtest_2026_summary.md
+!outputs/cams_correction_by_hour.csv
+!outputs/cams_correction_info.json

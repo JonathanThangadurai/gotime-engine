@@ -1,0 +1,11 @@
+{
+  "_note": "Edit municipality name and coordinates. Stations are chosen automatically as the nearest ones.",
+  "municipality": {
+    "name": "Amsterdam",
+    "lat": 52.3676,
+    "lon": 4.9041
+  },
+  "climatology_years": 20,
+  "baseline_daily_deaths_fallback": 14.7,
+  "forecast_days": 3
+}

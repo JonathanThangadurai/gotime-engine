@@ -1,0 +1,82 @@
+{
+ "definition": "ratio = sum(CAMS) / sum(measured) per local hour of day; divide CAMS by it to correct",
+ "period": [
+  "2026-05-01",
+  "2026-10-31"
+ ],
+ "pollutants": {
+  "PM10": {
+   "stations": [
+    "NL49014 Amsterdam-Vondelpark (2.7 km)",
+    "NL49003 Amsterdam-Nieuwendammerdijk (3.6 km)",
+    "NL49016 Amsterdam-Westerpark (3.7 km)",
+    "NL49701 Zaandam-Wagenschotpad (10.7 km)",
+    "NL49703 Spaarnwoude-Machineweg (12.4 km)",
+    "NL49565 Oude Meer-Aalsmeerderdijk (13.3 km)"
+   ],
+   "overall_ratio": 0.968,
+   "n_hours": 4415,
+   "lag_corr": {
+    "-1": 0.635,
+    "0": 0.64,
+    "1": 0.627
+   },
+   "mean_fc": 12.7,
+   "mean_meas": 13.2
+  },
+  "PM2.5": {
+   "stations": [
+    "NL49014 Amsterdam-Vondelpark (2.7 km)",
+    "NL49003 Amsterdam-Nieuwendammerdijk (3.6 km)",
+    "NL49016 Amsterdam-Westerpark (3.7 km)",
+    "NL49701 Zaandam-Wagenschotpad (10.7 km)",
+    "NL49703 Spaarnwoude-Machineweg (12.4 km)"
+   ],
+   "overall_ratio": 1.345,
+   "n_hours": 4415,
+   "lag_corr": {
+    "-1": 0.688,
+    "0": 0.69,
+    "1": 0.674
+   },
+   "mean_fc": 8.0,
+   "mean_meas": 5.9
+  },
+  "NO2": {
+   "stations": [
+    "NL49019 Amsterdam-Oude Schans (0.5 km)",
+    "NL49014 Amsterdam-Vondelpark (2.7 km)",
+    "NL49003 Amsterdam-Nieuwendammerdijk (3.6 km)",
+    "NL49022 Amsterdam-Ookmeer (7.5 km)",
+    "NL49021 Amsterdam -Kantershof (7.7 km)",
+    "NL49701 Zaandam-Wagenschotpad (10.7 km)",
+    "NL49703 Spaarnwoude-Machineweg (12.4 km)",
+    "NL49565 Oude Meer-Aalsmeerderdijk (13.3 km)"
+   ],
+   "overall_ratio": 1.811,
+   "n_hours": 4414,
+   "lag_corr": {
+    "-1": 0.73,
+    "0": 0.753,
+    "1": 0.731
+   },
+   "mean_fc": 18.3,
+   "mean_meas": 10.1
+  },
+  "O3": {
+   "stations": [
+    "NL49014 Amsterdam-Vondelpark (2.7 km)",
+    "NL49003 Amsterdam-Nieuwendammerdijk (3.6 km)"
+   ],
+   "overall_ratio": 0.946,
+   "n_hours": 4414,
+   "lag_corr": {
+    "-1": 0.878,
+    "0": 0.877,
+    "1": 0.84
+   },
+   "mean_fc": 56.6,
+   "mean_meas": 59.9
+  }
+ }
+}
