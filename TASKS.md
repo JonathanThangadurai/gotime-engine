@@ -36,6 +36,8 @@ Sources follow Jessie's recommendations of 13 November 2026; the data layer itse
 - [ ] Legal: GDPR (hay fever is health data) and a regulatory opinion on EU medical device rules
 
 ## 4. Phone demo: user journey in a fitness app
+Plan: `docs/phone-demo-plan.md`. Build brief for Claude Code: `docs/phone-demo-build-brief.md`.
+
 - [ ] Journey script: evening notification, morning lock screen, Today card, Why, route map, run with watch alerts, post-run summary, weekly insight
 - [ ] Mobile web app (installable on the home screen), engine running on the phone itself
 - [ ] Onboarding in three questions (goal pace, heat-adapted, hay fever) with consent wording

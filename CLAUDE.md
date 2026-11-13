@@ -87,3 +87,9 @@ for station observations incl. KNMI, ERA5 from Copernicus for climatology. NASA 
 (street heat mapping), never a substitute for air temperature. Infra: Docker on OVH with download workers (ours). Jessie owns only AeroWise; its route_profile is the one interface between us.
 The engines take hourly arrays per location, so only connectors / server.js conditionsFor change. Note: the CAMS correction
 factors in outputs/ were fitted against CAMS-via-Open-Meteo and must be re-checked against the ADS feed.
+
+## Phone demo (planned 13 Nov 2026)
+docs/phone-demo-plan.md = why (audiences, psychology rules, personas, journey, scripts).
+docs/phone-demo-build-brief.md = how (Vite + Preact + TS PWA in demo/, engine imported from api/engine.js, Leaflet/OSM,
+presenter stage view + phone drawer, keyboard shortcuts, deep links, scripts, steps 1-5 with acceptance criteria).
+Build one step at a time and stop for review after each.
