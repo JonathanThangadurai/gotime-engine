@@ -40,15 +40,15 @@
       "level_name": "green",
       "window": {
         "start": "2026-06-27T06:45:00+02:00",
-        "end": "2026-06-27T11:00:00+02:00",
-        "latest_start": "2026-06-27T10:15:00+02:00"
+        "end": "2026-06-27T12:00:00+02:00",
+        "latest_start": "2026-06-27T11:15:00+02:00"
       },
       "headline": {
         "code": "GO_BEFORE",
         "params": {
-          "end": "11:00"
+          "end": "12:00"
         },
-        "text": "Run before 11:00"
+        "text": "Run before 12:00"
       },
       "detail": {
         "code": "WORSE_LATER",
@@ -56,7 +56,7 @@
         "text": "After that, conditions turn against you."
       },
       "notification": {
-        "title": "Run before 11:00",
+        "title": "Run before 12:00",
         "body": "After that, conditions turn against you."
       }
     },
@@ -64,27 +64,32 @@
       "intensity": "normal",
       "pace": {
         "planned_s_per_km": 380,
-        "planned_pace_ok": true,
-        "limit_status": "capped",
-        "fastest_safe_pace_s_per_km": 241,
-        "max_duration_at_planned_s": null,
-        "pace_for_full_duration_s_per_km": null
+        "advice": "as_planned"
       },
       "route": {
         "id": "vondelpark",
         "name": "Vondelpark",
-        "air_dose_saving_pct": 68,
+        "exposure_lower_pct": 44,
         "compared_with": "Stadhouderskade"
       },
       "start_heading_deg": 60,
       "start_heading_status": "into_wind",
       "hydration": {
-        "fluid_ml": 0,
-        "sweat_rate_ml_per_h": 241,
-        "electrolytes_recommended": false
+        "advice": "drink_to_thirst",
+        "carry_water": true
       },
       "warm_up_indoors": false,
       "indoor_alternatives": []
+    },
+    "air_today": {
+      "pm25_24h_mean_ugm3": 14,
+      "pm10_24h_mean_ugm3": 25,
+      "no2_24h_mean_ugm3": 28,
+      "o3_max_8h_mean_ugm3": null,
+      "above_who_guideline": [
+        "nitrogen_dioxide"
+      ],
+      "naqi_pm25_band": 0
     },
     "reasons": [
       {
@@ -99,6 +104,22 @@
           "indoor_line_c": 28
         },
         "text": "Heat stress 16.3 °C in your slot, 25.5 °C at 15:00. Indoors above 28 °C."
+      },
+      {
+        "factor": "air",
+        "code": "AIR_ABOVE_GUIDELINE",
+        "level": 0,
+        "evidence": "published_threshold",
+        "params": {
+          "pollutant": "NO₂",
+          "averaging": "24-h mean",
+          "value_ugm3": 28,
+          "guideline_ugm3": 25,
+          "peak_time": "7:00",
+          "window_ugm3": 40,
+          "not_assessed": "Ozone"
+        },
+        "text": "NO₂ 24-h mean 28 µg/m³, above the WHO guideline of 25. Highest around 7:00; 40 in your slot."
       },
       {
         "factor": "wind",
@@ -123,20 +144,6 @@
           "clothing": "running_kit"
         },
         "text": "Not heat-adapted, 70 kg, 175 cm."
-      },
-      {
-        "factor": "air",
-        "code": "AIR_PEAK_LATER",
-        "level": 0,
-        "evidence": "published_slopes",
-        "params": {
-          "pollutant": "NO₂",
-          "peak_ugm3": 18,
-          "peak_time": "15:00",
-          "window_ugm3": 40,
-          "not_assessed": "Ozone"
-        },
-        "text": "NO₂ 18 µg/m³ at 15:00, 40 in your slot."
       }
     ],
     "tips": [
@@ -173,11 +180,12 @@
       }
     ],
     "data": {
-      "engine_version": "2.2.0",
+      "engine_version": "3.0.0",
       "status": "degraded",
       "not_assessed": [
         "ozone"
       ],
+      "unassessed_hours": [],
       "sources": [
         {
           "id": "gotime-synthetic",
@@ -199,9 +207,22 @@
       "params": {},
       "text": "Advisory only, not medical advice. Stop if you feel unwell."
     },
+    "experimental": {
+      "heat_budget": {
+        "model": "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
+        "uncompensable_heat": false,
+        "minutes_to_39c": null,
+        "suggested_max_pace_s_per_km": null,
+        "sweat_rate_ml_per_h": 646,
+        "sweat_loss_ml": 485,
+        "core_steady_c": 38.2
+      },
+      "note": "Experimental model output; not for runner screens."
+    },
     "hours": [
       {
         "start": "2026-06-27T06:00:00+02:00",
+        "assessed": true,
         "level": 0,
         "level_name": "green",
         "in_window": true,
@@ -211,11 +232,6 @@
           "air_temp_c": 19.6,
           "relative_humidity_pct": 64,
           "radiant_temp_c": 13.6
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 241,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 14,
@@ -230,17 +246,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.035
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 241,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T07:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": true,
@@ -250,11 +274,6 @@
           "air_temp_c": 20.2,
           "relative_humidity_pct": 60,
           "radiant_temp_c": 54
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 646,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 15,
@@ -269,17 +288,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.8,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.055
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 646,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T08:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": true,
@@ -289,11 +316,6 @@
           "air_temp_c": 21.2,
           "relative_humidity_pct": 55,
           "radiant_temp_c": 52
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 668,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 15,
@@ -308,17 +330,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.1,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.056
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 668,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T09:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": true,
@@ -328,11 +358,6 @@
           "air_temp_c": 22.4,
           "relative_humidity_pct": 50,
           "radiant_temp_c": 51.9
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 724,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 14,
@@ -347,17 +372,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.3,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.058
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 724,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T10:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": true,
@@ -368,38 +401,41 @@
           "relative_humidity_pct": 45,
           "radiant_temp_c": 53.1
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 805,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 13,
           "pm10_ugm3": 25,
           "no2_ugm3": 24,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "no2"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.6,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.062
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 805,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T11:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
-        "in_window": false,
+        "in_window": true,
         "heat": {
           "wbgt_c": 23,
           "level": 1,
@@ -407,35 +443,38 @@
           "relative_humidity_pct": 41,
           "radiant_temp_c": 53.8
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 895,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 13,
           "pm10_ugm3": 24,
           "no2_ugm3": 20,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "pm25"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.9,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.068
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 895,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T12:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -446,35 +485,38 @@
           "relative_humidity_pct": 38,
           "radiant_temp_c": 54.3
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 979,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 12,
           "pm10_ugm3": 23,
           "no2_ugm3": 18,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "pm25"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 4.2,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.073
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 979,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T13:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -485,35 +527,38 @@
           "relative_humidity_pct": 35,
           "radiant_temp_c": 54.8
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 1060,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 12,
           "pm10_ugm3": 23,
           "no2_ugm3": 17,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "pm25"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 4.2,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.078
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 1060,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T14:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -524,35 +569,38 @@
           "relative_humidity_pct": 33,
           "radiant_temp_c": 55.1
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": 13320,
-          "sweat_rate_ml_per_h": 1094,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 12,
           "pm10_ugm3": 23,
           "no2_ugm3": 17,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "pm25"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 4.2,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.08
+        "experimental": {
+          "minutes_to_39c": 222,
+          "sweat_rate_ml_per_h": 1094,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T15:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -563,35 +611,38 @@
           "relative_humidity_pct": 32,
           "radiant_temp_c": 55
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": 5160,
-          "sweat_rate_ml_per_h": 1094,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 12,
           "pm10_ugm3": 23,
           "no2_ugm3": 18,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "pm25"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.9,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.082
+        "experimental": {
+          "minutes_to_39c": 86,
+          "sweat_rate_ml_per_h": 1094,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T16:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -602,35 +653,38 @@
           "relative_humidity_pct": 33,
           "radiant_temp_c": 52.8
         },
-        "heat_budget": {
-          "max_duration_at_planned_s": 14280,
-          "sweat_rate_ml_per_h": 1094,
-          "core_steady_c": 38.2
-        },
         "air": {
           "pm25_ugm3": 13,
           "pm10_ugm3": 24,
           "no2_ugm3": 22,
           "o3_ugm3": null,
           "level": 0,
-          "dominant": null
+          "dominant": "no2"
         },
         "cold": {
           "wind_chill_c": null,
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.6,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.079
+        "experimental": {
+          "minutes_to_39c": 238,
+          "sweat_rate_ml_per_h": 1094,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T17:00:00+02:00",
+        "assessed": true,
         "level": 2,
         "level_name": "red",
         "in_window": false,
@@ -640,11 +694,6 @@
           "air_temp_c": 28.8,
           "relative_humidity_pct": 35,
           "radiant_temp_c": 48.1
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 1029,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 14,
@@ -659,17 +708,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.3,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.075
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 1029,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T18:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": false,
@@ -679,11 +736,6 @@
           "air_temp_c": 27.6,
           "relative_humidity_pct": 38,
           "radiant_temp_c": 39.5
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 885,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 15,
@@ -698,17 +750,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 3.1,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.068
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 885,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T19:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": false,
@@ -718,11 +778,6 @@
           "air_temp_c": 26,
           "relative_humidity_pct": 42,
           "radiant_temp_c": 28.5
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 701,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 16,
@@ -737,17 +792,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.8,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.057
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 701,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T20:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": false,
@@ -757,11 +820,6 @@
           "air_temp_c": 24.4,
           "relative_humidity_pct": 47,
           "radiant_temp_c": 20.2
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 549,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 16,
@@ -776,17 +834,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.048
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 549,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T21:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": false,
@@ -796,11 +862,6 @@
           "air_temp_c": 23.2,
           "relative_humidity_pct": 52,
           "radiant_temp_c": 17.2
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 459,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 15,
@@ -815,17 +876,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.044
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 459,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T22:00:00+02:00",
+        "assessed": true,
         "level": 1,
         "level_name": "yellow",
         "in_window": false,
@@ -835,11 +904,6 @@
           "air_temp_c": 22.4,
           "relative_humidity_pct": 56,
           "radiant_temp_c": 16.6
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 412,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 14,
@@ -854,17 +918,25 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.043
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 412,
+          "core_steady_c": 38.2
+        }
       },
       {
         "start": "2026-06-27T23:00:00+02:00",
+        "assessed": true,
         "level": 0,
         "level_name": "green",
         "in_window": false,
@@ -874,11 +946,6 @@
           "air_temp_c": 21.8,
           "relative_humidity_pct": 59,
           "radiant_temp_c": 16.1
-        },
-        "heat_budget": {
-          "max_duration_at_planned_s": null,
-          "sweat_rate_ml_per_h": 377,
-          "core_steady_c": 38.2
         },
         "air": {
           "pm25_ugm3": 14,
@@ -893,14 +960,21 @@
           "level": 0
         },
         "pollen": {
-          "grains_m3": 20,
-          "level": 0
+          "grass_m3": 20,
+          "birch_m3": 0,
+          "alder_m3": 0,
+          "mugwort_m3": 0,
+          "grass_level": 0
         },
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 45
         },
-        "cardio_load_rr": 1.041
+        "experimental": {
+          "minutes_to_39c": null,
+          "sweat_rate_ml_per_h": 377,
+          "core_steady_c": 38.2
+        }
       }
     ]
   }

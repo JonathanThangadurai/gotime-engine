@@ -13,8 +13,7 @@ function openMeteo(firstDate, days, scen = SCENARIOS.ams.heat, { pollen = true }
     W.temperature_2m.push(scen.t[h]); W.relative_humidity_2m.push(scen.rh[h]); W.shortwave_radiation.push(scen.sw[h]);
     W.wind_speed_10m.push(scen.ws[h]); W.wind_direction_10m.push(scen.wd[h]);
     A.pm10.push(scen.pm10[h]); A.pm2_5.push(scen.pm25[h]); A.nitrogen_dioxide.push(scen.no2[h]); A.ozone.push(scen.o3[h]);
-    const p = scen.pollen ? scen.pollen[h] : 0;
-    A.grass_pollen.push(p); A.birch_pollen.push(0); A.alder_pollen.push(0); A.mugwort_pollen.push(0);
+    for (const k of ["grass", "birch", "alder", "mugwort"]) A[`${k}_pollen`].push(scen.pollen && scen.pollen[k] ? scen.pollen[k][h] : 0);
   }
   const air = { hourly: { time: time.slice(), ...A } };
   if (!pollen) for (const k of ["grass_pollen", "birch_pollen", "alder_pollen", "mugwort_pollen"]) delete air.hourly[k];

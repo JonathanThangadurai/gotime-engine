@@ -1,0 +1,176 @@
+{
+  "source": "ECMWF thermofeel 2.3.0 (thermofeel.liljegren), Apache-2.0; Liljegren et al. 2008",
+  "generated_by": "api/test/wbgt/make_reference.py",
+  "cases": [
+    {
+      "name": "hot sun, light wind, moderate humidity",
+      "inputs": {
+        "ta_c": 32,
+        "rh_pct": 45,
+        "p_hpa": 1010,
+        "u2_mps": 1.0,
+        "sw_wm2": 850,
+        "cza": 0.85,
+        "fdir": 0.8
+      },
+      "reference": {
+        "wbgt_c": 31.313,
+        "tg_c": 50.669,
+        "tnw_c": 25.684
+      }
+    },
+    {
+      "name": "hot sun, light wind, humid",
+      "inputs": {
+        "ta_c": 31,
+        "rh_pct": 75,
+        "p_hpa": 1010,
+        "u2_mps": 1.0,
+        "sw_wm2": 800,
+        "cza": 0.8,
+        "fdir": 0.75
+      },
+      "reference": {
+        "wbgt_c": 33.976,
+        "tg_c": 49.965,
+        "tnw_c": 29.833
+      }
+    },
+    {
+      "name": "hot sun, strong wind",
+      "inputs": {
+        "ta_c": 32,
+        "rh_pct": 45,
+        "p_hpa": 1010,
+        "u2_mps": 6.0,
+        "sw_wm2": 850,
+        "cza": 0.85,
+        "fdir": 0.8
+      },
+      "reference": {
+        "wbgt_c": 28.042,
+        "tg_c": 41.587,
+        "tnw_c": 23.607
+      }
+    },
+    {
+      "name": "warm, cloudy (diffuse light)",
+      "inputs": {
+        "ta_c": 26,
+        "rh_pct": 70,
+        "p_hpa": 1010,
+        "u2_mps": 2.0,
+        "sw_wm2": 250,
+        "cza": 0.6,
+        "fdir": 0.1
+      },
+      "reference": {
+        "wbgt_c": 24.864,
+        "tg_c": 31.258,
+        "tnw_c": 22.875
+      }
+    },
+    {
+      "name": "warm night, humid",
+      "inputs": {
+        "ta_c": 27,
+        "rh_pct": 85,
+        "p_hpa": 1008,
+        "u2_mps": 1.5,
+        "sw_wm2": 0,
+        "cza": 0.0,
+        "fdir": 0.0
+      },
+      "reference": {
+        "wbgt_c": 25.436,
+        "tg_c": 26.44,
+        "tnw_c": 24.925
+      }
+    },
+    {
+      "name": "mild morning sun, low sun angle",
+      "inputs": {
+        "ta_c": 18,
+        "rh_pct": 65,
+        "p_hpa": 1015,
+        "u2_mps": 2.5,
+        "sw_wm2": 300,
+        "cza": 0.3,
+        "fdir": 0.6
+      },
+      "reference": {
+        "wbgt_c": 17.745,
+        "tg_c": 25.543,
+        "tnw_c": 15.48
+      }
+    },
+    {
+      "name": "cool cloudy, windy",
+      "inputs": {
+        "ta_c": 12,
+        "rh_pct": 80,
+        "p_hpa": 1005,
+        "u2_mps": 5.0,
+        "sw_wm2": 120,
+        "cza": 0.45,
+        "fdir": 0.1
+      },
+      "reference": {
+        "wbgt_c": 11.203,
+        "tg_c": 13.244,
+        "tnw_c": 10.506
+      }
+    },
+    {
+      "name": "tropical dawn, very humid",
+      "inputs": {
+        "ta_c": 28,
+        "rh_pct": 90,
+        "p_hpa": 1006,
+        "u2_mps": 1.2,
+        "sw_wm2": 60,
+        "cza": 0.15,
+        "fdir": 0.2
+      },
+      "reference": {
+        "wbgt_c": 27.64,
+        "tg_c": 29.877,
+        "tnw_c": 26.949
+      }
+    },
+    {
+      "name": "dry heat, desert-like",
+      "inputs": {
+        "ta_c": 40,
+        "rh_pct": 15,
+        "p_hpa": 1000,
+        "u2_mps": 3.0,
+        "sw_wm2": 950,
+        "cza": 0.95,
+        "fdir": 0.85
+      },
+      "reference": {
+        "wbgt_c": 29.724,
+        "tg_c": 52.424,
+        "tnw_c": 21.77
+      }
+    },
+    {
+      "name": "winter, calm, no sun",
+      "inputs": {
+        "ta_c": 2,
+        "rh_pct": 85,
+        "p_hpa": 1020,
+        "u2_mps": 0.5,
+        "sw_wm2": 0,
+        "cza": 0.0,
+        "fdir": 0.0
+      },
+      "reference": {
+        "wbgt_c": 0.303,
+        "tg_c": -0.449,
+        "tnw_c": 0.276
+      }
+    }
+  ]
+}

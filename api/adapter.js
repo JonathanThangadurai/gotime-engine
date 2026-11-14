@@ -4,7 +4,7 @@ const ENG = require("./engine.js");
 const COND = require("./conditions.js");
 const { LOCATIONS } = require("./locations.js");
 const MSG = { "en-GB": require("./messages/en-GB.json") };
-const SCHEMA_VERSION = "0.9.0", ENGINE_VERSION = "2.2.0";
+const SCHEMA_VERSION = "0.9.0", ENGINE_VERSION = "3.0.0";
 
 /** A request the API refuses, with an RFC 9457 problem shape (status, slug, title, detail, extra members). */
 class ApiError extends Error {
@@ -19,7 +19,7 @@ const msg = (code, params = {}, lang) => { const o = { code, params }; const t =
 const r1 = x => Math.round(x * 10) / 10;
 const LEVELS = ["green", "yellow", "red", "black"];
 const CLOTH_IN = { running_kit: "kit", full_length_light: "light", full_length_cotton: "cotton" };
-const POLLUTANT_VAR = { pm25: "pm2_5", pm10: "pm10", no2: "nitrogen_dioxide", o3: "ozone", wd: "wind_direction_10m", pollen: "pollen",
+const POLLUTANT_VAR = { pm25: "pm2_5", pm10: "pm10", no2: "nitrogen_dioxide", o3: "ozone", wd: "wind_direction_10m",
   t: "temperature_2m", rh: "relative_humidity_2m", ws: "wind_speed_10m", sw: "shortwave_radiation" };
 
 function haversineKm(a, b, c, d) { const R = 6371, rad = Math.PI / 180, x = Math.sin((c - a) * rad / 2) ** 2 + Math.cos(a * rad) * Math.cos(c * rad) * Math.sin((d - b) * rad / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
@@ -59,7 +59,7 @@ function toEngineUser(req, L, nowHour) {
   const take = (field, v, dflt, basis) => { if (v === undefined) { assumptions.push({ field, value: dflt, basis }); return dflt; } return v; };
   const paceS = act.planned_pace_s_per_km ?? (act.planned_speed_mps ? Math.round(1000 / act.planned_speed_mps) : undefined);
   const pace = take("activity.planned_pace_s_per_km", paceS, act.type === "walk" ? 690 : 380, "population_default");
-  const accDefault = L.W0 > 15;   // locations with a hot climate: assume a resident is heat-adapted
+  const accDefault = !!L.hotClimate;   // a hot-climate location: assume a resident is heat-adapted (declared in assumptions)
   const u = {
     pace: pace / 60, minutes: act.planned_duration_s / 60,
     kg: take("athlete.mass_kg", a.mass_kg, 70, "population_default"),
@@ -80,8 +80,36 @@ function dataInfo(ctx, quality, genMs) {
     engine_version: ENGINE_VERSION,
     status: quality.status,
     not_assessed: quality.not_assessed.map(k => POLLUTANT_VAR[k] || k),
+    unassessed_hours: (quality.missing_hours || []).map(h => `${String(h).padStart(2, "0")}:00`),
     sources: (ctx.sources || []).map(s => ({ ...s, age_s: s.retrieved_at ? Math.max(0, Math.round((genMs - Date.parse(s.retrieved_at)) / 1000)) : null })),
     coverage: ctx.coverage,
+  };
+}
+
+/** Pollen per taxon for one hour; the grass level uses the 50 grains/m3 threshold, other taxa have no level. */
+function pollenOut(x) {
+  const p = x.pollen;
+  if (!p) return { grass_m3: null, birch_m3: null, alder_m3: null, mugwort_m3: null, grass_level: null };
+  const v = k => (p[k] == null ? null : Math.round(p[k]));
+  return { grass_m3: v("grass"), birch_m3: v("birch"), alder_m3: v("alder"), mugwort_m3: v("mugwort"), grass_level: p.grass == null ? null : (x.grassHigh ? 2 : 0) };
+}
+
+/** Experimental heat-budget estimates (simplified ISO 7933). For partners and research only, never runner copy. */
+function experimentalBlock(r, u, noRun) {
+  const e = r.experimental;
+  if (!e || noRun) return { heat_budget: null, note: "Experimental model output; not for runner screens." };
+  const cap = e.max_speed_mps ? Math.round(1000 / e.max_speed_mps) : null;
+  return {
+    heat_budget: {
+      model: "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
+      uncompensable_heat: e.uncompensable,
+      minutes_to_39c: e.minutes_to_39c >= 240 ? null : e.minutes_to_39c,
+      suggested_max_pace_s_per_km: cap !== null && cap >= 210 ? cap : null,
+      sweat_rate_ml_per_h: Math.round(e.sweat_ml_per_h),
+      sweat_loss_ml: Math.round(e.sweat_ml_per_h * u.minutes / 60),
+      core_steady_c: r1(e.core_steady_c),
+    },
+    note: "Experimental model output; not for runner screens.",
   };
 }
 
@@ -95,7 +123,7 @@ function recommend(req, ctx) {
   // the activity date, the forecast date and "now" must agree
   if (date < clock.date) throw new ApiError(422, "date-in-past", "Activity date is in the past", `activity.date ${date} is before today (${clock.date}) in ${L.tz}.`);
   if (ctx.data.date !== date) throw new ApiError(502, "forecast-date-mismatch", "Forecast does not cover the activity date", `Forecast is for ${ctx.data.date}, activity.date is ${date}.`);
-  const quality = ctx.quality || COND.assess(ctx.data, { pollenExpected: !!L.pollen && ctx.coverage?.pollen === "covered" });
+  const quality = ctx.quality || COND.assess(ctx.data, { pollenExpected: !!L.pollen && !!ctx.data.pollen });
   const info = dataInfo(ctx, quality, genMs);
   if (quality.status === "unavailable") {
     throw new ApiError(503, "conditions-unavailable", "Weather data incomplete: no heat advice",
@@ -111,47 +139,48 @@ function recommend(req, ctx) {
   const action = none ? "none_today" : indoor ? "indoor" : r.mode === "short" ? "go_short" : r.start <= u.now + 0.5 && date === clock.date ? "go_now" : "go_later";
   const at = h => isoLocal(L.tz, date, h);
 
-  // pace, with an explicit limit status instead of overloaded nulls
-  let capPace = r.capS ? Math.round(1000 / r.capS) : null;
-  if (capPace !== null && capPace < 210) capPace = null;           // faster than 3:30/km: no practical cap
-  const plannedOk = !indoor && !none && r.dlimPlan >= u.minutes && r.fits;
-  const limitStatus = indoor || none ? "indoor" : r.capS === null ? "walk_only" : capPace === null ? "none" : "capped";
-  const pace = {
-    planned_s_per_km: paceS, planned_pace_ok: plannedOk, limit_status: limitStatus,
-    fastest_safe_pace_s_per_km: limitStatus === "capped" ? capPace : null,
-    max_duration_at_planned_s: r.dlimPlan >= 240 ? null : r.dlimPlan * 60,
-    pace_for_full_duration_s_per_km: plannedOk || indoor || none || r.dlimPlan >= u.minutes ? null : (r.capS ? Math.round(1000 / r.capS) : null),
-  };
+  // no complete window anywhere today because hours are missing: no advice rather than a guess
+  if (!r.completeWindowExists && quality.missing_hours && quality.missing_hours.length) {
+    throw new ApiError(503, "conditions-unavailable", "Weather data incomplete: no complete window",
+      `Hours not assessed on ${date}: ${quality.missing_hours.map(h => h + ":00").join(", ")}; no ${Math.round(u.minutes)}-minute stretch remains.`,
+      { data: { ...info, status: "unavailable" } });
+  }
+  // effort: from heat bands only, no numbers ("consider shorter or easier")
+  const pace = { planned_s_per_km: paceS, advice: indoor || none ? "indoor" : r.effort };
   // route + heading
   const airReason = r.reasons.find(x => x.k === "Air");
   const other = L.routes[1 - b.route];
-  const route = indoor || none ? null : { id: slug(r.route.name), name: r.route.name, air_dose_saving_pct: airReason && airReason.routeSaving > 5 ? airReason.routeSaving : null, compared_with: other ? other.name : null };
+  const route = indoor || none ? null : { id: slug(r.route.name), name: r.route.name,
+    exposure_lower_pct: airReason && airReason.exposureLowerPct > 5 ? airReason.exposureLowerPct : null, compared_with: other ? other.name : null };
   const headingStatus = indoor || none ? "indoor" : r.direction.unknown ? "unknown" : r.direction.short === "Any direction" ? "any" : "into_wind";
   const heading = headingStatus === "into_wind" ? Math.round(r.along >= 0 ? r.route.axis : (r.route.axis + 180) % 360) : null;
-  // hydration
-  const fluid = r.drink === "Optional" ? 0 : parseInt(r.drink, 10);
-  const sweat = Math.round(b.b.sweatMlH);
-  const hydration = { fluid_ml: indoor || none ? 0 : fluid, sweat_rate_ml_per_h: sweat, electrolytes_recommended: !indoor && !none && (r.loss > 1000 || (sweat > 800 && u.minutes > 60)) };
+  // hydration: drink according to thirst; carry water on long or warm runs. Personal sweat estimates are experimental.
+  const hydration = { advice: indoor || none ? "none" : "drink_to_thirst", carry_water: !indoor && !none && (u.minutes >= 60 || r.runHb >= 1) };
   const indoorAlt = indoor ? [msg("INDOOR_TREADMILL", { minutes: Math.min(40, Math.round(u.minutes)) }, lang), msg("INDOOR_CROSS_TRAINING", {}, lang)]
     .concat(r.why === "heat" || pool.some(x => x.hb === 3) ? [msg("TOMORROW_EARLY", {}, lang)] : []) : [];
+  // the day's air with each guideline's own averaging
+  const A = r.air, rr = v => v == null ? null : Math.round(v);
+  const air_today = { pm25_24h_mean_ugm3: rr(A.pm25_24h), pm10_24h_mean_ugm3: rr(A.pm10_24h), no2_24h_mean_ugm3: rr(A.no2_24h),
+    o3_max_8h_mean_ugm3: rr(A.o3_max8h), above_who_guideline: A.above_who.map(k => POLLUTANT_VAR[k]), naqi_pm25_band: A.pm25_24h == null ? null : A.pm_band };
 
   // reasons with params
   const peakW = pool.length ? pool.reduce((a, x) => x.W > a.W ? x : a) : b;
   const edges = ENG.bandEdges(u.acc);
-  const FACTOR = { Heat: "heat", Air: "air", Pollen: "pollen", Cold: "cold", Wind: "wind", You: "athlete" };
-  const EVID = { heat: "published_standard", air: "published_slopes", pollen: "published_threshold", cold: "mechanism", wind: "physics", athlete: "athlete_input" };
+  const FACTOR = { Heat: "heat", Air: "air", Pollen: "pollen", PollenOther: "pollen", Cold: "cold", Wind: "wind", You: "athlete" };
+  const EVID = { heat: "published_standard", air: "published_threshold", pollen: "published_threshold", cold: "mechanism", wind: "physics", athlete: "athlete_input" };
   const reasons = r.reasons.map(x => {
-    const factor = FACTOR[x.k]; let p = {}, level = 0;
+    const factor = FACTOR[x.k] || "pollen"; let p = {}, level = 0;
     if (factor === "heat") { level = b.hb; p = x.code === "HEAT_LOW" ? { wbgt_c: r1(b.W) } : { wbgt_c: r1(b.W), peak_wbgt_c: r1(peakW.W), peak_time: ENG.fmtHM(peakW.h), indoor_line_c: edges[2] }; }
-    if (factor === "air") { level = b.ab;
-      if (x.code === "AIR_PM_EPISODE") { const pk = pool.reduce((a, y) => y.pm25 > a.pm25 ? y : a, b); p = { peak_ugm3: Math.round(pk.pm25), peak_time: ENG.fmtHM(pk.h), window_ugm3: Math.round(b.pm25) }; }
-      else if (x.code === "AIR_PEAK_LATER") { const drv = w.driver || b.driver; p = { pollutant: ENG.NAMES[drv], peak_ugm3: Math.round(w[drv]), peak_time: ENG.fmtHM(w.h), window_ugm3: Math.round(b[drv]) }; }
+    if (factor === "air") { level = b.ab; p = { ...(x.params || {}) };
       if (x.missing && x.missing.length) p.not_assessed = x.missing.map(k => ENG.NAMES[k]).join(", "); }
-    if (factor === "pollen") { level = b.pollenHigh ? 2 : 0; p = data.pollen ? { peak: Math.round(Math.max(...r.hours.map(y => y.pollen || 0))), window: Math.round(b.pollen || 0) } : {}; }
+    if (x.k === "Pollen") { level = b.grassHigh ? 2 : 0;
+      p = data.pollen && data.pollen.grass ? { taxon: "grass", peak: Math.round(Math.max(...data.pollen.grass)), window: Math.round(b.pollen.grass), threshold: ENG.GRASS_LIMIT } : {}; }
+    if (x.k === "PollenOther") { level = 0; p = { taxa: x.others.map(([k, v]) => `${k} ${v}`).join(", ") }; }
     if (factor === "cold") { level = b.cb; p = { wind_chill_c: Math.round(b.head), breathing_w: Math.round(r.breath) }; }
     if (factor === "wind") { p = { speed_kmh: Math.round(b.ws), from: b.wd == null ? null : ENG.compass(b.wd), heading: heading === null ? null : ENG.compass(heading) }; }
     if (factor === "athlete") { p = { mass_kg: u.kg, height_cm: Math.round(u.height * 100), clothing: Object.keys(CLOTH_IN).find(k => CLOTH_IN[k] === u.cloth) }; }
-    const o = { factor, code: x.code, level, evidence: EVID[factor], params: p }; const t = lang && render(x.code, p, lang); if (t) o.text = t; return o;
+    const evidence = x.k === "PollenOther" ? "assumption" : EVID[factor];
+    const o = { factor, code: x.code, level, evidence, params: p }; const t = lang && render(x.code, p, lang); if (t) o.text = t; return o;
   });
 
   const headline = msg(r.hc.code, r.hc.params, lang), detail = msg(r.sc.code, r.sc.params, lang);
@@ -170,24 +199,27 @@ function recommend(req, ctx) {
     summary: { action, level: b.flag, level_name: LEVELS[b.flag], window, headline, detail, notification: { title, body } },
     guidance: { intensity: b.flag >= 2 ? "easy" : "normal", pace, route, start_heading_deg: heading, start_heading_status: headingStatus, hydration,
       warm_up_indoors: !indoor && !none && b.t < 5, indoor_alternatives: indoorAlt },
+    air_today,
     reasons,
     tips: r.tip ? [{ code: r.tip.code, evidence: r.tip.evidence, params: r.tip.params,
       ...(lang && render(r.tip.code, r.tip.params, lang) ? { text: render(r.tip.code, r.tip.params, lang) } : {}), skip_if: null }] : [],
     assumptions,
     data: info,
     disclaimer: msg("ADVISORY_NOT_MEDICAL", {}, lang),
+    experimental: experimentalBlock(r, u, indoor || none),
   };
-  if ((req.include || []).includes("hours")) out.hours = r.hours.filter(x => x.h >= (date === clock.date ? Math.floor(clock.hour) : 0)).map(x => ({
-    start: at(x.h), level: x.flag, level_name: LEVELS[x.flag], in_window: !!window && x.h >= Math.floor(r.start) && x.h < r.end,
+  if ((req.include || []).includes("hours")) out.hours = r.hours.filter(x => x.h >= (date === clock.date ? Math.floor(clock.hour) : 0)).map(x => x.na ? {
+    start: at(x.h), assessed: false, level: null, level_name: null, in_window: false, heat: null, air: null, cold: null,
+    pollen: pollenOut(x), wind: null } : {
+    start: at(x.h), assessed: true, level: x.flag, level_name: LEVELS[x.flag], in_window: !!window && x.h >= Math.floor(r.start) && x.h < r.end,
     heat: { wbgt_c: r1(x.W), level: x.hb, air_temp_c: r1(x.t), relative_humidity_pct: Math.round(x.rh), radiant_temp_c: r1(x.tmrt) },
-    heat_budget: { max_duration_at_planned_s: x.b.dlim >= 240 ? null : x.b.dlim * 60, sweat_rate_ml_per_h: Math.round(x.b.sweatMlH), core_steady_c: r1(x.b.Teq) },
     air: { pm25_ugm3: x.pm25 == null ? null : r1(x.pm25), pm10_ugm3: x.pm10 == null ? null : r1(x.pm10), no2_ugm3: x.no2 == null ? null : r1(x.no2),
       o3_ugm3: x.o3 == null ? null : r1(x.o3), level: x.ab, dominant: x.driver || null },
     cold: { wind_chill_c: x.t < 10 ? r1(x.head) : null, level: x.cb },
-    pollen: { grains_m3: x.pollen == null ? null : Math.round(x.pollen), level: x.pollen == null ? null : (x.pollenHigh ? 2 : 0) },
+    pollen: pollenOut(x),
     wind: { speed_mps: r1(x.ws / 3.6), from_deg: x.wd == null ? null : Math.round(x.wd) % 360 },
-    cardio_load_rr: Math.round(x.rr * 1000) / 1000,
-  }));
+    experimental: { minutes_to_39c: x.b.dlim >= 240 ? null : x.b.dlim, sweat_rate_ml_per_h: Math.round(x.b.sweatMlH), core_steady_c: r1(x.b.Teq) },
+  });
   return out;
 }
 
@@ -235,19 +267,25 @@ function live(req, ctx) {
   const core = Math.min(40.5, base + store), status = core >= 39 ? "at_limit" : core >= 38.5 ? "rising" : "normal";
   const remaining = Math.max(10, (durS - req.elapsed_s) / 60), cap = ENG.maxSpeedFor(c, remaining, u);
   let capPace = cap ? Math.round(1000 / cap) : null; if (capPace !== null && capPace < 210) capPace = null;
-  const hb = ENG.heatBand(c.W, u.acc), ab = ENG.airBand(c.pm25, c.o3);
-  let turned = prev.turned, alert = null;
+  const hb = ENG.heatBand(c.W, u.acc), ab = ENG.airBand(ENG.airDay(data).pm25_24h, c.o3);
+  let turned = prev.turned, alert = null, body = null;
   const A = (code, level, haptic, params = {}) => { const o = { code, level, params, haptic }; const t = lang && render(code, params, lang); if (t) o.text = t; return o; };
-  if (core >= 39) alert = A("WALK_AND_COOL", 3, "urgent");
-  else if (core >= 38.7) alert = A("EASE_OFF", 2, "double");
-  else if (hb === 3) alert = A("HEAD_HOME_HEAT", 3, "urgent");
+  // runner-facing alerts: forecast facts only
+  if (hb === 3) alert = A("HEAD_HOME_HEAT", 3, "urgent");
   else if (ab >= 2) alert = A("AIR_WORSENING", 2, "double");
   else if (c.t < 5 && req.elapsed_s <= 480) alert = A("EASY_START_COLD", 1, "single");
   else if (!turned && req.elapsed_s >= durS / 2 && c.ws >= 10) { alert = A("TURN_FOR_TAILWIND", 0, "single"); turned = true; }
+  // experimental body alerts from the heat budget (research only)
+  if (core >= 39) body = A("WALK_AND_COOL", 3, "urgent");
+  else if (core >= 38.7) body = A("EASE_OFF", 2, "double");
   const limitStatus = cap === null ? "walk_only" : capPace === null ? "none" : "capped";
   const state = toB64u(JSON.stringify({ v: 1, rid: prev.rid, base, store, t: req.elapsed_s, turned, at: nowMs }));
-  return { schema_version: SCHEMA_VERSION, at: new Date(nowMs).toISOString(), recommendation_id: prev.rid, core_estimate_c: r1(core), core_status: status,
-    limit_status: limitStatus, fastest_safe_pace_s_per_km: limitStatus === "capped" ? capPace : null, alert, state };
+  return { schema_version: SCHEMA_VERSION, at: new Date(nowMs).toISOString(), recommendation_id: prev.rid,
+    heat_level: hb, alert,
+    experimental: { core_estimate_c: r1(core), core_status: status, limit_status: limitStatus,
+      suggested_max_pace_s_per_km: limitStatus === "capped" ? capPace : null, body_alert: body,
+      note: "Experimental model output; not for runner screens." },
+    state };
 }
 
 module.exports = { recommend, live, findLocation, render, isoLocal, instantFor, localClock, addDays, ApiError, LOCATIONS, SCHEMA_VERSION, ENGINE_VERSION };

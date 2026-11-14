@@ -79,7 +79,7 @@ test("user test: questions on the phone at the marked steps, answers exported as
 test("Dutch: the journey in nl-NL", async ({ page }, info) => {
   await page.goto("./?lang=nl&moment=4");
   await expect(page.locator("html")).toHaveAttribute("lang", "nl-NL");
-  await expect(page.getByTestId("headline")).toHaveText("Loop vóór 11:00");
+  await expect(page.getByTestId("headline")).toHaveText("Loop vóór 12:00");
   await expect(page.getByText("zaterdag 27 juni")).toBeVisible();
   expect(plain(await page.getByTestId("row-start").textContent())).toBe("Start richting noordoosten, tegen de wind in");
   await shot(page, "nl-03-today", info.project.name);
@@ -87,10 +87,10 @@ test("Dutch: the journey in nl-NL", async ({ page }, info) => {
   await expect(page.getByTestId("why-sheet")).toContainText("Waarom dit advies");
   expect(plain(await page.getByTestId("counterfactual").textContent())).toMatch(/^Op je gewone tijd \(18:00\) is de hittestress \d+ °C hoger\.$/);
   await expect(page.getByTestId("credits")).toHaveText("Weer en lucht: Open-Meteo / ERA5 (CC BY 4.0)");
-  await expect(page.getByTestId("why-sheet")).toContainText("Ozon stijgt");
+  await expect(page.getByTestId("why-sheet")).toContainText("Ozon hoogste 8-uursgemiddelde");
   await shot(page, "nl-04-why", info.project.name);
   await page.keyboard.press("2");
-  await expect(page.getByTestId("notification")).toContainText("Morgen: loop 6:45–11:00");
+  await expect(page.getByTestId("notification")).toContainText("Morgen: loop 6:45–12:00");
   await expect(page.getByText("vrijdag 26 juni")).toBeVisible();
   await shot(page, "nl-01-evening", info.project.name);
   await page.keyboard.press("8");
@@ -112,7 +112,7 @@ test("installed app works offline after the first load", async ({ page, context 
   await page.reload();
   await expect(page.getByTestId("onboarding")).toBeVisible();
   await page.keyboard.press("4");
-  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");   // the engine runs on the phone
+  await expect(page.getByTestId("headline")).toHaveText("Run before 12:00");   // the engine runs on the phone
   await context.setOffline(false);
 });
 

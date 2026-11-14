@@ -1,4 +1,6 @@
 """
+NOTE (14 Nov 2026): exploratory only. The run engine (api/engine.js) no longer uses a Stafoggia-based run-level
+term; the Stafoggia tables belong to the population alert. Kept for reference and its tests.
 cv_exertion.py - Environmental cardiovascular load of a run (heat x air pollution x exertion).
 
 Answers: "How much does the environment add to the acute cardiovascular strain of THIS run,

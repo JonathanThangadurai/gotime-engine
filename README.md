@@ -14,7 +14,7 @@ Environmental health intelligence for outdoor activity. GOTime couples heat, hum
 | **Phone demo** | [`demo/`](demo/) | Vite + Preact + TypeScript | Installable web app: the runner journey inside a fictional fitness app, with a presenter mode, partner lens and a user-test mode, on the same engine | Live at https://jonathanthangadurai.github.io/gotime-engine/ |
 | **Watch prototype** | [`prototype/`](prototype/) | One HTML file | Clickable watch demo (Amsterdam and Chennai, heat, city, pollen and cold runs) built on the same engine | Working; opened as a local file it fetches live data |
 | **Population alert** | repository root (`*.py`) | Python | Daily heat × air-pollution mortality risk and excess deaths for one Dutch municipality, today plus 2 days | Working for Amsterdam; 2026 back-test done |
-| **Exertion model** | `cv_exertion.py` | Python | Reference derivation of the run-level cardiovascular load used by the run engine | Tested (`test_cv_exertion.py`) |
+| **Exertion model** | `cv_exertion.py` | Python | Exploratory run-level cardiovascular load (Stafoggia slopes); not used by the run engine | Tested (`test_cv_exertion.py`) |
 | **Wind service (AeroWise)** | separate private repository | Python | Street-level headwind and gusts every 200 m along a route | Integration planned (route profile) |
 
 ---
@@ -106,25 +106,26 @@ in the week view (marked "Example week"), and the stored scenario data (Open-Met
 
 ## How the run engine decides
 
+**Rule:** forecast facts and suggestions may reach runners; body estimates are experimental and never on runner screens.
+
 For every hour of the day, and for the planned pace and duration, the engine runs these steps:
 
-1. **Heat stress (WBGT).** Natural wet bulb, globe and air temperature are solved from temperature, humidity, sun angle and wind with the Liljegren (2008) model.
-2. **Personal heat lines.** The ACSM bands are 18 / 23 / 28 °C WBGT. A heat-adapted athlete gets the lines 4.4 °C higher, which is the ISO 7243 acclimatisation offset at running effort. Above the top line the advice is to train indoors.
-3. **Heat budget.** A simplified ISO 7933 (Predicted Heat Strain) balance works out the heat made at that pace, the heat lost to air, sun and breathing, and the sweat that can evaporate. Heat that cannot be shed raises the core. The engine reports the minutes until the core reaches 39 °C and the fastest pace that stays below it.
-4. **Air.** For each pollutant, the Stafoggia et al. (2023) slope at the day's **local** temperature percentile, multiplied by the run's share of a day's breathing, multiplied by the amount above the WHO 2021 guideline. The engine keeps the worst pollutant. Guard rails apply on top: PM2.5 bands from the Indian National Air Quality Index and the EU ozone thresholds.
-5. **Cold.** Wind chill at the athlete's own airflow (Environment Canada index), plus the heat lost by breathing cold air and a warm-up rule.
-6. **Pollen.** With hay fever on, hours above 50 grains/m³ are kept out of the window.
-7. **Decision.** The engine scores each hour on the worst flag first, then on whether the planned run fits the heat budget, then on cardiovascular load, pollen and cold. The best hour and its neighbours form the window. The output is the action (`go_now`, `go_later`, `go_short`, `indoor`), the pace advice, the route with the lower air dose, the start heading into the wind, the fluid to carry and ranked reasons.
+1. **Heat stress (WBGT).** Natural wet bulb, globe and air temperature are solved from temperature, humidity, sun angle and wind with the Liljegren (2008) model. Checked against an independent implementation (ECMWF thermofeel) in ten reference cases (sun, cloud, night, wind, humidity): within 0.15 °C WBGT; the solver converges in every case.
+2. **Heat bands (conservative prompts).** The ACSM bands are 18 / 23 / 28 °C WBGT. A heat-adapted athlete gets the lines 4.4 °C higher (ISO 7243 acclimatisation offset at running effort). "Heat-adapted" means repeated training or work in the heat over the last 1-2 weeks, not one warm day. Above the top line the advice is to train indoors. When the hours of the run are red, the advice is "consider a shorter or easier run", without numbers.
+3. **Air, with each guideline's own averaging.** WHO 2021: PM2.5, PM10 and NO₂ as 24-h means, ozone as the maximum 8-h mean (exceedance). India NAQI PM2.5 bands on the 24-h mean (level). EU ozone 180 / 240 µg/m³ on hourly values (information and alert thresholds, not a clearance). Hourly values relative to the guidelines only rank the hours ("worse in the afternoon").
+4. **Cold.** Wind chill at the athlete's own airflow (Environment Canada index) and a warm-up rule.
+5. **Pollen, per taxon.** With hay fever on, hours with grass pollen above 50 grains/m³ are kept out of the window. Birch, alder and mugwort are shown for information, without a threshold until one is sourced.
+6. **Decision.** Each hour is scored on its worst band first, then on heat stress, guideline-relative air, pollen and cold (ranking weights are demo values). The best hour and its neighbours form the window, which must fit the whole run (`latest_start` = end − duration). The output is the action, the effort advice, the route with lower concentrations, the start heading into the wind, "drink according to thirst", and ranked reasons.
+7. **Experimental only.** A simplified ISO 7933 heat budget (time to a 39 °C core, sweat rate, a pace limit) is returned under `experimental` for partners and research. It only gives a time limit when heat storage cannot be compensated. It is not validated for running and never drives runner advice.
 
-The whole day recomputes in under a millisecond, so the engine can run on every new reading.
+The run engine uses no epidemiological relative risk: the Stafoggia et al. (2023) tables belong to the population alert (Python), not to individual runs. The whole day recomputes in under a millisecond.
 
 ### Adapting to place
 
-The same physics runs everywhere. Each location supplies four things:
-- its own temperature climatology, used for the pollution slopes;
-- a local heat reference for the cardiovascular term;
-- default body size;
-- local content (indoor options, hydration advice, named routes).
+The same physics runs everywhere. Each location supplies:
+- whether residents are assumed heat-adapted by default (declared in `assumptions`);
+- local content (indoor options, drink advice, named routes);
+- its time zone (UTC offsets are computed per instant from the IANA zone).
 
 Thresholds move with **heat acclimatisation**, not with nationality. A heat-adapted runner in Chennai and a visiting runner from Amsterdam get different answers on the same morning.
 
@@ -133,16 +134,18 @@ Thresholds move with **heat acclimatisation**, not with nationality. A heat-adap
 ## Inputs and outputs
 
 **Inputs** (25 in total; see [`api/README.md`](api/README.md) for the full mapping):
-- **Hourly weather and air:** temperature, humidity, sunlight, wind speed and direction, PM2.5, PM10, NO₂, ozone and pollen.
-- **Place and time:** coordinates, time zone, date, current time, local climatology, local heat reference, routes.
+- **Hourly weather and air:** temperature, humidity, sunlight, wind speed and direction, PM2.5, PM10, NO₂, ozone and pollen per taxon.
+- **Place and time:** coordinates, time zone, date, current time, routes.
 - **Athlete:** pace, duration, body mass, height, heat acclimatisation, clothing, hay fever.
 
 **Outputs** (contract in [`api/openapi.yaml`](api/openapi.yaml)):
 - `summary`: the action, the level (green, yellow, red, black), the time window, the headline and a ready-made notification.
-- `guidance`: pace limits, route, start heading, hydration, warm-up and indoor alternatives.
+- `guidance`: effort advice (no numbers), route, start heading, "drink according to thirst", warm-up and indoor alternatives.
+- `air_today`: the day's air with each guideline's averaging (24-h means, max 8-h ozone).
+- `experimental`: heat-budget estimates for partners and research; not for runner screens.
 - `reasons`: ranked, each with its evidence level.
 - `hours`: an optional hour-by-hour timeline.
-- `/live`: estimated core temperature, the pace limit and alerts with vibration patterns.
+- `/live` (experimental): forecast-based alerts with vibration patterns; body estimates only under `experimental`.
 
 Every message is a stable code with parameters. Text is optional, so partners can use their own wording and language.
 
@@ -150,20 +153,21 @@ Every message is a stable code with parameters. Text is optional, so partners ca
 
 ## Scientific basis and how solid each part is
 
-| Part | Basis | Evidence level |
-|---|---|---|
-| Heat stress from weather | Liljegren et al. (2008), WBGT from standard meteorological data | Published method |
-| Heat lines and acclimatisation offset | ACSM exertional heat illness guidance (18 / 23 / 28 °C); ISO 7243:2017; US Army heat category 5 at 32.2 °C as a cross-check | Published standards |
-| Heat budget, 39 °C core cap | ISO 7933 Predicted Heat Strain, simplified | Standard, simplified |
-| Pollutant effects | Stafoggia et al. (2023), *Environment International* 181:108258, Tables S2 and S3 | Published slopes |
-| Air guard rails | India National Air Quality Index PM2.5 bands; EU ozone information and alert thresholds (180 / 240 µg/m³); WHO 2021 guidelines | Published bands |
-| Heat-to-heart term | Rowland et al. (2020), hourly heat and myocardial infarction | Published slope |
-| Cold | Environment Canada wind chill index; cold raises blood pressure | Index and mechanism |
-| Pollen | 50 grains/m³ symptom threshold | Published threshold |
-| Local heat reference (Amsterdam 10 °C, Chennai 21.8 °C) | Shift by the gap in median heat stress (ERA5 2016-2025) | Assumption |
-| Clothing, route exposure and cold weights | Chosen for the demo | Demo values |
+| Part | Basis | Evidence level | On runner screens? |
+|---|---|---|---|
+| Heat stress from weather | Liljegren et al. (2008), WBGT from standard meteorological data; checked against ECMWF thermofeel 2.3.0 in 10 reference cases (max difference 0.15 °C WBGT) | Published method, cross-checked | Yes (as heat stress) |
+| Heat bands and acclimatisation offset | ACSM exertional heat illness guidance (18 / 23 / 28 °C); ISO 7243:2017 (+4.4 °C heat-adapted); US Army heat category 5 at 32.2 °C as a cross-check | Published standards, used as conservative prompts | Yes |
+| Air exceedance | WHO 2021 guidelines: PM2.5 15, PM10 45, NO₂ 25 µg/m³ as 24-h means; ozone 100 µg/m³ as the maximum 8-h mean | Published guidelines | Yes |
+| Air level | India NAQI PM2.5 bands on the 24-h mean (60 / 120 / 250); EU ozone information and alert thresholds 180 / 240 µg/m³ on hourly values (not a clearance) | Published bands | Yes |
+| Air timing | Hourly concentration relative to the guideline value, for ranking hours only | Method choice | Yes (as "worse later") |
+| Cold | Environment Canada wind chill index; cold raises blood pressure | Index and mechanism | Yes |
+| Pollen | 50 grains/m³ for grass; other taxa shown without a threshold | Published threshold (grass only) | Yes |
+| Water | Drink according to thirst | Consensus advice | Yes |
+| Tips ("what pros do") | FIS, Racinais et al. 2015, Choo et al. 2018 (see `api/engine.js`) | Published consensus or research | Yes, one at a time |
+| Heat budget, 39 °C core, sweat, pace limit | ISO 7933 Predicted Heat Strain, simplified; time limit only from uncompensable heat storage | Experimental, not validated for running | No (`experimental` only) |
+| Clothing, route exposure factors and ranking weights | Chosen for the demo | Demo values | Indirectly |
 
-The population alert uses Stafoggia et al. (2023) Model 3 with the pooled tables. The cap means clean air never lowers risk. Baseline deaths come from CBS (2015-2019). Its approximations (A1-A6) are documented in the header of `alert_engine.py`. The 2026 back-test is in [`outputs/backtest_2026_summary.md`](outputs/backtest_2026_summary.md).
+The population alert (Python) uses Stafoggia et al. (2023) Model 3 with the pooled tables; that is where those tables belong. The cap means clean air never lowers risk. Baseline deaths come from CBS (2015-2019). Its approximations (A1-A6) are documented in the header of `alert_engine.py`. The 2026 back-test is in [`outputs/backtest_2026_summary.md`](outputs/backtest_2026_summary.md). `cv_exertion.py` is an exploratory run-level derivation with the same tables; the run engine no longer uses it.
 
 ---
 
@@ -233,8 +237,9 @@ outputs/                 back-test summary and CAMS correction tables
 - The API supports **Amsterdam and Chennai** only. Other locations return `422`.
 - Weather and air quality come from the Open-Meteo API (non-commercial, prototype only). Station correction is not yet applied in the API.
 - Wind is scaled from 10 m with a fixed factor. Shade, slope and street canyons are not yet used. The AeroWise wind service will provide them.
-- `/live` estimates core temperature from the heat budget. A heart-rate method is planned.
-- Nothing has been validated against outcomes for running yet. The population alert captured about 45 % of the 2026 heatwave signal (see the back-test summary).
+- `/live` is experimental; its core estimate comes from the simplified heat budget and is never shown to runners. A heart-rate method is planned.
+- Nothing has been validated against outcomes for running yet.
+- Population alert, 2026 heatwave: for weeks 25-27 the model's excess deaths for Amsterdam (16.8) are about 0.45 times a scaled national figure (CBS national excess of 1,117 deaths above the 2023-2025 mean for the same weeks, times Amsterdam's ~3.4 % share of national deaths ≈ 38). This is a ratio of two estimates, not a share of a measured Amsterdam signal: there are no Amsterdam death counts in the comparison, the CBS counts are provisional, and the reference ignores trend (see the back-test summary).
 
 ## Roadmap
 

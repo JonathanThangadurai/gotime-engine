@@ -25,6 +25,7 @@ function derive(params: Record<string, unknown>, l: Lang): Record<string, unknow
     if (typeof n === "number") out[`${key}_word`] = COPY[l][`NUM_${n}`] ?? String(n);
   }
   if (typeof params.clothing === "string") out.clothing_word = t(`KIT_LOWER_${params.clothing}`, {}, { lang: l });
+  if (typeof params.averaging === "string" && COPY[l][`AVG_${params.averaging}`] !== undefined) out.averaging = COPY[l][`AVG_${params.averaging}`];
   if (typeof params.pollutant === "string" && COPY[l][`POLLUTANT_${params.pollutant}`] !== undefined) out.pollutant = COPY[l][`POLLUTANT_${params.pollutant}`];
   // compass words from the engine ("north-east") in the current language
   for (const key of ["heading", "from"]) {

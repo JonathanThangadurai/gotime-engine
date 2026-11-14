@@ -59,14 +59,14 @@ describe("Amsterdam heatwave, Sanne at 06:45", () => {
   it("builds three rows from guidance", () => {
     const v = todayView(rec, 6.75);
     expect(v.chips.map(c => c.kind)).toEqual(["pace", "start", "water"]);
-    expect(t(v.chips[0].code, v.chips[0].params)).toBe("6:20/km is fine");
-    expect(t(v.chips[2].code, v.chips[2].params)).toBe("Water optional");
+    expect(t(v.chips[0].code, v.chips[0].params)).toBe("6:20/km as planned");           // no body-based "fine"
+    expect(t(v.chips[2].code, v.chips[2].params)).toBe("Carry water; drink according to thirst");
     expect(v.window).toEqual({ start: clockOf(rec.summary.window!.start), end: clockOf(rec.summary.window!.end) });
   });
   it("timeline runs from now to 22:00 with the window in it", () => {
     const tl = todayView(rec, 6.75).timeline!;
-    expect(tl).toMatchObject({ now: "6:45", dayEnd: "22:00", start: 0, endLabel: "11:00" });
-    expect(tl.end).toBeCloseTo((11 - 6.75) / (22 - 6.75), 5);
+    expect(tl).toMatchObject({ now: "6:45", dayEnd: "22:00", start: 0, endLabel: "12:00" });
+    expect(tl.end).toBeCloseTo((12 - 6.75) / (22 - 6.75), 5);
   });
   it("consumer copy rounds numbers to whole units", () => {
     const heat = rec.reasons[0];

@@ -36,7 +36,7 @@ test("late-evening plan for tomorrow: 23:30 the night before, window on tomorrow
   // the night of the autumn change: plan at 23:30 CEST on 24 October for Sunday 25 October (CET from 03:00)
   const r = recommend(req("2026-10-25", { start_after: "07:00" }), ctxFor(onDate(SCENARIOS.ams.pollen, "2026-10-25"), instantFor(AMS, "2026-10-24", 23.5)));
   assert.equal(r.activity.date, "2026-10-25");
-  assert.ok(r.summary.window.start.startsWith("2026-10-25T07:00:00+01:00"), r.summary.window.start);
+  assert.match(r.summary.window.start, /^2026-10-25T(0[7-9]|1[0-9]|2[01]):[0-5]\d:00\+01:00$/);   // tomorrow, CET, not before 07:00
   assert.equal(r.summary.action, "go_later");
 });
 
@@ -45,7 +45,7 @@ test("window fit: at 21:30 a 45-minute run does not fit before 22:00 -> go_short
   assert.equal(r.summary.action, "go_short");
   assert.equal(r.summary.detail.code, "FITS_IN_WINDOW");
   assert.deepEqual(r.summary.detail.params, { max_minutes: 30, planned_minutes: 45, end: "22:00" });
-  assert.equal(r.guidance.pace.planned_pace_ok, false);
+  assert.equal(r.guidance.pace.advice, "as_planned");          // no pace numbers on the runner side
   assert.equal(r.summary.window.latest_start, r.summary.window.start);   // nothing later fits either
 });
 

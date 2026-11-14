@@ -59,9 +59,11 @@ terms capped at 0, baseline 14.67 deaths/day.
 - **Lag-0-1 temperature reached p100 of the climatology during the heatwave.** The heat term is extrapolated above
   T99 there (approximation A1).
 - **Size of the shortfall:** for weeks 25-27 the model gives 16.8 excess deaths in Amsterdam. The CBS national excess
-  for the same weeks is 1,117. Scaled by Amsterdam's share of national deaths (about 3.4 %), that is about 38, so the
-  model shows roughly 45 % of the signal. This is a crude comparison: different populations, a provisional count, and
-  a reference that ignores trend.
+  for the same weeks is 1,117 (2026 provisional counts against the 2023-2025 mean for the same weeks). Scaled down by
+  Amsterdam's share of national deaths (about 3.4 %), that national figure becomes about 38, so the model's estimate is
+  about 0.45 times this scaled national figure. This is a ratio of two estimates, not a share of a measured Amsterdam
+  signal: there are no Amsterdam death counts in the comparison, the counts are provisional, and the reference ignores
+  trend.
 
 **Implications**
 - **Tiers:** with RED at 1.10 and AMBER at 1.08, every AMBER-or-higher day falls in the heatwave or in the hot spells

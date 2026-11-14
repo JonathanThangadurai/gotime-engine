@@ -52,8 +52,8 @@ describe("Amsterdam heatwave journey (Sanne)", () => {
   });
   it("glance: one verb, one time, window arc on a 12-hour dial", () => {
     const g = glanceView(rec, 6.75);
-    expect(t(g.text.code, g.text.params)).toBe("Go before 11:00");
-    expect(g.arc).toEqual({ from: (6.75 / 12) * 360, to: (6.75 / 12) * 360 + (11 - 6.75) * 30 });
+    expect(t(g.text.code, g.text.params)).toBe("Go before 12:00");
+    expect(g.arc).toEqual({ from: (6.75 / 12) * 360, to: (6.75 / 12) * 360 + (12 - 6.75) * 30 });
   });
   it("run trace is the API /live sequence", () => {
     const { live, LOCATIONS } = require(path.join(API, "adapter.js"));

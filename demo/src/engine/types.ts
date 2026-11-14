@@ -28,13 +28,15 @@ export interface Tip { code: string; evidence: string; params: Record<string, st
 
 export interface HourOut {
   start: string;
-  level: number;
-  level_name: LevelName;
+  assessed: boolean;
+  level: number | null;
+  level_name: LevelName | null;
   in_window: boolean;
-  heat: { wbgt_c: number; level: number; air_temp_c: number };
-  air: { level: number; dominant: string | null; pm25_ugm3: number | null; o3_ugm3: number | null };
-  pollen: { grains_m3: number | null; level: number | null };
-  wind: { speed_mps: number; from_deg: number | null };
+  heat: { wbgt_c: number; level: number; air_temp_c: number } | null;
+  air: { level: number; dominant: string | null; pm25_ugm3: number | null; o3_ugm3: number | null } | null;
+  pollen: { grass_m3: number | null; birch_m3: number | null; alder_m3: number | null; mugwort_m3: number | null; grass_level: number | null };
+  wind: { speed_mps: number; from_deg: number | null } | null;
+  experimental?: { minutes_to_39c: number | null; sweat_rate_ml_per_h: number; core_steady_c: number };
 }
 
 export interface Recommendation {
@@ -54,18 +56,11 @@ export interface Recommendation {
   };
   guidance: {
     intensity: "normal" | "easy";
-    pace: {
-      planned_s_per_km: number;
-      planned_pace_ok: boolean;
-      limit_status: "none" | "capped" | "walk_only" | "indoor";
-      fastest_safe_pace_s_per_km: number | null;
-      max_duration_at_planned_s: number | null;
-      pace_for_full_duration_s_per_km: number | null;
-    };
-    route: { id: string; name: string; air_dose_saving_pct: number | null; compared_with: string | null } | null;
+    pace: { planned_s_per_km: number; advice: "as_planned" | "consider_shorter_or_easier" | "indoor" };
+    route: { id: string; name: string; exposure_lower_pct: number | null; compared_with: string | null } | null;
     start_heading_deg: number | null;
     start_heading_status: "into_wind" | "any" | "unknown" | "indoor";
-    hydration: { fluid_ml: number; sweat_rate_ml_per_h: number; electrolytes_recommended: boolean };
+    hydration: { advice: "drink_to_thirst" | "none"; carry_water: boolean };
     warm_up_indoors: boolean;
     indoor_alternatives: Message[];
   };
@@ -73,7 +68,12 @@ export interface Recommendation {
   tips?: Tip[];
   hours?: HourOut[];
   disclaimer: Message;
-  data: { engine_version: string; status: "ok" | "degraded" | "unavailable"; not_assessed: string[]; sources: (Source & { age_s: number | null })[] };
+  data: { engine_version: string; status: "ok" | "degraded" | "unavailable"; not_assessed: string[]; unassessed_hours: string[]; sources: (Source & { age_s: number | null })[] };
+  air_today: { pm25_24h_mean_ugm3: number | null; pm10_24h_mean_ugm3: number | null; no2_24h_mean_ugm3: number | null; o3_max_8h_mean_ugm3: number | null;
+    above_who_guideline: string[]; naqi_pm25_band: number | null };
+  /** Experimental model output: partner lens and research only, never runner screens. */
+  experimental: { heat_budget: null | { uncompensable_heat: boolean; minutes_to_39c: number | null; suggested_max_pace_s_per_km: number | null;
+    sweat_rate_ml_per_h: number; sweat_loss_ml: number; core_steady_c: number }; note: string };
 }
 
 export interface Source { id: string; kind: string; variables: string[]; retrieved_at: string | null }

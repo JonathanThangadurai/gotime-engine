@@ -22,10 +22,14 @@ test("nulls and NaN stay missing, never 0", () => {
   assert.ok(!data.t.includes(0) || SCENARIOS.ams.heat.t.includes(0));
 });
 
-test("heat essentials missing -> unavailable", () => {
+test("one missing weather hour degrades the day; all missing makes it unavailable", () => {
   const { weather, air } = openMeteo(DATE, 1);
   weather.hourly.relative_humidity_2m[10] = null;
-  assert.equal(COND.fromOpenMeteo(weather, air, { date: DATE }).quality.status, "unavailable");
+  const q = COND.fromOpenMeteo(weather, air, { date: DATE }).quality;
+  assert.equal(q.status, "degraded");
+  assert.deepEqual(q.missing_hours, [10]);
+  const all = openMeteo(DATE, 1); all.weather.hourly.temperature_2m = all.weather.hourly.temperature_2m.map(() => null);
+  assert.equal(COND.fromOpenMeteo(all.weather, all.air, { date: DATE }).quality.status, "unavailable");
 });
 
 test("array length must match the time axis; air axis must align with weather", () => {
@@ -77,11 +81,30 @@ test("server: a missing pollutant -> degraded, not assessed, never 0", async () 
   assert.ok(r.body.hours.every(h => h.air.o3_ugm3 === null));
 });
 
-test("server: missing temperature -> 503, typed status, no advice", async () => {
-  const r = await call(handlerWith(om => { om.weather.hourly.temperature_2m[12] = null; return om; }), "POST", "/v1/recommendations", body());
+test("server: one missing daytime hour -> 200, degraded, that hour left out of every window", async () => {
+  const r = await call(handlerWith(om => { om.weather.hourly.temperature_2m[9] = null; return om; }), "POST", "/v1/recommendations", { ...body(), include: ["hours"] });
+  assert.equal(r.status, 200);
+  assert.equal(r.body.data.status, "degraded");
+  assert.deepEqual(r.body.data.unassessed_hours, ["09:00"]);
+  const h9 = r.body.hours.find(h => h.start.slice(11, 13) === "09");
+  assert.equal(h9.assessed, false);
+  assert.equal(h9.in_window, false);
+  const w = r.body.summary.window, ms = Date.parse;
+  assert.ok(!(ms(w.start) <= ms(h9.start) && ms(h9.start) < ms(w.end)), `window ${w.start}-${w.end} spans 09:00`);
+});
+
+test("server: no complete window for the duration because of missing hours -> 503", async () => {
+  // at 05:30 only 30 minutes are usable: every hour from 06:00 to 23:00 is missing temperature
+  const r = await call(handlerWith(om => { for (let h = 6; h < 24; h++) om.weather.hourly.temperature_2m[h] = null; return om; }),
+    "POST", "/v1/recommendations", { ...body(), now: instantFor(AMS.tz, DATE, 5.5) });
   assert.equal(r.status, 503);
   assert.equal(r.body.type, "https://api.gotime.example/problems/conditions-unavailable");
   assert.equal(r.body.data.status, "unavailable");
+});
+
+test("server: missing temperature everywhere -> 503", async () => {
+  const r = await call(handlerWith(om => { om.weather.hourly.temperature_2m = om.weather.hourly.temperature_2m.map(() => null); return om; }), "POST", "/v1/recommendations", body());
+  assert.equal(r.status, 503);
 });
 
 test("server: weather HTTP 500 and no snapshot for that date -> 503; air HTTP 500 -> degraded", async () => {

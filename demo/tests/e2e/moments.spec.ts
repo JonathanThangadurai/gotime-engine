@@ -40,13 +40,13 @@ test.beforeEach(async ({ page }) => {
 const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
   { name: "00-onboarding", check: async p => { await expect(p.getByTestId("onboarding")).toBeVisible(); } },
   { name: "01-evening", check: async p => {
-    await expect(p.getByTestId("notification")).toContainText("Tomorrow: run 6:45–11:00");
+    await expect(p.getByTestId("notification")).toContainText("Tomorrow: run 6:45–12:00");
     await expect(p.getByTestId("notification")).toContainText(/At your usual 18:00, heat stress will be \d+\s°C higher\./); } },
-  { name: "02-glance", check: async p => { await expect(p.getByTestId("glance")).toContainText("Go before 11:00"); } },
+  { name: "02-glance", check: async p => { await expect(p.getByTestId("glance")).toContainText("Go before 12:00"); } },
   { name: "03-today", check: async p => {
     await expect(p.getByTestId("headline")).toHaveText(expectedHeadline(6.75));
     await expect(p.locator(".rows .row")).toHaveCount(3);
-    await expect(p.getByTestId("row-water")).toHaveText("Water optional");
+    await expect(p.getByTestId("row-water")).toHaveText("Carry water; drink according to thirst");
     await expect(p.getByTestId("device").getByText(CREDITS_DATA)).toHaveCount(0); } },
   { name: "04-why", check: async p => {
     await expect(p.getByTestId("counterfactual")).toHaveText(/^At your usual 18:00, heat stress would be \d+\s°C higher\.$/);
@@ -67,7 +67,8 @@ const WALK: { name: string; check: (p: Page) => Promise<void> }[] = [
     await expect(card).toContainText("Cooler than your usual 18:00 run.");
     await expect(card.locator(".row").first()).toHaveText(/^At your usual 18:00, heat stress would have been \d+\s°C higher\.$/);
     await expect(card).toContainText("You went at 6:45, as planned.");
-    await expect(card).toContainText(/You sweated about 150\sml, no need to top up\. At your usual 18:00 it would have been about \d+\sml\./);
+    await expect(card).toContainText("Drink according to thirst.");
+    await expect(card).not.toContainText(/sweat|core|\bml\b/);                    // no body estimates for runners
     await expect(card).toContainText("Compared with your usual run, it felt…");
     await expect(card).not.toContainText("38 °C"); } },
   { name: "08-week", check: async p => {
@@ -90,7 +91,7 @@ test("all nine moments reachable in order with →", async ({ page }, info) => {
 test("onboarding answers re-run the engine", async ({ page }) => {
   await page.getByTestId("pace-435").click();
   await page.keyboard.press("4");
-  await expect(page.getByTestId("row-pace")).toHaveText("7:15/km is fine");
+  await expect(page.getByTestId("row-pace")).toHaveText("7:15/km as planned");
 });
 
 test("evening: one tap adds the slot to the calendar", async ({ page }, info) => {
@@ -177,12 +178,12 @@ test("phone view: long press on the page header opens the presenter drawer", asy
 // ---------------------------------------------------------------- step 3: Chennai
 test("C switches city and re-runs the engine", async ({ page }) => {
   await page.keyboard.press("4");
-  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 12:00");
   await page.keyboard.press("c");
   await expect(page.getByTestId("headline")).toHaveText("Run before 7:00");      // Arjun, 6 May 2024, 5:15
   await expect(page.getByText("Monday 6 May")).toBeVisible();
   await page.keyboard.press("c");
-  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 12:00");
 });
 
 test("Chennai May heat: Arjun goes early with local drink advice and a kit choice", async ({ page }, info) => {
@@ -191,7 +192,8 @@ test("Chennai May heat: Arjun goes early with local drink advice and a kit choic
   await expect(page.getByTestId("row-water")).toContainText("ORS or neer mor");
   await shot(page, "chn-03-today-arjun", info.project.name);
   await page.getByTestId("kit-full_length_cotton").click();
-  await expect(page.getByTestId("headline")).toHaveText("Run before 6:00");
+  await expect(page.getByTestId("kit-full_length_cotton")).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 7:00");   // kit changes experimental values only
   await shot(page, "chn-03-today-arjun-cotton", info.project.name);
 });
 
@@ -199,11 +201,11 @@ test("Bhogi: skip the early slot", async ({ page }, info) => {
   await page.keyboard.press("c");
   await page.keyboard.press("s");                                                 // May heat -> Bhogi smoke
   await page.keyboard.press("2");
-  await expect(page.getByTestId("notification")).toContainText("Tomorrow: run after 15:00");
+  await expect(page.getByTestId("notification")).toContainText("Tomorrow: run 12:00–18:00");
   await expect(page.getByTestId("notification")).toContainText("At your usual 5:30, PM2.5 will be about 290 µg/m³.");
   await shot(page, "chn-01-evening-bhogi", info.project.name);
   await page.keyboard.press("4");
-  await expect(page.getByTestId("headline")).toHaveText("Run after 15:00");
+  await expect(page.getByTestId("headline")).toHaveText("Run 12:00–18:00");
   await expect(page.getByTestId("usual-note")).toHaveText("Skip your usual 5:30 run today: smoke.");
   await shot(page, "chn-03-today-bhogi", info.project.name);
   await page.keyboard.press("ArrowRight");
@@ -233,7 +235,7 @@ test("evening: Arjun on the May morning gets no message (change-only)", async ({
 // ---------------------------------------------------------------- step 4: presentation features
 test("deep link reproduces the exact screen", async ({ page }, info) => {
   await page.goto("./?city=chn&scenario=bhogi&persona=arjun&moment=4&lens=partner");
-  await expect(page.getByTestId("headline")).toHaveText("Run after 15:00");
+  await expect(page.getByTestId("headline")).toHaveText("Run 12:00–18:00");
   await expect(page.getByTestId("usual-note")).toHaveText("Skip your usual 5:30 run today: smoke.");
   await expect(page.locator(".lens-on").first()).toBeVisible();
   if (info.project.name === "stage") await expect(page.getByTestId("partner-lens")).toContainText("POST /v1/recommendations");
@@ -265,7 +267,7 @@ test("the pitch script runs end to end with → only", async ({ page }, info) =>
   }
   // the last step: Amsterdam Today card with the partner lens and the API response
   await expect(page.getByTestId("partner-lens")).toContainText("summary");
-  await expect(page.getByTestId("headline")).toHaveText("Run before 11:00");
+  await expect(page.getByTestId("headline")).toHaveText("Run before 12:00");
   await page.keyboard.press("ArrowRight");                       // stays on the last step
   await expect(pos).toHaveText("Partner pitch: 9/9");
 });
@@ -300,7 +302,7 @@ test("P toggles the partner lens, N the speaker notes", async ({ page }, info) =
   await page.keyboard.press("n");
   await expect(page.getByTestId("speaker-note")).toHaveCount(0);
   await page.keyboard.press("8");
-  await expect(page.getByTestId("partner-lens")).toContainText("estimated");
+  await expect(page.getByTestId("partner-lens")).toContainText("Experimental");
   await shot(page, "lens-after", info.project.name);
 });
 

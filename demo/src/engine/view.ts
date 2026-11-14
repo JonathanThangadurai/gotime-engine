@@ -4,6 +4,7 @@ import { ENG, type EngineDay, type Message, type Recommendation, type Reason, ty
 import { cfFamily, cfParams, type Comparison } from "./reference";
 
 export interface Chip { kind: "pace" | "start" | "water"; code: string; params: Record<string, string | number> }
+// Runner screens show forecast facts and suggestions only; body estimates (experimental) stay in the partner lens.
 /** Thin timeline from now to the end of the running day: positions are fractions 0-1 of that span. */
 export interface Timeline { now: string; dayEnd: string; start: number; end: number; startLabel: string; endLabel: string }
 const DAY_END_H = 22;
@@ -49,7 +50,7 @@ export function usualSlotNote(rec: Recommendation, usualHour: number | undefined
   if (usualHour === undefined || !w || usualHour < fromHour - 0.5) return null;
   if (usualHour >= hourOf(w.start) && usualHour < hourOf(w.end)) return null;
   const h = rec.hours?.find(x => +x.start.slice(11, 13) === Math.floor(usualHour));
-  if (!h) return null;
+  if (!h || !h.air || !h.heat) return null;
   const time = ENG.fmtHM(usualHour);
   if (h.air.level >= 2 && h.air.level >= h.heat.level) return { code: (h.air.pm25_ugm3 ?? 0) > 60 ? "SKIP_USUAL_SMOKE" : "SKIP_USUAL_AIR", params: { time } };
   if (h.heat.level >= 2) return { code: "SKIP_USUAL_HEAT", params: { time } };
@@ -62,18 +63,14 @@ export function todayView(rec: Recommendation, nowHour: number, usualHour?: numb
   const chips: Chip[] = [];
   if (s.action !== "indoor" && s.action !== "none_today") {
     const p = g.pace;
-    if (!p.planned_pace_ok && p.max_duration_at_planned_s !== null)
-      chips.push({ kind: "pace", code: "CHIP_PACE_SHORT", params: { minutes: Math.round(p.max_duration_at_planned_s / 60) } });
-    else if (p.planned_pace_ok) chips.push({ kind: "pace", code: "CHIP_PACE_OK", params: { pace: paceText(p.planned_s_per_km) } });
-    else if (p.pace_for_full_duration_s_per_km !== null)
-      chips.push({ kind: "pace", code: "CHIP_PACE_EASE", params: { pace: paceText(p.pace_for_full_duration_s_per_km) } });
+    chips.push(p.advice === "consider_shorter_or_easier"
+      ? { kind: "pace", code: "CHIP_PACE_EASIER", params: { pace: paceText(p.planned_s_per_km) } }
+      : { kind: "pace", code: "CHIP_PACE_OK", params: { pace: paceText(p.planned_s_per_km) } });
     chips.push(g.start_heading_deg === null
       ? { kind: "start", code: "CHIP_START_ANY", params: {} }
       : { kind: "start", code: "CHIP_START", params: { heading: ENG.compass(g.start_heading_deg) } });
-    chips.push(g.hydration.fluid_ml > 0
-      ? drink ? { kind: "water", code: "CHIP_WATER_LOCAL", params: { ml: g.hydration.fluid_ml, drink } }
-        : { kind: "water", code: "CHIP_WATER", params: { ml: g.hydration.fluid_ml } }
-      : { kind: "water", code: "CHIP_WATER_NONE", params: {} });
+    const carry = g.hydration.carry_water ? "_CARRY" : "";
+    chips.push(drink ? { kind: "water", code: `CHIP_THIRST${carry}_LOCAL`, params: { drink } } : { kind: "water", code: `CHIP_THIRST${carry}`, params: {} });
   }
   return {
     action: s.action,
@@ -136,17 +133,17 @@ export function glanceView(rec: Recommendation, nowHour: number): GlanceView {
 }
 
 /** During the run: the /live response at one minute, with alerts held on screen for three minutes. */
-export interface RunView { clock: string; minute: number; minutes: number; pace: string; cap: Coded; body: Coded; alert: { code: string; level: number } | null }
-export function runView(trace: TracePoint[], minute: number, paceSPerKm: number): RunView {
+export interface RunView { clock: string; minute: number; minutes: number; pace: string; heat: Coded; heatStress: Coded | null; alert: { code: string; level: number } | null }
+/** The watch: pace, progress, the forecast heat band and heat stress for this hour, and forecast-based cues. */
+export function runView(trace: TracePoint[], minute: number, paceSPerKm: number, rec?: Recommendation): RunView {
   const i = Math.max(0, Math.min(trace.length - 1, minute)), p = trace[i];
   let alert = null;
   for (let j = i; j >= Math.max(0, i - 2); j--) { const a = trace[j].live.alert; if (a) { alert = { code: a.code, level: a.level }; break; } }
-  const cap = p.live.fastest_safe_pace_s_per_km;
+  const hour = rec?.hours?.find(h => +h.start.slice(11, 13) === Math.floor(p.clock));
   return {
     clock: ENG.fmtHM(p.clock), minute: i, minutes: trace.length - 1, pace: paceText(paceSPerKm),
-    cap: cap === null ? { code: p.live.core_status === "at_limit" ? "WATCH_WALK_ONLY" : "WATCH_NO_CAP", params: {} }
-      : cap >= paceSPerKm - 60 ? { code: "WATCH_CAP", params: { pace: paceText(cap) } } : { code: "WATCH_NO_CAP", params: {} },
-    body: { code: `WATCH_BODY.${p.live.core_status}`, params: {} },
+    heat: { code: `WATCH_HEAT.${p.live.heat_level}`, params: {} },
+    heatStress: hour?.heat ? { code: "WATCH_HEAT_STRESS", params: { wbgt_c: hour.heat.wbgt_c } } : null,
     alert,
   };
 }
@@ -163,7 +160,6 @@ export interface AfterView {
   rows: (Coded & { icon: string })[];
   estimates: { peak_core_c: number } | null; // partner lens / numbers view only, labelled "estimated"
 }
-const r50 = (ml: number) => Math.round(ml / 50) * 50;
 /** plan: last night's recommendation (the planned window); drink: local drink advice, if any. */
 export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint[], plan?: Recommendation, drink?: string,
   cmp?: Comparison | null): AfterView {
@@ -174,19 +170,15 @@ export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint
     return { indoor: true, title: { code: "AFTER_INDOOR_TITLE", params: {} }, sub: { code: "AFTER_INDOOR_SUB", params: {} }, planned: null,
       rows, estimates: null };
   }
-  const minutes = trace.length - 1, startH = trace[0].clock, ran = day.hours[Math.floor(startH)];
+  const minutes = trace.length - 1, startH = trace[0].clock;
   const pace = rec.guidance.pace.planned_s_per_km, km = (minutes * 60 / pace).toFixed(1);
   const serious = trace.some(p => p.live.alert && p.live.alert.level >= 2);
-  const loss = ran.b.sweatMlH * minutes / 60;
   const rows: AfterView["rows"] = [];
   const say = cmp && cmp.ran && cmp.worthSaying ? cmp : null;
   if (say) rows.push({ icon: say.factor === "heat" ? "heat" : "air", code: `CF_AFTER_${cfFamily(say)}`, params: cfParams(say) });
   rows.push({ icon: "pace", code: "AFTER_RUN", params: { km, minutes } });
-  // sweat at the reference hour, for the same run
-  const refLoss = cmp ? cmp.ref.sweat_ml_per_h * minutes / 60 : 0;
-  const topUp = loss >= 300, compare = !!cmp && refLoss - loss >= 100;
-  const water = `AFTER_WATER_${topUp ? "DRINK" : "NONE"}${compare ? (cmp!.kind === "usual" ? "_CMP_USUAL" : "_CMP") : ""}${topUp && drink ? "_LOCAL" : ""}`;
-  rows.push({ icon: "water", code: water, params: { ml: r50(loss), time: cmp?.time ?? "", worst_ml: r50(refLoss), ...(drink ? { drink } : {}) } });
+  // water: drink according to thirst (personal sweat estimates are experimental, partner lens only)
+  rows.push({ icon: "water", code: drink ? "AFTER_DRINK_LOCAL" : "AFTER_DRINK", params: drink ? { drink } : {} });
   let planned: Coded | null = null;
   const w = plan?.summary.window;
   if (w && startH >= hourOf(w.start) - 1e-9 && startH < hourOf(w.end)) planned = { code: "AFTER_AS_PLANNED", params: { start: ENG.fmtHM(startH) } };
@@ -196,6 +188,6 @@ export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint
     sub: say ? { code: `AFTER_SUB_${say.factor === "heat" ? "HEAT" : "AIR"}${say.kind === "usual" ? "_USUAL" : ""}`, params: { time: say.time } } : null,
     planned,
     rows,
-    estimates: { peak_core_c: Math.max(...trace.map(p => p.live.core_estimate_c)) },
+    estimates: { peak_core_c: Math.max(...trace.map(p => p.live.experimental.core_estimate_c)) },
   };
 }

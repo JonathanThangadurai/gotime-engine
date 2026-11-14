@@ -32,8 +32,8 @@ describe("Dutch copy (nl-NL)", () => {
     const s = scenarioById("ams-heat");
     const rec = recommend({ city: s.city, scenario: s.dataKey, localHour: parseTime(s.defaultTime), request: PERSONAS.sanne.request, sources: s.sources });
     const v = todayView(rec, 6.75);
-    expect(t(v.headlineMsg.code, v.headlineMsg.params)).toBe("Loop vóór 11:00");
-    expect(v.chips.map(c => plain(t(c.code, c.params)))).toEqual(["6:20/km is prima", "Start richting noordoosten, tegen de wind in", "Water optioneel"]);
+    expect(t(v.headlineMsg.code, v.headlineMsg.params)).toBe("Loop vóór 12:00");
+    expect(v.chips.map(c => plain(t(c.code, c.params)))).toEqual(["6:20/km zoals gepland", "Start richting noordoosten, tegen de wind in", "Neem water mee; drink op dorst"]);
     expect(dayLabel("2026-06-27")).toBe("zaterdag 27 juni");
     expect(weekdayName(4)).toBe("donderdag");
     const lap = lapMessage(ROUTES.vondelpark, 45, 380);

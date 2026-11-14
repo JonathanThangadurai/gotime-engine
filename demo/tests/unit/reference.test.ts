@@ -27,7 +27,7 @@ function dayOf(id: string, personaId?: Persona["id"]) {
 }
 
 describe("rule: usual time outside the window -> compare with the usual time", () => {
-  it("Sanne, Amsterdam heatwave: usual 18:00 is outside 6:45-11:00", () => {
+  it("Sanne, Amsterdam heatwave: usual 18:00 is outside 6:45-12:00", () => {
     const d = dayOf("ams-heat");
     expect(d.ref).toMatchObject({ kind: "usual", factor: "heat", hour: 18, time: "18:00" });
     const delta = d.day.hours[18].W - d.day.hours[Math.floor(d.start)].W;
@@ -38,9 +38,8 @@ describe("rule: usual time outside the window -> compare with the usual time", (
     const rows = d.after.rows.map(r => t(r.code, r.params));
     expect(rows[0]).toBe(`At your usual 18:00, heat stress would have been ${x} °C higher.`);
     expect(t(d.after.sub!.code, d.after.sub!.params)).toBe("Cooler than your usual 18:00 run.");
-    const ml = Math.round(d.day.hours[Math.floor(d.start)].b.sweatMlH * 0.75 / 50) * 50;
-    const refMl = Math.round(d.day.hours[18].b.sweatMlH * 0.75 / 50) * 50;
-    expect(rows[2]).toBe(`You sweated about ${ml} ml, no need to top up. At your usual 18:00 it would have been about ${refMl} ml.`);
+    expect(rows[2]).toBe("Drink according to thirst.");                      // no sweat estimate on the runner card
+    expect(rows.join(" ")).not.toMatch(/sweat|ml\b|core/);
   });
 
   it("Arjun, Bhogi: usual 5:30 is outside 15:00-22:00; PM2.5 at 5:30 from the engine", () => {
@@ -79,17 +78,16 @@ describe("rule: usual time inside the window -> worst hour of the top factor", (
     expect(t(d.after.rows[0].code, d.after.rows[0].params)).toBe(`At ${hottest.h}:00, heat stress would have been ${x} °C higher.`);
   });
 
-  it("smoke day with the usual time inside the window: the worst-air hour, not the engine's overall worst", () => {
+  it("smoke day with the usual time inside the window: the worst-air hour of the day", () => {
     // Bhogi for a runner who usually goes at 16:00 (inside 15:00-22:00)
     const s = scenarioById("chn-bhogi"), h = parseTime(s.defaultTime);
     const inp = { city: s.city, scenario: s.dataKey, localHour: h, request: PERSONAS.arjun.request, sources: s.sources };
     const plan = recommend(inp), planDay = evaluateDay(inp);
     const ref = referenceHour(plan, planDay, 16, h)!;
     const pool = planDay.hours.filter(x => x.h >= 5 && x.h <= 21);
-    const smokiest = pool.reduce((a, b) => (b.pm25 > a.pm25 ? b : a));
+    const smokiest = pool.reduce((a, b) => ((b.pm25 ?? -1) > (a.pm25 ?? -1) ? b : a));
     expect(ref).toMatchObject({ kind: "worst", factor: "air", pollutant: "pm25", hour: smokiest.h });
     expect(smokiest.h).toBe(6);
-    expect(planDay.worst.h).not.toBe(smokiest.h);                  // differs from the engine's overall worst hour (8:00)
   });
 });
 

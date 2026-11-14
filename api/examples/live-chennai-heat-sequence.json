@@ -20,11 +20,16 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:30:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 37,
-      "core_status": "normal",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 413,
+      "heat_level": 2,
       "alert": null,
+      "experimental": {
+        "core_estimate_c": 37,
+        "core_status": "normal",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 413,
+        "body_alert": null,
+        "note": "Experimental model output; not for runner screens."
+      },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcsInN0b3JlIjowLCJ0IjowLCJ0dXJuZWQiOmZhbHNlLCJhdCI6MTcxNDk1OTAwMDAwMH0"
     }
   },
@@ -49,11 +54,16 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:35:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.4,
-      "core_status": "normal",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 408,
+      "heat_level": 2,
       "alert": null,
+      "experimental": {
+        "core_estimate_c": 38.4,
+        "core_status": "normal",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 408,
+        "body_alert": null,
+        "note": "Experimental model output; not for runner screens."
+      },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNjkxOTMwMDYxMjA4MTUsInN0b3JlIjowLjcwMzAzMDM0ODMzOTY0NjIsInQiOjMwMCwidHVybmVkIjpmYWxzZSwiYXQiOjE3MTQ5NTkzMDAwMDB9"
     }
   },
@@ -78,16 +88,21 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:40:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 39.5,
-      "core_status": "at_limit",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 402,
-      "alert": {
-        "code": "WALK_AND_COOL",
-        "level": 3,
-        "params": {},
-        "haptic": "urgent",
-        "text": "Walk now and cool down"
+      "heat_level": 2,
+      "alert": null,
+      "experimental": {
+        "core_estimate_c": 39.5,
+        "core_status": "at_limit",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 402,
+        "body_alert": {
+          "code": "WALK_AND_COOL",
+          "level": 3,
+          "params": {},
+          "haptic": "urgent",
+          "text": "Walk now and cool down"
+        },
+        "note": "Experimental model output; not for runner screens."
       },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzguMTAwNTA3ODQzMDUwOTUsInN0b3JlIjoxLjQwNjA2MDY5NjY3OTI5MjMsInQiOjYwMCwidHVybmVkIjpmYWxzZSwiYXQiOjE3MTQ5NTk2MDAwMDB9"
     }
@@ -113,16 +128,21 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:45:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.9,
-      "core_status": "rising",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 393,
-      "alert": {
-        "code": "EASE_OFF",
-        "level": 2,
-        "params": {},
-        "haptic": "double",
-        "text": "Body heat rising: ease off"
+      "heat_level": 2,
+      "alert": null,
+      "experimental": {
+        "core_estimate_c": 38.9,
+        "core_status": "rising",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 393,
+        "body_alert": {
+          "code": "EASE_OFF",
+          "level": 2,
+          "params": {},
+          "haptic": "double",
+          "text": "Body heat rising: ease off"
+        },
+        "note": "Experimental model output; not for runner screens."
       },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNjk4NjI4NTE1NjY2NDcsInN0b3JlIjoxLjIwMDgwODMzMDQ1MDgxMjQsInQiOjkwMCwidHVybmVkIjpmYWxzZSwiYXQiOjE3MTQ5NTk5MDAwMDB9"
     }
@@ -148,11 +168,16 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:50:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.5,
-      "core_status": "normal",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 382,
+      "heat_level": 2,
       "alert": null,
+      "experimental": {
+        "core_estimate_c": 38.5,
+        "core_status": "normal",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 382,
+        "body_alert": null,
+        "note": "Experimental model output; not for runner screens."
+      },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNDYxMzIyNzkxNjM5MjIsInN0b3JlIjowLjk5NTU1NTk2NDIyMjMzMjUsInQiOjEyMDAsInR1cm5lZCI6ZmFsc2UsImF0IjoxNzE0OTYwMjAwMDAwfQ"
     }
   },
@@ -177,18 +202,29 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T01:55:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.8,
-      "core_status": "rising",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 366,
+      "heat_level": 2,
       "alert": {
-        "code": "EASE_OFF",
-        "level": 2,
+        "code": "TURN_FOR_TAILWIND",
+        "level": 0,
         "params": {},
-        "haptic": "double",
-        "text": "Body heat rising: ease off"
+        "haptic": "single",
+        "text": "Halfway: turn now, tailwind home"
       },
-      "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNjg1NjQyMzczNjY5NzYsInN0b3JlIjoxLjA5NjcxOTg4NDY5OTA4MzgsInQiOjE1MDAsInR1cm5lZCI6ZmFsc2UsImF0IjoxNzE0OTYwNTAwMDAwfQ"
+      "experimental": {
+        "core_estimate_c": 38.8,
+        "core_status": "rising",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 366,
+        "body_alert": {
+          "code": "EASE_OFF",
+          "level": 2,
+          "params": {},
+          "haptic": "double",
+          "text": "Body heat rising: ease off"
+        },
+        "note": "Experimental model output; not for runner screens."
+      },
+      "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNjg1NjQyMzczNjY5NzYsInN0b3JlIjoxLjA5NjcxOTg4NDY5OTA4MzgsInQiOjE1MDAsInR1cm5lZCI6dHJ1ZSwiYXQiOjE3MTQ5NjA1MDAwMDB9"
     }
   },
   {
@@ -212,18 +248,23 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T02:00:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 39,
-      "core_status": "at_limit",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 339,
-      "alert": {
-        "code": "WALK_AND_COOL",
-        "level": 3,
-        "params": {},
-        "haptic": "urgent",
-        "text": "Walk now and cool down"
+      "heat_level": 2,
+      "alert": null,
+      "experimental": {
+        "core_estimate_c": 39,
+        "core_status": "at_limit",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 339,
+        "body_alert": {
+          "code": "WALK_AND_COOL",
+          "level": 3,
+          "params": {},
+          "haptic": "urgent",
+          "text": "Walk now and cool down"
+        },
+        "note": "Experimental model output; not for runner screens."
       },
-      "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuODE4MTAwODQzNjYyOTgsInN0b3JlIjoxLjE5Nzg4MzgwNTE3NTgzNSwidCI6MTgwMCwidHVybmVkIjpmYWxzZSwiYXQiOjE3MTQ5NjA4MDAwMDB9"
+      "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuODE4MTAwODQzNjYyOTgsInN0b3JlIjoxLjE5Nzg4MzgwNTE3NTgzNSwidCI6MTgwMCwidHVybmVkIjp0cnVlLCJhdCI6MTcxNDk2MDgwMDAwMH0"
     }
   },
   {
@@ -247,16 +288,15 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T02:05:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.5,
-      "core_status": "rising",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 291,
-      "alert": {
-        "code": "TURN_FOR_TAILWIND",
-        "level": 0,
-        "params": {},
-        "haptic": "single",
-        "text": "Halfway: turn now, tailwind home"
+      "heat_level": 2,
+      "alert": null,
+      "experimental": {
+        "core_estimate_c": 38.5,
+        "core_status": "rising",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 291,
+        "body_alert": null,
+        "note": "Experimental model output; not for runner screens."
       },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuNTMxODcwMDA2NTk3ODcsInN0b3JlIjowLjk5MjYzMTQzODk0NzM1NTEsInQiOjIxMDAsInR1cm5lZCI6dHJ1ZSwiYXQiOjE3MTQ5NjExMDAwMDB9"
     }
@@ -282,11 +322,16 @@
       "schema_version": "0.9.0",
       "at": "2024-05-06T02:10:00.000Z",
       "recommendation_id": "rec_lvuab5c0k0bi",
-      "core_estimate_c": 38.2,
-      "core_status": "normal",
-      "limit_status": "capped",
-      "fastest_safe_pace_s_per_km": 291,
+      "heat_level": 2,
       "alert": null,
+      "experimental": {
+        "core_estimate_c": 38.2,
+        "core_status": "normal",
+        "limit_status": "capped",
+        "suggested_max_pace_s_per_km": 291,
+        "body_alert": null,
+        "note": "Experimental model output; not for runner screens."
+      },
       "state": "eyJ2IjoxLCJyaWQiOiJyZWNfbHZ1YWI1YzBrMGJpIiwiYmFzZSI6MzcuMzYyODUzNTU5NjE5Mjk2LCJzdG9yZSI6MC43ODczNzkwNzI3MTg4NzU2LCJ0IjoyNDAwLCJ0dXJuZWQiOnRydWUsImF0IjoxNzE0OTYxNDAwMDAwfQ"
     }
   }

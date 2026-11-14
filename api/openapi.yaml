@@ -17,6 +17,11 @@ info:
       (`guidance.pace.limit_status`, `guidance.start_heading_status`); the value is then null.
     - Levels: 0 green, 1 yellow, 2 red, 3 black (black = do not run outdoors).
     - Times: offsets are computed per instant from the IANA zone (daylight saving time included).
+    - Runner-facing fields carry forecast facts and suggestions. Body estimates (heat budget, core temperature, sweat,
+      pace limits) are experimental, sit only under `experimental`, and must not be shown to runners.
+    - Air uses each guideline's own averaging: WHO 2021 PM2.5, PM10 and NO2 as 24-h means and ozone as the maximum
+      8-h mean; India NAQI PM2.5 bands on the 24-h mean; EU ozone 180 / 240 on hourly values (information and alert
+      thresholds, not a clearance). Hourly values only rank hours for timing.
 
     **Prototype (0.9).** This contract may still change. Authentication (bearer) and rate limiting (429) are planned,
     not implemented. `/live` is experimental.
@@ -179,7 +184,12 @@ components:
           properties:
             mass_kg: { type: number, minimum: 30, maximum: 200 }
             height_m: { type: number, minimum: 1.2, maximum: 2.3 }
-            heat_acclimatised: { type: boolean }
+            heat_acclimatised:
+              type: boolean
+              description: >-
+                True when the athlete has trained or worked in the heat repeatedly over the last 1-2 weeks (for example
+                most days, an hour or more). It moves the heat bands up by 4.4 °C. A single warm day does not count.
+                Defaults to true only in hot-climate locations (declared in assumptions).
             clothing: { type: string, enum: [running_kit, full_length_light, full_length_cotton] }
             hay_fever: { type: boolean }
           additionalProperties: false
@@ -206,7 +216,7 @@ components:
     # ---------- response ----------
     Recommendation:
       type: object
-      required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, reasons, assumptions, data, disclaimer]
+      required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, air_today, reasons, assumptions, data, disclaimer, experimental]
       properties:
         schema_version: { type: string, const: "0.9.0" }
         id: { type: string, description: Pass to /live as recommendation_id to link a run to its plan. }
@@ -242,9 +252,11 @@ components:
             "What pros do": pro-level guidance in an everyday dose, from the run hours' conditions.
             The engine returns at most one. Show it quietly, below the main advice.
           items: { $ref: "#/components/schemas/Tip" }
+        air_today: { $ref: "#/components/schemas/AirToday" }
+        experimental: { $ref: "#/components/schemas/Experimental" }
         hours:
           type: array
-          description: Only when include=hours. Remaining hours of today.
+          description: Only when include=hours. Remaining hours of the date.
           items: { $ref: "#/components/schemas/Hour" }
         assumptions:
           type: array
@@ -295,33 +307,26 @@ components:
         intensity: { type: string, enum: [normal, easy] }
         pace:
           type: object
-          required: [planned_s_per_km, planned_pace_ok, limit_status, fastest_safe_pace_s_per_km, max_duration_at_planned_s, pace_for_full_duration_s_per_km]
+          description: No numbers here; experimental pace limits are under `experimental.heat_budget`.
+          required: [planned_s_per_km, advice]
           properties:
             planned_s_per_km: { type: integer }
-            planned_pace_ok: { type: boolean }
-            limit_status:
+            advice:
               type: string
-              enum: [none, capped, walk_only, indoor]
-              description: "none = no practical heat cap; capped = see fastest_safe_pace_s_per_km; walk_only = even running slowly exceeds the heat budget; indoor = no outdoor run advised."
-            fastest_safe_pace_s_per_km:
-              type: [integer, "null"]
-              description: Do not run faster than this for the planned duration. Set only when limit_status is capped.
-            max_duration_at_planned_s:
-              type: [integer, "null"]
-              description: Longest safe run at the planned pace. null = no heat limit within 4 hours.
-            pace_for_full_duration_s_per_km:
-              type: [integer, "null"]
-              description: Pace that makes the full planned duration safe. null when the planned pace already is.
+              enum: [as_planned, consider_shorter_or_easier, indoor]
+              description: From the heat bands of the hours the run covers (red or higher -> consider shorter or easier).
           additionalProperties: false
         route:
           oneOf:
             - type: "null"
             - type: object
-              required: [id, name, air_dose_saving_pct, compared_with]
+              required: [id, name, exposure_lower_pct, compared_with]
               properties:
                 id: { type: string }
                 name: { type: string }
-                air_dose_saving_pct: { type: [integer, "null"], description: Lower extra air-pollution dose than the compared route. }
+                exposure_lower_pct:
+                  type: [integer, "null"]
+                  description: How much lower the guideline-relative concentration is on this route than on compared_with at the run hour (route factors are demo values).
                 compared_with: { type: [string, "null"] }
               additionalProperties: false
         start_heading_deg:
@@ -333,11 +338,11 @@ components:
           description: "any = wind too light along the route to matter; unknown = wind direction not available; indoor = no outdoor run advised."
         hydration:
           type: object
-          required: [fluid_ml, sweat_rate_ml_per_h, electrolytes_recommended]
+          description: Personal sweat estimates are experimental (`experimental.heat_budget`).
+          required: [advice, carry_water]
           properties:
-            fluid_ml: { type: integer, description: To carry or drink during the run; 0 = optional. }
-            sweat_rate_ml_per_h: { type: integer }
-            electrolytes_recommended: { type: boolean }
+            advice: { type: string, enum: [drink_to_thirst, none], description: "drink_to_thirst: show DRINK_TO_THIRST." }
+            carry_water: { type: boolean, description: True for runs of 60 minutes or more, or when the run hours are at least yellow for heat. }
           additionalProperties: false
         warm_up_indoors: { type: boolean }
         indoor_alternatives:
@@ -376,68 +381,118 @@ components:
 
     Hour:
       type: object
-      required: [start, level, level_name, in_window, heat, heat_budget, air, cold, pollen, wind, cardio_load_rr]
+      required: [start, assessed, level, level_name, in_window, heat, air, cold, pollen, wind]
       properties:
         start: { type: string, format: date-time }
-        level: { $ref: "#/components/schemas/Level" }
-        level_name: { $ref: "#/components/schemas/LevelName" }
+        assessed: { type: boolean, description: false when weather essentials are missing for this hour; it is then left out of every window. }
+        level: { oneOf: [{ $ref: "#/components/schemas/Level" }, { type: "null" }] }
+        level_name: { oneOf: [{ $ref: "#/components/schemas/LevelName" }, { type: "null" }] }
         in_window: { type: boolean }
         heat:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [wbgt_c, level, air_temp_c, relative_humidity_pct, radiant_temp_c]
+              properties:
+                wbgt_c: { type: number }
+                level: { $ref: "#/components/schemas/Level" }
+                air_temp_c: { type: number }
+                relative_humidity_pct: { type: number }
+                radiant_temp_c: { type: number }
+              additionalProperties: false
+        air:
+          oneOf:
+            - type: "null"
+            - type: object
+              description: Hourly values (timing only). Daily guideline status is in air_today.
+              required: [pm25_ugm3, pm10_ugm3, no2_ugm3, o3_ugm3, level, dominant]
+              properties:
+                pm25_ugm3: { type: [number, "null"], description: null when not assessed }
+                pm10_ugm3: { type: [number, "null"], description: null when not assessed }
+                no2_ugm3: { type: [number, "null"], description: null when not assessed }
+                o3_ugm3: { type: [number, "null"], description: null when not assessed }
+                level: { $ref: "#/components/schemas/Level", description: "max(NAQI PM2.5 band of the 24-h mean, EU hourly ozone 180 / 240)" }
+                dominant: { type: [string, "null"], enum: [pm25, pm10, no2, o3, null], description: Highest hourly value relative to its guideline. }
+              additionalProperties: false
+        cold:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [wind_chill_c, level]
+              properties:
+                wind_chill_c: { type: [number, "null"], description: null above 10 °C, where wind chill is undefined. }
+                level: { $ref: "#/components/schemas/Level" }
+              additionalProperties: false
+        pollen:
           type: object
-          required: [wbgt_c, level, air_temp_c, relative_humidity_pct, radiant_temp_c]
+          description: Per taxon, grains/m³; null = not assessed or not covered. Only grass has a level (50 grains/m³).
+          required: [grass_m3, birch_m3, alder_m3, mugwort_m3, grass_level]
           properties:
-            wbgt_c: { type: number }
-            level: { $ref: "#/components/schemas/Level" }
-            air_temp_c: { type: number }
-            relative_humidity_pct: { type: number }
-            radiant_temp_c: { type: number }
+            grass_m3: { type: [number, "null"] }
+            birch_m3: { type: [number, "null"] }
+            alder_m3: { type: [number, "null"] }
+            mugwort_m3: { type: [number, "null"] }
+            grass_level: { oneOf: [{ $ref: "#/components/schemas/Level" }, { type: "null" }] }
           additionalProperties: false
-        heat_budget:
+        wind:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [speed_mps, from_deg]
+              properties:
+                speed_mps: { type: number }
+                from_deg: { type: [integer, "null"], description: null when the wind direction is not available }
+              additionalProperties: false
+        experimental:
           type: object
-          required: [max_duration_at_planned_s, sweat_rate_ml_per_h, core_steady_c]
+          description: Experimental heat-budget values for this hour at the planned pace. Not for runner screens.
+          required: [minutes_to_39c, sweat_rate_ml_per_h, core_steady_c]
           properties:
-            max_duration_at_planned_s: { type: [integer, "null"] }
+            minutes_to_39c: { type: [integer, "null"], description: null = no limit (heat can be shed). }
             sweat_rate_ml_per_h: { type: integer }
             core_steady_c: { type: number }
           additionalProperties: false
-        air:
-          type: object
-          required: [pm25_ugm3, pm10_ugm3, no2_ugm3, o3_ugm3, level, dominant]
-          properties:
-            pm25_ugm3: { type: [number, "null"], description: null when not assessed }
-            pm10_ugm3: { type: [number, "null"], description: null when not assessed }
-            no2_ugm3: { type: [number, "null"], description: null when not assessed }
-            o3_ugm3: { type: [number, "null"], description: null when not assessed }
-            level: { $ref: "#/components/schemas/Level" }
-            dominant: { type: [string, "null"], enum: [pm25, pm10, no2, o3, null] }
-          additionalProperties: false
-        cold:
-          type: object
-          required: [wind_chill_c, level]
-          properties:
-            wind_chill_c: { type: [number, "null"], description: null above 10 °C, where wind chill is undefined. }
-            level: { $ref: "#/components/schemas/Level" }
-          additionalProperties: false
-        pollen:
-          type: object
-          required: [grains_m3, level]
-          properties:
-            grains_m3: { type: [number, "null"] }
-            level: { oneOf: [{ $ref: "#/components/schemas/Level" }, { type: "null" }] }
-          additionalProperties: false
-        wind:
-          type: object
-          required: [speed_mps, from_deg]
-          properties:
-            speed_mps: { type: number }
-            from_deg: { type: [integer, "null"], description: null when the wind direction is not available }
-          additionalProperties: false
-        cardio_load_rr: { type: number, description: Relative cardiovascular load vs a cool, clean hour (population estimate). }
+      additionalProperties: false
+
+    AirToday:
+      type: object
+      description: The day's air with each guideline's own averaging (the forecast day, 00-24 local). null = not assessed.
+      required: [pm25_24h_mean_ugm3, pm10_24h_mean_ugm3, no2_24h_mean_ugm3, o3_max_8h_mean_ugm3, above_who_guideline, naqi_pm25_band]
+      properties:
+        pm25_24h_mean_ugm3: { type: [integer, "null"], description: WHO 2021 guideline 15. }
+        pm10_24h_mean_ugm3: { type: [integer, "null"], description: WHO 2021 guideline 45. }
+        no2_24h_mean_ugm3: { type: [integer, "null"], description: WHO 2021 guideline 25. }
+        o3_max_8h_mean_ugm3: { type: [integer, "null"], description: WHO 2021 guideline 100. }
+        above_who_guideline: { type: array, items: { type: string, enum: [pm2_5, pm10, nitrogen_dioxide, ozone] } }
+        naqi_pm25_band: { oneOf: [{ $ref: "#/components/schemas/Level" }, { type: "null" }], description: "India NAQI on the 24-h mean: 1 above 60, 2 above 120, 3 above 250." }
+      additionalProperties: false
+
+    Experimental:
+      type: object
+      description: >-
+        Experimental model output for partners and research. Not validated for running and never for runner screens.
+      required: [heat_budget, note]
+      properties:
+        heat_budget:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [model, uncompensable_heat, minutes_to_39c, suggested_max_pace_s_per_km, sweat_rate_ml_per_h, sweat_loss_ml, core_steady_c]
+              properties:
+                model: { type: string }
+                uncompensable_heat: { type: boolean, description: Heat storage cannot be compensated at the planned pace in some run hour. }
+                minutes_to_39c: { type: [integer, "null"], description: Only from uncompensable heat storage; null = no limit. }
+                suggested_max_pace_s_per_km: { type: [integer, "null"] }
+                sweat_rate_ml_per_h: { type: integer }
+                sweat_loss_ml: { type: integer }
+                core_steady_c: { type: number }
+              additionalProperties: false
+        note: { type: string }
       additionalProperties: false
 
     DataInfo:
       type: object
-      required: [engine_version, status, not_assessed, sources, coverage]
+      required: [engine_version, status, not_assessed, unassessed_hours, sources, coverage]
       properties:
         engine_version: { type: string }
         status:
@@ -447,7 +502,11 @@ components:
         not_assessed:
           type: array
           description: Variables with missing data today. A pollutant listed here is not assessed, never assumed clean.
-          items: { type: string, examples: [ozone, pollen, wind_direction_10m] }
+          items: { type: string, examples: [ozone, birch_pollen, wind_direction_10m] }
+        unassessed_hours:
+          type: array
+          description: Local hours (HH:00) with missing weather essentials; they are left out of every window.
+          items: { type: string, pattern: "^[0-2][0-9]:00$" }
         sources:
           type: array
           items:
@@ -487,29 +546,40 @@ components:
       additionalProperties: false
     LiveResponse:
       type: object
-      description: Experimental.
-      required: [schema_version, at, recommendation_id, core_estimate_c, core_status, limit_status, fastest_safe_pace_s_per_km, alert, state]
+      description: Experimental. Runner-facing alerts come from forecast facts only; body estimates are under `experimental`.
+      required: [schema_version, at, recommendation_id, heat_level, alert, experimental, state]
       properties:
         schema_version: { type: string, const: "0.9.0" }
         at: { type: string, format: date-time }
         recommendation_id: { type: string }
-        limit_status: { type: string, enum: [none, capped, walk_only] }
-        core_estimate_c: { type: number, maximum: 40.5, description: Modelled from the heat budget (v1); from heart rate in v1.1. Capped at 40.5, beyond which the model is not meaningful. }
-        core_status: { type: string, enum: [normal, rising, at_limit] }
-        fastest_safe_pace_s_per_km: { type: [integer, "null"], description: Set only when limit_status is capped. }
+        heat_level: { $ref: "#/components/schemas/Level" }
         alert:
           oneOf:
             - type: "null"
-            - type: object
-              required: [code, level, params]
-              properties:
-                code: { type: string, enum: [WALK_AND_COOL, EASE_OFF, HEAD_HOME_HEAT, AIR_WORSENING, EASY_START_COLD, TURN_FOR_TAILWIND, DRINK] }
-                level: { $ref: "#/components/schemas/Level" }
-                params: { type: object }
-                text: { type: string }
-                haptic: { type: string, enum: [none, single, double, urgent] }
-              additionalProperties: false
+            - $ref: "#/components/schemas/LiveAlert"
+        experimental:
+          type: object
+          description: Experimental heat-budget estimates. Not validated for running; never for runner screens.
+          required: [core_estimate_c, core_status, limit_status, suggested_max_pace_s_per_km, body_alert, note]
+          properties:
+            core_estimate_c: { type: number, maximum: 40.5 }
+            core_status: { type: string, enum: [normal, rising, at_limit] }
+            limit_status: { type: string, enum: [none, capped, walk_only] }
+            suggested_max_pace_s_per_km: { type: [integer, "null"] }
+            body_alert: { oneOf: [{ type: "null" }, { $ref: "#/components/schemas/LiveAlert" }] }
+            note: { type: string }
+          additionalProperties: false
         state: { type: string }
+      additionalProperties: false
+    LiveAlert:
+      type: object
+      required: [code, level, params]
+      properties:
+        code: { type: string, enum: [WALK_AND_COOL, EASE_OFF, HEAD_HOME_HEAT, AIR_WORSENING, EASY_START_COLD, TURN_FOR_TAILWIND, DRINK] }
+        level: { $ref: "#/components/schemas/Level" }
+        params: { type: object }
+        text: { type: string }
+        haptic: { type: string, enum: [none, single, double, urgent] }
       additionalProperties: false
 
     Problem:

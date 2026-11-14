@@ -43,7 +43,8 @@ placeholders that must be back-tested before anyone outside the team sees an ale
   are uncalibrated choices. Route note = last-24 h gap, nearest traffic vs background Luchtmeetnet station.
 
 - Back-test 2026 done (outputs/backtest_2026_summary.md): heatwave 18-29 Jun caught (RED 24-27 Jun) but the model
-  gives ~45 % of the CBS signal and misses the lagged week after; placeholder tiers fire on 48/184 days; CAMS NO2 x1.8,
+  gives ~0.45 x a scaled national CBS figure (wk 25-27: model 16.8 Amsterdam excess deaths vs CBS national excess x Amsterdam's
+  ~3.4 % death share; a ratio of two estimates, no Amsterdam counts) and misses the lagged week after; placeholder tiers fire on 48/184 days; CAMS NO2 x1.8,
   PM2.5 x1.35 vs background stations (summer, by hour: outputs/cams_correction_by_hour.csv); Open-Meteo archive T is
   -1.4 C at 10:00 and +0.9 C at 21:00 vs KNMI Schiphol (correct per hour of day, not one offset).
 - Luchtmeetnet: timestamp_measured = END of hour (connector uses timestamp_measured_start); API truncates ranges to
@@ -78,6 +79,11 @@ python3 test_cv_exertion.py checks it. Not yet wired into run_window.py - do tha
   value (data.status ok | degraded | unavailable, data.not_assessed, source age_s); explicit status fields instead of overloaded
   nulls (pace.limit_status, start_heading_status); UTC offsets per instant from the IANA zone (no month rules); a window fits
   the whole run (latest_start); /live is experimental with a signed state. Auth and 429 are planned. `cd api && npm test`.
+- Science rule (batch B, 14 Nov 2026): forecast facts and suggestions may reach runners; body estimates (ISO 7933 heat budget:
+  time to 39 C, sweat, pace limit, core) are experimental, only under `experimental`, never in runner copy. The run engine has
+  no Stafoggia/RR term (that stays in the Python population alert). Air: WHO 24-h means + max 8-h O3 (exceedance), NAQI
+  PM2.5 on the 24-h mean, EU O3 180/240 hourly (information/alert); hourly values only rank hours. Pollen per taxon, 50 for
+  grass only. Water: drink according to thirst. WBGT is checked against ECMWF thermofeel (api/test/fixtures).
 - prototype/gotime-watch.html is BUILT from prototype/template.html + api/engine.js + api/locations.js + api/conditions.js (python3 prototype/build.py).
   Never edit the built file.
 - Wind: AeroWise (separate private repo, Python, Benelux, cycling) gives headwind/gust/path/elevation every 200 m. Planned as a

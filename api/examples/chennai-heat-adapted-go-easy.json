@@ -63,27 +63,35 @@
       "intensity": "easy",
       "pace": {
         "planned_s_per_km": 380,
-        "planned_pace_ok": true,
-        "limit_status": "capped",
-        "fastest_safe_pace_s_per_km": 280,
-        "max_duration_at_planned_s": null,
-        "pace_for_full_duration_s_per_km": null
+        "advice": "consider_shorter_or_easier"
       },
       "route": {
         "id": "marina-promenade",
         "name": "Marina promenade",
-        "air_dose_saving_pct": 53,
+        "exposure_lower_pct": 23,
         "compared_with": "Anna Salai"
       },
       "start_heading_deg": 180,
       "start_heading_status": "into_wind",
       "hydration": {
-        "fluid_ml": 400,
-        "sweat_rate_ml_per_h": 868,
-        "electrolytes_recommended": false
+        "advice": "drink_to_thirst",
+        "carry_water": true
       },
       "warm_up_indoors": false,
       "indoor_alternatives": []
+    },
+    "air_today": {
+      "pm25_24h_mean_ugm3": 34,
+      "pm10_24h_mean_ugm3": 71,
+      "no2_24h_mean_ugm3": 25,
+      "o3_max_8h_mean_ugm3": 108,
+      "above_who_guideline": [
+        "pm2_5",
+        "pm10",
+        "nitrogen_dioxide",
+        "ozone"
+      ],
+      "naqi_pm25_band": 0
     },
     "reasons": [
       {
@@ -98,6 +106,21 @@
           "indoor_line_c": 32.4
         },
         "text": "Heat stress 28.1 °C in your slot, 34.7 °C at 11:00. Indoors above 32.4 °C."
+      },
+      {
+        "factor": "air",
+        "code": "AIR_ABOVE_GUIDELINE",
+        "level": 0,
+        "evidence": "published_threshold",
+        "params": {
+          "pollutant": "PM2.5",
+          "averaging": "24-h mean",
+          "value_ugm3": 34,
+          "guideline_ugm3": 15,
+          "peak_time": "7:00",
+          "window_ugm3": 34
+        },
+        "text": "PM2.5 24-h mean 34 µg/m³, above the WHO guideline of 15. Highest around 7:00; 34 in your slot."
       },
       {
         "factor": "wind",
@@ -122,19 +145,6 @@
           "clothing": "running_kit"
         },
         "text": "Heat-adapted, 62 kg, 168 cm."
-      },
-      {
-        "factor": "air",
-        "code": "AIR_PEAK_LATER",
-        "level": 0,
-        "evidence": "published_slopes",
-        "params": {
-          "pollutant": "PM10",
-          "peak_ugm3": 60,
-          "peak_time": "11:00",
-          "window_ugm3": 70
-        },
-        "text": "PM10 60 µg/m³ at 11:00, 70 in your slot."
       }
     ],
     "tips": [
@@ -161,9 +171,10 @@
       }
     ],
     "data": {
-      "engine_version": "2.2.0",
+      "engine_version": "3.0.0",
       "status": "ok",
       "not_assessed": [],
+      "unassessed_hours": [],
       "sources": [
         {
           "id": "era5-reanalysis",
@@ -200,6 +211,18 @@
       "code": "ADVISORY_NOT_MEDICAL",
       "params": {},
       "text": "Advisory only, not medical advice. Stop if you feel unwell."
+    },
+    "experimental": {
+      "heat_budget": {
+        "model": "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
+        "uncompensable_heat": false,
+        "minutes_to_39c": null,
+        "suggested_max_pace_s_per_km": 280,
+        "sweat_rate_ml_per_h": 868,
+        "sweat_loss_ml": 651,
+        "core_steady_c": 38.1
+      },
+      "note": "Experimental model output; not for runner screens."
     }
   }
 }

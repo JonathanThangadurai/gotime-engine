@@ -32,56 +32,61 @@
       "planned_pace_s_per_km": 380
     },
     "summary": {
-      "action": "go_now",
+      "action": "go_later",
       "level": 0,
       "level_name": "green",
       "window": {
-        "start": "2026-05-21T06:30:00+02:00",
-        "end": "2026-05-21T08:00:00+02:00",
-        "latest_start": "2026-05-21T07:15:00+02:00"
+        "start": "2026-05-21T18:00:00+02:00",
+        "end": "2026-05-21T22:00:00+02:00",
+        "latest_start": "2026-05-21T21:15:00+02:00"
       },
       "headline": {
-        "code": "GO_BEFORE",
+        "code": "GO_AFTER",
         "params": {
-          "end": "8:00"
+          "start": "18:00"
         },
-        "text": "Run before 8:00"
+        "text": "Run after 18:00"
       },
       "detail": {
-        "code": "WORSE_LATER",
+        "code": "POLLEN_UNTIL",
         "params": {},
-        "text": "After that, conditions turn against you."
+        "text": "Grass pollen is high until then."
       },
       "notification": {
-        "title": "Run before 8:00",
-        "body": "After that, conditions turn against you."
+        "title": "Run after 18:00",
+        "body": "Grass pollen is high until then."
       }
     },
     "guidance": {
       "intensity": "normal",
       "pace": {
         "planned_s_per_km": 380,
-        "planned_pace_ok": true,
-        "limit_status": "capped",
-        "fastest_safe_pace_s_per_km": 241,
-        "max_duration_at_planned_s": null,
-        "pace_for_full_duration_s_per_km": null
+        "advice": "as_planned"
       },
       "route": {
         "id": "vondelpark",
         "name": "Vondelpark",
-        "air_dose_saving_pct": 75,
+        "exposure_lower_pct": 44,
         "compared_with": "Stadhouderskade"
       },
       "start_heading_deg": 240,
       "start_heading_status": "into_wind",
       "hydration": {
-        "fluid_ml": 0,
-        "sweat_rate_ml_per_h": 0,
-        "electrolytes_recommended": false
+        "advice": "drink_to_thirst",
+        "carry_water": false
       },
       "warm_up_indoors": false,
       "indoor_alternatives": []
+    },
+    "air_today": {
+      "pm25_24h_mean_ugm3": 8,
+      "pm10_24h_mean_ugm3": 16,
+      "no2_24h_mean_ugm3": 22,
+      "o3_max_8h_mean_ugm3": 110,
+      "above_who_guideline": [
+        "ozone"
+      ],
+      "naqi_pm25_band": 0
     },
     "reasons": [
       {
@@ -90,9 +95,9 @@
         "level": 0,
         "evidence": "published_standard",
         "params": {
-          "wbgt_c": 9.3
+          "wbgt_c": 11.6
         },
-        "text": "Heat stress 9.3 °C, comfortably low."
+        "text": "Heat stress 11.6 °C, comfortably low."
       },
       {
         "factor": "pollen",
@@ -100,10 +105,27 @@
         "level": 0,
         "evidence": "published_threshold",
         "params": {
+          "taxon": "grass",
           "peak": 120,
-          "window": 14
+          "window": 15,
+          "threshold": 50
         },
-        "text": "Pollen peaks at 120 grains/m³; your slot is below 50."
+        "text": "Grass pollen peaks at 120 grains/m³; your slot stays below 50."
+      },
+      {
+        "factor": "air",
+        "code": "AIR_ABOVE_GUIDELINE",
+        "level": 0,
+        "evidence": "published_threshold",
+        "params": {
+          "pollutant": "Ozone",
+          "averaging": "max 8-h mean",
+          "value_ugm3": 110,
+          "guideline_ugm3": 100,
+          "peak_time": "14:00",
+          "window_ugm3": 62
+        },
+        "text": "Ozone max 8-h mean 110 µg/m³, above the WHO guideline of 100. Highest around 14:00; 62 in your slot."
       },
       {
         "factor": "wind",
@@ -111,11 +133,11 @@
         "level": 0,
         "evidence": "physics",
         "params": {
-          "speed_kmh": 8,
+          "speed_kmh": 6,
           "from": "south-west",
           "heading": "south-west"
         },
-        "text": "8 km/h from the south-west. Start heading south-west, into the wind; tailwind home."
+        "text": "6 km/h from the south-west. Start heading south-west, into the wind; tailwind home."
       },
       {
         "factor": "athlete",
@@ -128,19 +150,6 @@
           "clothing": "running_kit"
         },
         "text": "Not heat-adapted, 70 kg, 175 cm."
-      },
-      {
-        "factor": "air",
-        "code": "AIR_PEAK_LATER",
-        "level": 0,
-        "evidence": "published_slopes",
-        "params": {
-          "pollutant": "NO₂",
-          "peak_ugm3": 14,
-          "peak_time": "13:00",
-          "window_ugm3": 34
-        },
-        "text": "NO₂ 14 µg/m³ at 13:00, 34 in your slot."
       }
     ],
     "tips": [],
@@ -167,9 +176,10 @@
       }
     ],
     "data": {
-      "engine_version": "2.2.0",
+      "engine_version": "3.0.0",
       "status": "ok",
       "not_assessed": [],
+      "unassessed_hours": [],
       "sources": [
         {
           "id": "gotime-synthetic",
@@ -190,6 +200,18 @@
       "code": "ADVISORY_NOT_MEDICAL",
       "params": {},
       "text": "Advisory only, not medical advice. Stop if you feel unwell."
+    },
+    "experimental": {
+      "heat_budget": {
+        "model": "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
+        "uncompensable_heat": false,
+        "minutes_to_39c": null,
+        "suggested_max_pace_s_per_km": null,
+        "sweat_rate_ml_per_h": 252,
+        "sweat_loss_ml": 189,
+        "core_steady_c": 38.2
+      },
+      "note": "Experimental model output; not for runner screens."
     }
   }
 }

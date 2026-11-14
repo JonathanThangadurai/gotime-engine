@@ -16,13 +16,14 @@ interface Ctx {
   sources: Source[];
   coverage: { pollen: "covered" | "not_covered"; air_quality: "model_grid" | "stations" };
 }
+type LiveAlert = { code: string; level: number; params: Record<string, unknown>; haptic: string; text?: string };
 export interface LiveResponse {
   recommendation_id: string;
-  core_estimate_c: number;
-  limit_status: "none" | "capped" | "walk_only";
-  core_status: "normal" | "rising" | "at_limit";
-  fastest_safe_pace_s_per_km: number | null;
-  alert: { code: string; level: number; params: Record<string, unknown>; haptic: string; text?: string } | null;
+  heat_level: number;
+  alert: LiveAlert | null;                      // runner-facing: forecast facts only
+  /** Experimental body estimates: partner lens and research only. */
+  experimental: { core_estimate_c: number; core_status: "normal" | "rising" | "at_limit"; limit_status: string;
+    suggested_max_pace_s_per_km: number | null; body_alert: LiveAlert | null; note: string };
   state: string;
 }
 const adapter = adapterModule as {
@@ -33,7 +34,8 @@ const adapter = adapterModule as {
   addDays(date: string, days: number): string;
 };
 /** One hour as the engine sees it (subset of ENG.evaluate().hours[]). */
-export interface EngineHour { h: number; W: number; t: number; hb: number; ab: number; flag: number; pm25: number; pm10: number; no2: number; o3: number; b: { sweatMlH: number; dlim: number } }
+export interface EngineHour { h: number; na: boolean; W: number; t: number; hb: number; ab: number; flag: number;
+  pm25: number | null; pm10: number | null; no2: number | null; o3: number | null }
 export interface EngineDay { best: EngineHour; worst: EngineHour; hours: EngineHour[]; indoor: boolean; hc: { code: string } }
 export const ENG = engineModule as {
   evaluate(d: unknown, u: Record<string, unknown>, L: unknown): EngineDay;
@@ -42,8 +44,8 @@ export const ENG = engineModule as {
   compass(deg: number): string;
 };
 
-interface Location { name: string; tz: string; lat: number; lon: number; W0: number; drinkTip: string }
-interface ScenarioData { label: string; date: string; pollen: number[] | null }
+interface Location { name: string; tz: string; lat: number; lon: number; hotClimate: boolean; drinkTip: string }
+interface ScenarioData { label: string; date: string; pollen: Record<string, number[] | null> | null }
 const { LOCATIONS, SCENARIOS } = locationsModule as {
   LOCATIONS: Record<CityKey, Location>;
   SCENARIOS: Record<CityKey, Record<string, ScenarioData>>;
@@ -101,7 +103,7 @@ export function evaluateDay(inp: RunInputs): EngineDay {
   const L = location(inp.city), d = scenarioData(inp.city, inp.scenario), a = inp.request.athlete, act = inp.request.activity;
   return ENG.evaluate(d, {
     pace: act.planned_pace_s_per_km / 60, minutes: act.planned_duration_s / 60,
-    kg: a.mass_kg ?? 70, height: a.height_m ?? 1.75, acc: a.heat_acclimatised ?? L.W0 > 15,
+    kg: a.mass_kg ?? 70, height: a.height_m ?? 1.75, acc: a.heat_acclimatised ?? L.hotClimate,
     cloth: CLOTH_IN[a.clothing ?? "running_kit"], hayfever: a.hay_fever ?? false, now: inp.localHour,
   }, L);
 }

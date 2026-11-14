@@ -10,7 +10,7 @@ const ALERT_CLASS = (level: number) => level >= 3 ? "stop" : level >= 2 ? "warn"
 export function Watch() {
   const { recommendation, runFrame, runMinute, trace } = useRun();
   const playing = useSignal(false);
-  const tr = trace.value, v = runView(tr, runFrame.value, recommendation.value.guidance.pace.planned_s_per_km);
+  const tr = trace.value, v = runView(tr, runFrame.value, recommendation.value.guidance.pace.planned_s_per_km, recommendation.value);
   const km = (v.minute * 60 / recommendation.value.guidance.pace.planned_s_per_km).toFixed(2);
   useEffect(() => {
     if (!playing.value) return;
@@ -27,9 +27,9 @@ export function Watch() {
       <div class={`watch${lens.value ? " lens-on" : ""}`}><div class="watch-screen gt-module">
         <div class="w-clock">{v.clock}</div>
         <div class="w-pace">{v.pace}<small>/km</small></div>
-        <div class="w-cap">{t(v.cap.code, v.cap.params)}</div>
+        <div class="w-cap">{t(v.heat.code)}</div>
         <div class="w-bar"><span style={{ width: `${(v.minute / v.minutes) * 100}%` }} /></div>
-        <div class="w-stats"><span>{v.minute} min</span><span>{km} km</span><span>{t(v.body.code)}</span></div>
+        <div class="w-stats"><span>{v.minute} min</span><span>{km} km</span><span>{v.heatStress ? t(v.heatStress.code, v.heatStress.params) : ""}</span></div>
         {v.alert && <div class={`w-alert ${ALERT_CLASS(v.alert.level)}`} role="status" data-testid="watch-alert">{t(v.alert.code)}</div>}
         <div class="w-btns"><button type="button" onClick={() => { playing.value = false; goNext(); }}>{t("WATCH_END")}</button></div>
       </div></div>

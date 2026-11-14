@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import { DeviceScreen } from "../host/HostApp";
 import { CITY_LABEL } from "../scenarios";
-import { eveningView, runView } from "../engine/view";
+import { eveningView } from "../engine/view";
 import { t } from "../copy";
 import { HourlyStrip } from "../screens/HourlyStrip";
 import {
@@ -59,18 +59,19 @@ function lensPayload(run: Run): { title: string; body: unknown } {
       body: { notification: run.plan.value.summary.notification, window: run.plan.value.summary.window,
         sent: eveningView(run.plan.value, run.persona.value.usualHour, run.planComparison.value).notify } };
     case "glance": return { title: "Watch or lock-screen glance: summary", body: { action: summary.action, level_name: summary.level_name, window: summary.window, headline: summary.headline } };
-    case "today": case "indoor": return { title: "POST /v1/recommendations: summary, guidance and tips", body: { schema_version, summary, guidance, tips: rec.tips } };
+    case "today": case "indoor": return { title: "POST /v1/recommendations: summary, guidance, air_today, tips (and experimental)", body: { schema_version, summary, guidance, air_today: rec.air_today, tips: rec.tips, experimental: rec.experimental } };
     case "why": return { title: "reasons[] (ranked, with evidence)", body: reasons };
     case "route": return { title: "guidance.route and start heading", body: { route: guidance.route, start_heading_deg: guidance.start_heading_deg } };
     case "run": {
       const tr = run.trace.value, f = run.runFrame.value, { state: _state, ...live } = tr[Math.min(f, tr.length - 1)].live;
-      return { title: `POST /v1/live at minute ${f} (every 30-60 s)`, body: { ...live, view: runView(tr, f, guidance.pace.planned_s_per_km) } };
+      return { title: `POST /v1/live at minute ${f} (experimental; body estimates under "experimental")`, body: live };
     }
     case "after": {
       const cmp = run.comparison.value, tr = run.trace.value;
       return { title: "Computed in the app from /live and hours[]", body: {
-        peak_core_c_estimated: Math.max(...tr.map(p => p.live.core_estimate_c)),
+        experimental_peak_core_c: Math.max(...tr.map(p => p.live.experimental.core_estimate_c)),
         alerts: tr.filter(p => p.live.alert).map(p => ({ minute: p.minute, code: p.live.alert!.code })),
+        experimental_heat_budget: run.recommendation.value.experimental.heat_budget,
         reference_hour: cmp && { kind: cmp.kind, factor: cmp.factor, time: cmp.time },
       } };
     }
@@ -89,7 +90,7 @@ export function StageView() {
   const silentEvening = m.id === "evening" && !eveningView(run.plan.value, run.persona.value.usualHour, run.planComparison.value).notify;
   const payload = lens.value ? lensPayload(run) : null;
   const est = run.screen.value === "after" && run.action.value !== "indoor"
-    ? Math.max(...run.trace.value.map(p => p.live.core_estimate_c)) : null;
+    ? Math.max(...run.trace.value.map(p => p.live.experimental.core_estimate_c)) : null;
   return (
     <div class={`stage${barHidden.value ? " bar-hidden" : ""}${cmpOn ? " compare" : ""}${notes.value || lens.value ? "" : " no-panel"}`} data-layout="stage">
       {!barHidden.value && <header class="stage-top">

@@ -16,12 +16,12 @@ export const pitch: Script = {
       note: "One tap deeper: the benefit first, compared with her usual time, then plain reasons, each with its evidence level. Numbers only if she asks." },
     // 2. The run and the post-run card (45 s)
     { scenario: "ams-heat", persona: "sanne", time: "06:45", moment: 7, seconds: 20,
-      note: "On her watch: pace against the heat cap and a cue to turn at halfway for a tailwind home. All of it computed on the phone, minute by minute." },
+      note: "On her watch: her pace, the forecast heat for this hour and a cue to turn at halfway for a tailwind home. All of it computed on the phone." },
     { scenario: "ams-heat", persona: "sanne", time: "06:45", moment: 8, seconds: 25,
       note: "After the run, the benefit she would never notice otherwise: what her usual 18:00 would have been like. She went as planned, and she tells us how it felt." },
     // 3. Chennai: same engine, different advice (45 s)
     { scenario: "chn-bhogi", persona: "arjun", time: "05:15", moment: 4, seconds: 25,
-      note: "Chennai, Bhogi morning. Arjun always runs at 5:30, and today that is the worst slot: bonfire smoke. Same engine, different advice: go after 15:00." },
+      note: "Chennai, Bhogi morning. Arjun always runs at 5:30, and today that is the worst slot: bonfire smoke. Same engine, different advice: the cleaner midday and afternoon, and go easy." },
     { scenario: "chn-heat", persona: "arjun", compare: "sanne", time: "05:15", moment: 4, seconds: 20,
       note: "Same May morning in Chennai, two runners. Arjun is used to the heat: go early, go easy. Sanne is visiting: train indoors, and her streak is kept." },
     // 4. Partner lens (30 s)

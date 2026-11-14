@@ -59,10 +59,11 @@ for (const c of CASES) {
     check("live request", "LiveRequest", req);
     const res = live(req, { data, L, lang: "en-GB", nowISO: instantFor(L.tz, data.date, 7 + m / 60) });
     check("live response", "LiveResponse", res); state = res.state;
-    if (res.alert && res.alert.code === "WALK_AND_COOL") speed = 1.4; else if (res.alert && res.alert.code === "EASE_OFF") speed = Math.min(speed, 2.4); else if (res.core_status === "normal" && speed < 2) speed = 2.4; seq.push({ request: { ...req, state: req.state ? "<from previous>" : null }, response: res });
+    const body = res.experimental.body_alert;   // the simulated runner follows the experimental body alerts
+    if (body && body.code === "WALK_AND_COOL") speed = 1.4; else if (body && body.code === "EASE_OFF") speed = Math.min(speed, 2.4); else if (res.experimental.core_status === "normal" && speed < 2) speed = 2.4; seq.push({ request: { ...req, state: req.state ? "<from previous>" : null }, response: res });
   }
   fs.writeFileSync(path.join(__dirname, "examples", "live-chennai-heat-sequence.json"), JSON.stringify(seq, null, 2));
-  console.log("✓ live sequence:", seq.map(s => `${s.request.elapsed_s/60}m ${s.response.core_estimate_c}°C ${s.response.alert ? s.response.alert.code : "-"}`).join(" | "));
+  console.log("✓ live sequence:", seq.map(s => `${s.request.elapsed_s/60}m ${s.response.experimental.core_estimate_c}°C (exp.) ${s.response.alert ? s.response.alert.code : "-"}${s.response.experimental.body_alert ? " / exp. " + s.response.experimental.body_alert.code : ""}`).join(" | "));
 }
 console.log(fails ? `${fails} validation failure(s)` : "All examples valid against openapi.yaml");
 process.exit(fails ? 1 : 0);

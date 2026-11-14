@@ -23,8 +23,8 @@ export interface ReferenceHour {
 
 export interface Comparison extends ReferenceHour {
   ranHour: number | null;        // when the runner goes; null on an indoor day
-  ref: { wbgt_c: number; ugm3: number | null; sweat_ml_per_h: number };
-  ran: { wbgt_c: number; ugm3: number | null; sweat_ml_per_h: number } | null;
+  ref: { wbgt_c: number; ugm3: number | null };
+  ran: { wbgt_c: number; ugm3: number | null } | null;
   heatDelta: number | null;      // reference minus ran, deg C heat stress (WBGT)
   smoke: boolean;                // air reference is a PM2.5 episode (above the NAQI 60 line)
   worthSaying: boolean;          // the difference is big enough to mention
@@ -36,7 +36,7 @@ const quarterUp = (h: number): number => Math.ceil(h * 4 - 1e-9) / 4;
 
 /** The factor that ranks first in the API reasons, ignoring "all clear" reasons. */
 function topFactor(rec: Recommendation): { factor: Factor; pollutant: Pollutant | null } | null {
-  const r = rec.reasons.find(x => (x.factor === "heat" && x.code === "HEAT_RISES") || (x.factor === "air" && x.code !== "AIR_CLEAN"));
+  const r = rec.reasons.find(x => (x.factor === "heat" && x.code === "HEAT_RISES") || (x.factor === "air" && (x.code === "AIR_PM_EPISODE" || x.code === "AIR_ABOVE_GUIDELINE")));
   if (!r) return null;
   if (r.factor === "heat") return { factor: "heat", pollutant: null };
   return { factor: "air", pollutant: r.code === "AIR_PM_EPISODE" ? "pm25" : NAME_TO_KEY[String(r.params.pollutant)] ?? "pm25" };
@@ -57,7 +57,7 @@ export function referenceHour(plan: Recommendation, planDay: EngineDay, usualHou
   const top = topFactor(plan);
   if (!top) return null;
   if (usualOutsideWindow(plan, usualHour)) return { kind: "usual", ...top, hour: usualHour!, time: ENG.fmtHM(usualHour!) };
-  const pool = planDay.hours.filter(h => h.h >= Math.max(5, Math.floor(fromHour)) && h.h <= 21);
+  const pool = planDay.hours.filter(h => !h.na && h.h >= Math.max(5, Math.floor(fromHour)) && h.h <= 21);
   const val = (h: EngineHour) => top.factor === "heat" ? h.W : (h[top.pollutant!] as number);
   const worst = pool.reduce((a, b) => (val(b) > val(a) ? b : a), pool[0]);
   return { kind: "worst", ...top, hour: worst.h, time: ENG.fmtHM(worst.h) };
@@ -69,7 +69,7 @@ export function compareWith(ref: ReferenceHour, rec: Recommendation, day: Engine
   const ranHour = rec.summary.action === "indoor" || !w ? null : quarterUp(hourOf(w.start));
   const at = (h: number) => {
     const x = day.hours[Math.floor(h)];
-    return { wbgt_c: x.W, ugm3: ref.pollutant ? (x[ref.pollutant] as number) : null, sweat_ml_per_h: x.b.sweatMlH };
+    return { wbgt_c: x.W, ugm3: ref.pollutant ? (x[ref.pollutant] as number) : null };
   };
   const refV = at(ref.hour), ranV = ranHour === null ? null : at(ranHour);
   const heatDelta = ranV ? refV.wbgt_c - ranV.wbgt_c : null;

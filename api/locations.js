@@ -1,11 +1,13 @@
 // ===== Locations and scenarios =====
 // UTC offsets are never stored here: they come per instant from the IANA zone (`tz`) via the engine.
 const rep = v => Array(24).fill(v);
+// pollen per taxon (grains/m3). Synthetic days define grass only and declare the other taxa as 0 (made-up days, not
+// missing data). Real feeds keep a missing taxon as null (not assessed).
+const noPollen = () => ({ grass: rep(0), birch: rep(0), alder: rep(0), mugwort: rep(0) });
+const grassOnly = a => ({ grass: a, birch: rep(0), alder: rep(0), mugwort: rep(0) });
 const LOCATIONS = {
   ams: { name: "Amsterdam", tz: "Europe/Amsterdam", lat: 52.3584, lon: 4.8697, aqDomain: "cams_europe", pollen: true,
-    // warm-season daily-mean temperature percentiles, ERA5 2016-2025
-    clim: [[8.3,1],[10.5,5],[13.2,15],[14.6,25],[16.6,50],[18.5,75],[19.5,85],[22,95],[24.5,99]],
-    W0: 10,  // reference heat stress for the cardio term
+    hotClimate: false,   // residents are not assumed heat-adapted
     persona: { kg: 72, height: 1.80, acc: false, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
     routes: [
       { name: "Vondelpark", x: {}, axis: 60, into: ["Head north-east", "Start at the Amstelveenseweg end, into the wind; tailwind home."], away: ["Head south-west", "Start at the Leidseplein end, into the wind; tailwind home."] },
@@ -13,10 +15,7 @@ const LOCATIONS = {
     indoor: ["Treadmill, 40 min easy", "Spin class or a swim", "Or run tomorrow morning"],
     drinkTip: "" },
   chn: { name: "Chennai", tz: "Asia/Kolkata", lat: 13.0827, lon: 80.2707, aqDomain: "cams_global", pollen: false,
-    // all-year daily-mean temperature percentiles, ERA5 2016-2025 (no cool season)
-    clim: [[23.6,1],[24.6,5],[25.5,15],[26.2,25],[28.2,50],[29.8,75],[30.5,85],[31.6,95],[32.8,99]],
-    // local reference: Amsterdam's 10 C shifted by the gap in median shade heat stress (26.7 vs 14.9 C, ERA5)
-    W0: 21.8,
+    hotClimate: true,    // residents are assumed heat-adapted unless the request says otherwise
     persona: { kg: 62, height: 1.68, acc: true, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
     routes: [
       { name: "Marina promenade", x: {}, axis: 0, into: ["Head north first", "Start at the lighthouse end, north into the wind; tailwind home."], away: ["Head south first", "Start at the north end, south into the wind; tailwind home."] },
@@ -35,7 +34,7 @@ const SCENARIOS = {
       pm10:[12.7,12,12.3,13.1,11.4,10.6,10.7,12,12.7,13.5,13.3,13.6,12.3,10.8,11.7,11.7,12.9,13.5,14,13.1,12.4,12.2,12.2,12.2],
       pm25:[4.5,3.9,3.6,3.4,3.3,3.3,3.6,3.9,4.5,4.9,4.7,4.4,4.3,4.3,4.6,4.8,5.1,5.8,6,6.9,6.8,6.3,5.6,5.6],
       no2:[16.7,14,9.9,10.2,9.7,10,12.2,16.3,25,28.6,23,16.8,11.7,15.6,14.4,18,27.1,36.6,43.2,52.1,45.4,46.7,41.5,32.5],
-      o3:[55,58,62,65,62,63,63,60,53,52,55,58,62,61,59,57,52,45,38,24,28,28,33,36], pollen: rep(0) },
+      o3:[55,58,62,65,62,63,63,60,53,52,55,58,62,61,59,57,52,45,38,24,28,28,33,36], pollen: noPollen() },
     heat: { label: "Heatwave Saturday (synthetic)", type: "Heat run", date: "2026-06-27",
       t:[21,20.4,19.8,19.4,19,19.2,19.6,20.2,21.2,22.4,23.8,25.4,27,28.4,29.4,30,29.6,28.8,27.6,26,24.4,23.2,22.4,21.8],
       rh:[62,64,66,67,68,67,64,60,55,50,45,41,38,35,33,32,33,35,38,42,47,52,56,59],
@@ -44,7 +43,7 @@ const SCENARIOS = {
       o3:[70,65,60,58,55,55,60,70,85,100,120,140,160,175,185,190,185,175,160,140,120,100,90,80],
       no2:[30,25,22,20,22,30,40,45,38,30,24,20,18,17,17,18,22,30,36,35,33,32,31,30],
       pm25:[13,13,12,12,12,13,14,15,15,14,13,13,12,12,12,12,13,14,15,16,16,15,14,14],
-      pm10:[24,23,22,22,22,23,25,27,27,26,25,24,23,23,23,23,24,25,27,28,28,27,26,25], pollen: rep(20) },
+      pm10:[24,23,22,22,22,23,25,27,27,26,25,24,23,23,23,23,24,25,27,28,28,27,26,25], pollen: grassOnly(rep(20)) },
     pollen: { label: "Spring hay-fever day (synthetic)", type: "Pollen run", hay: true, date: "2026-05-21",
       t:[11,10.5,10,9.6,9.4,9.8,11,12.6,14.2,15.8,17.2,18.4,19.4,20.1,20.5,20.6,20.2,19.4,18.2,16.8,15.4,14.2,13.2,12.4],
       rh:[82,84,86,87,88,86,80,72,64,58,52,48,45,43,42,42,44,47,52,58,64,70,75,79],
@@ -54,7 +53,7 @@ const SCENARIOS = {
       no2:[22,18,15,14,16,24,34,38,32,26,20,17,15,14,14,15,18,25,30,28,26,25,24,23],
       pm25:[7,7,6,6,6,7,8,9,9,8,8,7,7,7,7,7,8,8,9,9,9,8,8,8],
       pm10:[15,14,14,13,13,14,16,18,18,17,16,16,15,15,15,15,16,17,18,18,18,17,16,16],
-      pollen:[8,6,5,4,4,6,14,30,55,80,100,115,120,118,110,98,80,62,45,32,22,15,11,9] },
+      pollen: grassOnly([8,6,5,4,4,6,14,30,55,80,100,115,120,118,110,98,80,62,45,32,22,15,11,9]) },
     cold: { label: "Icy winter morning (synthetic)", type: "Cold run", date: "2027-01-12",
       t:[-4,-4.4,-4.8,-5.2,-5.5,-5.8,-6,-6,-5.6,-4.6,-3.4,-2.2,-1.2,-0.6,-0.4,-0.8,-1.6,-2.4,-3,-3.4,-3.8,-4,-4.2,-4.4],
       rh:[85,86,87,88,88,89,89,88,85,80,74,70,66,64,64,66,70,74,78,80,82,83,84,85],
@@ -63,7 +62,7 @@ const SCENARIOS = {
       o3:[55,56,57,58,58,57,52,44,40,44,50,55,58,60,60,58,52,44,40,42,46,50,52,54],
       no2:[24,20,17,16,18,28,42,52,46,34,26,22,20,20,22,28,38,46,44,38,32,28,26,25],
       pm25:[10,9,9,8,9,10,12,14,13,11,10,9,9,9,10,11,13,14,13,12,11,11,10,10],
-      pm10:[18,17,16,16,17,18,21,24,23,20,18,17,17,17,18,20,23,25,24,22,20,19,18,18], pollen: rep(0) },
+      pm10:[18,17,16,16,17,18,21,24,23,20,18,17,17,17,18,20,23,25,24,22,20,19,18,18], pollen: noPollen() },
   },
   chn: {
     live: { label: "Today (real readings)", type: "Heat run", date: "2026-11-13", fetched: "2026-11-13T09:40:00Z",

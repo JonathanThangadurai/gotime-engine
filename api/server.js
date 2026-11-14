@@ -43,7 +43,7 @@ function createHandler({ fetchImpl = globalThis.fetch, now = () => Date.now(), s
       }
       return { at: now(), data: { date }, quality: { status: "unavailable", missing: COND.ESSENTIAL.slice(), not_assessed: [], problems: [String(w.reason && w.reason.message)] }, sources: [] };
     }
-    const { data, quality } = COND.fromOpenMeteo(w.value, a.status === "fulfilled" ? a.value : null, { date, pollen: !!L.pollen });
+    const { data, quality } = COND.fromOpenMeteo(w.value, a.status === "fulfilled" ? a.value : null, { date, tz: L.tz, pollen: !!L.pollen });
     if (a.status === "rejected") quality.problems.push(String(a.reason && a.reason.message));
     const sources = [{ id: "open-meteo-forecast", kind: "forecast", variables: ["temperature_2m", "relative_humidity_2m", "shortwave_radiation", "wind_speed_10m", "wind_direction_10m"], retrieved_at: at }];
     if (a.status === "fulfilled") sources.push({ id: L.aqDomain.replace("_", "-"), kind: "model", variables: ["pm2_5", "pm10", "nitrogen_dioxide", "ozone"].concat(L.pollen ? ["pollen"] : []), retrieved_at: at });

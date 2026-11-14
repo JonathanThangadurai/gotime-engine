@@ -3,6 +3,9 @@
 When to run, how hard, which way to start and what to drink, given heat, air, pollen, cold, wind and the athlete.
 One call, one decision a partner can show as-is, plus the evidence behind it.
 
+> **Rule:** forecast facts and suggestions may reach runners; body estimates (heat budget, core, sweat, pace limits)
+> are experimental, sit only under `experimental`, and must not be shown to runners.
+>
 > **Prototype.** Schema 0.9.0: the contract may still change. Authentication (bearer) and rate limiting (429) are
 > planned, not implemented. `/live` is experimental. Not licensed for use (`UNLICENSED`). Advisory only, not medical advice.
 
@@ -16,7 +19,7 @@ One call, one decision a partner can show as-is, plus the evidence behind it.
 | `engine.js`, `locations.js` | The engine (Liljegren WBGT, simplified ISO 7933 heat budget, Stafoggia air slopes, bands) and city settings. |
 | `server.js` | Local server: `npm install && node server.js` → `http://localhost:8787/v1`. |
 | `build_examples.js` | Regenerates the examples and fails if any of them breaks the contract. |
-| `test/` | `npm test`: DST, window fit, activity dates, missing data, the server with a stubbed fetch, `/live` state. |
+| `test/` | `npm test`: DST (incl. a real Open-Meteo response for 25 Oct 2026), window fit, dates, missing data and hours, the server with a stubbed fetch, `/live` state, WBGT against ECMWF thermofeel, air averaging, pollen per taxon. |
 
 ## Integrate
 
@@ -48,8 +51,10 @@ POST /v1/recommendations
 The whole planned run fits the window: `latest_start` = `end` − duration. When it does not fit (for example at 21:30
 for 45 minutes), `action` is `go_short` with `FITS_IN_WINDOW`; when not even 15 minutes fit, `none_today`.
 
-**3. Optionally show `guidance`, `reasons` and `tips[]`.** Guidance covers pace, route, start heading, fluid and indoor
-options. Reasons are ranked, and each one has an evidence level. `tips[]` ("What pros do") holds at most one tip, with
+**3. Optionally show `guidance`, `air_today`, `reasons` and `tips[]`.** Guidance covers effort advice
+(`as_planned` or `consider_shorter_or_easier`, no numbers), route, start heading, "drink according to thirst"
+(`hydration.advice`, plus `carry_water`) and indoor options. `air_today` gives the day's air with each guideline's
+averaging (WHO 24-h means and the maximum 8-h ozone mean, the NAQI PM2.5 band). Do not show `experimental`. Reasons are ranked, and each one has an evidence level. `tips[]` ("What pros do") holds at most one tip, with
 its evidence level and an optional `skip_if`; show it quietly below the main advice.
 
 **4. Experimental: during a run**, call `POST /v1/live` every 30-60 s with `recommendation_id`, elapsed time and speed,
@@ -63,11 +68,19 @@ and echo back `state` unchanged. The state is signed and bound to the recommenda
   daylight saving time included).
 - **Codes first, text optional.** Every message is `code + params`; `text` is a convenience in `Accept-Language`. To use your own voice or language, render the codes from your own catalogue, starting from `messages/en-GB.json`.
 - **Missing data is never a value.** `data.status` is `ok`, `degraded` (some factors not assessed, listed in
-  `data.not_assessed`; the advice covers the rest) or `unavailable` (no advice: `503` with the same `data` block).
+  `data.not_assessed`, or hours with missing weather, listed in `data.unassessed_hours` and left out of every window;
+  the advice covers the rest) or `unavailable` (no advice: `503` with the same `data` block, only when no complete
+  window remains for the planned duration).
   A pollutant that is not assessed is never called clean. Each source carries `age_s`.
-- **Explicit status fields** where a value can be absent for different reasons: `guidance.pace.limit_status`
-  (`none`, `capped`, `walk_only`, `indoor`) and `guidance.start_heading_status` (`into_wind`, `any`, `unknown`, `indoor`).
-  The value fields are null unless the status says otherwise.
+- **Explicit status fields** where a value can be absent for different reasons: `guidance.pace.advice`
+  (`as_planned`, `consider_shorter_or_easier`, `indoor`) and `guidance.start_heading_status` (`into_wind`, `any`,
+  `unknown`, `indoor`). The value fields are null unless the status says otherwise.
+- **Heat-adapted** (`athlete.heat_acclimatised`) means repeated training or work in the heat over the last 1-2 weeks,
+  not one warm day. It moves the heat bands up by 4.4 °C. Bands are conservative prompts, not diagnoses.
+- **Air averaging.** WHO 2021 guidelines as 24-h means (PM2.5, PM10, NO₂) and the maximum 8-h mean (ozone); India NAQI
+  PM2.5 bands on the 24-h mean; EU ozone 180 / 240 on hourly values (information and alert, not a clearance). Hourly
+  values only rank hours for timing.
+- **Pollen per taxon.** The 50 grains/m³ threshold applies to grass only; birch, alder and mugwort are information.
 - **Levels** 0-3 = green, yellow, red, black. Black means do not run outdoors, and `action` is then `indoor` with `indoor_alternatives`.
 - **Defaults are declared.** Anything the engine assumed is listed in `assumptions`. For example, `heat_acclimatised: true` with basis `local_climate` in Chennai.
 - **Evidence is labelled.** Every reason and tip carries `published_standard`, `published_slopes`, `published_consensus`, `published_research`, `mechanism`, `assumption`, `demo_value` and so on, so a partner can choose what to show.
@@ -92,16 +105,19 @@ and echo back `state` unchanged. The state is signed and bound to the recommenda
 | Push notification the evening before or in the morning | `summary.notification` |
 | Watch glance or complication | `summary.action`, `level_name`, `window`, `headline` |
 | Route builder | `guidance.route`, `start_heading_deg`, `start_heading_status` |
-| Pre-run screen | `guidance.pace`, `hydration`, `warm_up_indoors`, `tips[]` |
+| Pre-run screen | `guidance.pace.advice`, `hydration`, `warm_up_indoors`, `tips[]` |
+| Air detail | `air_today` (WHO 24-h / 8-h values), `hours[].air` for timing |
+| Research and partner dashboards only | `experimental` (heat budget), `hours[].experimental` |
 | "Why?" detail and coaching content | `reasons[]` |
-| During the run (experimental) | `/live` → `alert`, `limit_status`, `fastest_safe_pace_s_per_km`, `core_estimate_c` |
+| During the run (experimental) | `/live` → `alert` (forecast-based), `heat_level`; body estimates only under `experimental` |
 
 ## Prototype limits
 
 - Two cities: Amsterdam and Chennai, within 50 km. Other locations return `422 unsupported-location`.
 - Air quality comes from the model grid (CAMS); station correction is planned.
 - Route geometry only sets the start heading. Shade, slope and the wind module come later.
-- `/live` estimates core temperature from the heat budget. A heart-rate-based estimate is planned; the field is already accepted.
+- `/live` estimates core temperature from the simplified heat budget (experimental, never for runners). A heart-rate-based estimate is planned; the field is already accepted.
+- The 24-h and 8-h air means are taken over the forecast day (00-24 local), not a trailing window across midnight.
 - No authentication or rate limiting yet. The `/live` signing secret is `GOTIME_STATE_SECRET` (random per process if unset).
 - Clothing values, route exposure factors and cold weights are demo values and are labelled that way.
 - Advisory only, not medical advice.
