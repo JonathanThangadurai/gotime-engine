@@ -106,6 +106,9 @@ export function eveningView(plan: Recommendation, usualHour: number, cmp?: Compa
   const s = plan.summary, dur = durationH(plan);
   const title = { code: `TOMORROW.${s.headline.code}`, params: s.headline.params as Record<string, string | number> };
   const tip = plan.tips?.[0] ?? null;
+  // smoke day: indoors first, the least bad slot second
+  if (s.action === "indoor" && s.window) return { notify: true, title,
+    body: { code: "LEAST_BAD_TOMORROW", params: { start: ENG.fmtHM(hourOf(s.window.start)), end: ENG.fmtHM(hourOf(s.window.end)) } }, slot: null, tip };
   if (s.action === "indoor" || !s.window) return { notify: true, title, body: { code: "TOMORROW_BODY_indoor", params: {} }, slot: null, tip };
   const st = hourOf(s.window.start), en = hourOf(s.window.end);
   const notify = !(usualHour >= st && usualHour + dur <= en);
@@ -184,7 +187,7 @@ export function afterView(rec: Recommendation, day: EngineDay, trace: TracePoint
   if (w && startH >= hourOf(w.start) - 1e-9 && startH < hourOf(w.end)) planned = { code: "AFTER_AS_PLANNED", params: { start: ENG.fmtHM(startH) } };
   return {
     indoor: false,
-    title: { code: serious ? "AFTER_TITLE_MIXED" : "AFTER_TITLE_GOOD", params: {} },
+    title: { code: serious ? "AFTER_TITLE_DONE" : "AFTER_TITLE_GOOD", params: {} },
     sub: say ? { code: `AFTER_SUB_${say.factor === "heat" ? "HEAT" : "AIR"}${say.kind === "usual" ? "_USUAL" : ""}`, params: { time: say.time } } : null,
     planned,
     rows,

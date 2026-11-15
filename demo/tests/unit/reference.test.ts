@@ -47,12 +47,11 @@ describe("rule: usual time outside the window -> compare with the usual time", (
     expect(d.ref).toMatchObject({ kind: "usual", factor: "air", pollutant: "pm25", hour: 5.5, time: "5:30" });
     const pm = d.day.hours[5].pm25, ran = d.day.hours[Math.floor(d.start)].pm25;
     expect(pm).toBe(290);
-    expect(t(d.evening.body.code, d.evening.body.params)).toBe("At your usual 5:30, PM2.5 will be about 290 µg/m³.");
-    expect(t(d.why.counterfactual!.code, d.why.counterfactual!.params))
-      .toBe(`At your usual 5:30, PM2.5 would be about 290 µg/m³. In your window it is ${ran}.`);
-    expect(t(d.after.rows[0].code, d.after.rows[0].params))
-      .toBe(`At your usual 5:30, PM2.5 would have been about 290 µg/m³. In your window it was ${ran}.`);
-    expect(t(d.after.sub!.code, d.after.sub!.params)).toBe("Cleaner air than your usual 5:30 run.");
+    void ran;
+    // smoke day: indoors first, the least bad slot second; no benefit line on an indoor day
+    expect(t(d.evening.body.code, d.evening.body.params)).toBe("Smoke all day. If you go out, 12:00–18:00 is least bad.");
+    expect(d.why.counterfactual).toBeNull();
+    expect(t(d.after.rows[0].code, d.after.rows[0].params)).toBe("At your usual 5:30, PM2.5 outside would have been about 290 µg/m³.");
   });
 
   it("Sanne visiting Chennai (indoor, no window): the usual time is the reference", () => {
@@ -95,7 +94,8 @@ describe("one reference hour per day, on every screen", () => {
   for (const [id, persona] of [["ams-heat", "sanne"], ["chn-bhogi", "arjun"], ["chn-heat", "arjun"]] as const) {
     it(`${id} / ${persona}: evening, Why and after-run use the same hour`, () => {
       const d = dayOf(id, persona);
-      const times = [d.why.counterfactual?.params.time, d.after.rows[0].params.time];
+      const times = [d.after.rows[0].params.time];
+      if (d.why.counterfactual) times.push(d.why.counterfactual.params.time);
       if (d.evening.notify && d.evening.body.code.startsWith("CF_")) times.push(d.evening.body.params.time);
       expect(new Set(times)).toEqual(new Set([d.ref.time]));
     });

@@ -15,7 +15,7 @@ import { firstMoment, jump, next, prev, screenFor, MOMENTS } from "../journey/ma
 
 export type Layout = "stage" | "phone";
 export type PersonaId = Persona["id"];
-export interface Answers { pace_s_per_km: number; heat_acclimatised: boolean; hay_fever: boolean }
+export interface Answers { pace_s_per_km: number; heat_acclimatised: "yes" | "no" | "unknown"; hay_fever: boolean }
 export type Feel = "easier" | "same" | "harder";
 export type Clothing = "running_kit" | "full_length_light" | "full_length_cotton";
 

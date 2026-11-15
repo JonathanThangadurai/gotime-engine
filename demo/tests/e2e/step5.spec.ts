@@ -23,14 +23,18 @@ test("user test: questions on the phone at the marked steps, answers exported as
   await page.getByTestId("ut-consent-start").click();
   await expect(consent).toHaveCount(0);
   await expect(page.getByTestId("onboarding")).toBeVisible();
-  await expect(page.getByTestId("ut-card")).toHaveCount(0);            // no question during onboarding
+  // baseline before any advice: when would they normally run tomorrow?
+  const card = page.getByTestId("ut-card");
+  await expect(card).toContainText("When would you normally run tomorrow?");
+  await expect(card).toContainText("Research question · 1 of 11");
+  await page.getByTestId("ut-usual_time-evening").click();
+  await expect(page.getByTestId("notification")).toHaveCount(0);        // no advice shown yet
 
   await page.keyboard.press("ArrowRight");                              // evening
-  const card = page.getByTestId("ut-card");
-  await expect(card).toContainText("What would you do tomorrow?");
-  await expect(card).toContainText("Research question · 1 of 10");
-  await page.getByTestId("ut-evening_plan-window").click();
-  await expect(page.getByTestId("ut-evening_plan-window")).toHaveAttribute("aria-checked", "true");
+  await expect(card).toContainText("After this message, when would you run tomorrow?");
+  await expect(card).toContainText("Research question · 2 of 11");
+  await page.getByTestId("ut-plan_after_message-early").click();
+  await expect(page.getByTestId("ut-plan_after_message-early")).toHaveAttribute("aria-checked", "true");
   await shot(page, "ut-01-evening", info.project.name);
   // hide to look at the screen, then bring it back
   await card.getByRole("button", { name: "Hide" }).click();
@@ -68,11 +72,11 @@ test("user test: questions on the phone at the marked steps, answers exported as
   const data = JSON.parse(fs.readFileSync(await download.path(), "utf8"));
   expect(data.sessions).toHaveLength(1);
   expect(data.sessions[0].answers).toMatchObject({
-    evening_plan: "window", today_when: "Before eleven, it gets hot after", comprehension: true, why_top: "heat",
+    usual_time: "evening", plan_after_message: "early", today_when: "Before eleven, it gets hot after", comprehension: true, why_top: "heat",
     after_feel: 6, useful: 6, trust: 5, notify: true, frequency: "daily",
   });
   expect(data.sessions[0].answers.consent).toBe(true);
-  expect(data.sessions[0].summary).toEqual({ consent: true, decision_change: true, comprehension: true, usefulness_1_7: 6, trust_1_7: 5,
+  expect(data.sessions[0].summary).toEqual({ consent: true, usual_time: "evening", plan_after_message: "early", decision_change: true, comprehension: true, usefulness_1_7: 6, trust_1_7: 5,
     would_allow_notifications: true, too_often: "daily" });
 });
 
@@ -97,7 +101,7 @@ test("Dutch: the journey in nl-NL", async ({ page }, info) => {
   await expect(page.getByTestId("after-card")).toContainText("Goed getimed");
   await shot(page, "nl-07-after", info.project.name);
   await page.keyboard.press("9");
-  await expect(page.getByTestId("example-week")).toHaveText("Voorbeeldweek");
+  await expect(page.getByTestId("example-week")).toHaveText("GOTime · Voorbeeldweek");
   await expect(page.getByTestId("week-card")).toContainText("zaterdag · 6:45");
 });
 

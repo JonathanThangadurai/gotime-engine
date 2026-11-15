@@ -3,7 +3,7 @@
 const test = require("node:test"), assert = require("node:assert/strict");
 const ENG = require("../engine.js");
 const COND = require("../conditions.js");
-const { recommend, instantFor, LOCATIONS } = require("../adapter.js");
+const { recommend, toEngineUser, instantFor, LOCATIONS } = require("../adapter.js");
 const { SCENARIOS } = require("../locations.js");
 const { createHandler } = require("../server.js");
 const { stubFetch, call } = require("./helpers.js");
@@ -104,7 +104,7 @@ test("heat budget: a time limit only from uncompensable heat storage", () => {
 test("runner-facing fields carry no body estimates; they are under experimental", () => {
   for (const [key, scen, hour] of [["ams", "heat", 6.75], ["chn", "heat", 5.25], ["chn", "bhogi", 5.25]]) {
     const L = LOCATIONS[key], d = SCENARIOS[key][scen];
-    const r = recommend({ ...req(d.date), location: { lat: L.lat, lon: L.lon } }, ctx(d, hour, L));
+    const r = recommend({ ...req(d.date), include: ["hours", "experimental"], location: { lat: L.lat, lon: L.lon } }, ctx(d, hour, L));
     assert.deepEqual(Object.keys(r.guidance.pace).sort(), ["advice", "planned_s_per_km"]);
     assert.deepEqual(Object.keys(r.guidance.hydration).sort(), ["advice", "carry_water"]);
     const runner = JSON.stringify([r.summary, r.guidance, r.reasons, r.tips]);
@@ -112,6 +112,70 @@ test("runner-facing fields carry no body estimates; they are under experimental"
     assert.ok(r.experimental && "heat_budget" in r.experimental);
     assert.ok(r.hours.every(h => !("cardio_load_rr" in h) && !("heat_budget" in h)));
   }
+});
+
+test("experimental is research-only: omitted unless include=experimental", () => {
+  const d = SCENARIOS.ams.heat;
+  const r = recommend(req(d.date), ctx(d, 6.75));
+  assert.ok(!("experimental" in r));
+  assert.ok(r.hours.every(h => !("experimental" in h)));
+});
+
+test("heat_acclimatised: no city default; omitted -> unknown -> non-adapted bands", () => {
+  const L = LOCATIONS.chn, d = SCENARIOS.chn.heat, loc = { lat: L.lat, lon: L.lon };
+  const omitted = recommend({ ...req(d.date), location: loc }, ctx(d, 5.25, L));
+  const unknown = recommend({ ...req(d.date, { heat_acclimatised: "unknown" }), location: loc }, ctx(d, 5.25, L));
+  const no = recommend({ ...req(d.date, { heat_acclimatised: "no" }), location: loc }, ctx(d, 5.25, L));
+  const yes = recommend({ ...req(d.date, { heat_acclimatised: "yes" }), location: loc }, ctx(d, 5.25, L));
+  assert.deepEqual(omitted.assumptions.find(a => a.field === "athlete.heat_acclimatised"), { field: "athlete.heat_acclimatised", value: "unknown", basis: "not_provided" });
+  assert.deepEqual(omitted.summary, unknown.summary);
+  assert.deepEqual(unknown.summary, no.summary);
+  assert.notDeepEqual(no.summary.action, yes.summary.action);
+});
+
+test("windows: the chosen 120-minute interval is the best of all full intervals (reviewer case)", () => {
+  const L = LOCATIONS.ams, d = SCENARIOS.ams.heat;
+  const rq = { ...req(d.date, { heat_acclimatised: "no" }), activity: { type: "run", date: d.date, planned_duration_s: 7200, planned_pace_s_per_km: 380 } };
+  const { u } = toEngineUser(rq, L, 6.75), r = ENG.evaluate(d, u, L);
+  const all = [];
+  for (let st = 6.75; st + 2 <= 22 + 1e-9 && st <= (u.before ?? 22) + 1e-9; st += 0.25) {
+    let sum = 0, ok = true;
+    for (let h = Math.floor(st); h < st + 2 - 1e-9; h++) { const x = r.hours[h]; if (x.na || x.flag > 2) { ok = false; break; }
+      sum += x.score * (Math.min(h + 1, st + 2) - Math.max(h, st)); }
+    if (ok) all.push({ st, score: sum / 2 });
+  }
+  assert.ok(all.length > 0 && r.fits && r.chosen.len === 2);
+  const min = Math.min(...all.map(c => c.score));
+  assert.ok(Math.abs(r.chosen.score - min) < 1e-9, `chosen ${r.chosen.st} (${r.chosen.score}) vs best ${min}`);
+  assert.equal(r.chosen.st, all.find(c => Math.abs(c.score - min) < 1e-9).st, "ties go to the earliest start");
+  assert.ok(r.start <= r.chosen.st + 1e-9 && r.end >= r.chosen.st + 2 - 1e-9 && r.latestStart >= r.chosen.st - 1e-9);
+  const api = recommend({ ...rq, location: { lat: L.lat, lon: L.lon } }, ctx(d, 6.75));
+  assert.notEqual(api.summary.action, "go_short");
+});
+
+test("windows: a shorter run only when no full interval qualifies", () => {
+  const d = SCENARIOS.ams.heat;
+  const late = recommend(req(d.date), ctx(d, 21.5));
+  assert.equal(late.summary.action, "go_short");
+  assert.equal(late.summary.detail.code, "FITS_IN_WINDOW");
+});
+
+test("smoke day (Bhogi): indoors first, least bad slot second, with a window", () => {
+  const L = LOCATIONS.chn, d = SCENARIOS.chn.bhogi;
+  const r = recommend({ ...req(d.date, { heat_acclimatised: "yes" }), location: { lat: L.lat, lon: L.lon } }, ctx(d, 5.25, L));
+  assert.equal(r.summary.action, "indoor");
+  assert.equal(r.summary.headline.code, "INDOOR_TODAY");
+  assert.equal(r.summary.detail.code, "LEAST_BAD_WINDOW");
+  assert.ok(r.summary.window && r.summary.window.start < r.summary.window.end);
+});
+
+test("air below the WHO guideline is never called clean or safe", () => {
+  const d = SCENARIOS.ams.cold || SCENARIOS.ams.today;
+  const r = recommend(req(d.date), ctx(d, 6.75));
+  const txt = JSON.stringify(r);
+  assert.doesNotMatch(txt, /AIR_CLEAN|\bclean\b|\bsafe\b/i);
+  const msgs = require("../messages/en-GB.json");
+  assert.ok(msgs.AIR_BELOW_GUIDELINE && !msgs.AIR_CLEAN);
 });
 
 test("heat bands decide effort without numbers: red run hours -> consider shorter or easier", () => {

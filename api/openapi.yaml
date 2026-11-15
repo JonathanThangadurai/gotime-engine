@@ -86,7 +86,7 @@ paths:
   /live:
     post:
       operationId: liveStep
-      summary: "Experimental: in-run guidance, called every 30-60 s during an activity"
+      summary: "Out of pilot scope (experimental, no further work): in-run guidance"
       x-experimental: true
       description: >-
         Experimental; may change or be removed. Stateless: send back the `state` from the previous response unchanged.
@@ -185,11 +185,13 @@ components:
             mass_kg: { type: number, minimum: 30, maximum: 200 }
             height_m: { type: number, minimum: 1.2, maximum: 2.3 }
             heat_acclimatised:
-              type: boolean
+              type: [string, boolean]
+              enum: ["yes", "no", "unknown", true, false]
               description: >-
-                True when the athlete has trained or worked in the heat repeatedly over the last 1-2 weeks (for example
-                most days, an hour or more). It moves the heat bands up by 4.4 °C. A single warm day does not count.
-                Defaults to true only in hot-climate locations (declared in assumptions).
+                "yes" when the athlete has trained or worked in the heat repeatedly over the last 1-2 weeks (for example
+                most days, an hour or more); it moves the heat bands up by 4.4 °C. "no" or "unknown" use the non-adapted
+                bands. There is no city default: when omitted it is "unknown" (declared in assumptions). Booleans are
+                accepted for now (deprecated).
             clothing: { type: string, enum: [running_kit, full_length_light, full_length_cotton] }
             hay_fever: { type: boolean }
           additionalProperties: false
@@ -205,7 +207,8 @@ components:
           additionalProperties: false
         include:
           type: array
-          items: { type: string, enum: [hours, debug] }
+          items: { type: string, enum: [hours, experimental, debug] }
+          description: "hours: the hour-by-hour timeline. experimental: research-only model output (heat budget), omitted by default."
         context:
           type: string
           enum: [now, evening_before]
@@ -216,7 +219,7 @@ components:
     # ---------- response ----------
     Recommendation:
       type: object
-      required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, air_today, reasons, assumptions, data, disclaimer, experimental]
+      required: [schema_version, id, generated_at, valid_until, location, activity, summary, guidance, air_today, reasons, assumptions, data, disclaimer]
       properties:
         schema_version: { type: string, const: "0.9.0" }
         id: { type: string, description: Pass to /live as recommendation_id to link a run to its plan. }
@@ -288,7 +291,7 @@ components:
         level_name: { $ref: "#/components/schemas/LevelName" }
         window:
           oneOf: [{ $ref: "#/components/schemas/Window" }, { type: "null" }]
-          description: null when action is indoor or none_today.
+          description: null when action is none_today, or indoor without a least-bad slot (LEAST_BAD_WINDOW).
         headline: { $ref: "#/components/schemas/Message" }
         detail: { $ref: "#/components/schemas/Message" }
         notification:
@@ -320,13 +323,10 @@ components:
           oneOf:
             - type: "null"
             - type: object
-              required: [id, name, exposure_lower_pct, compared_with]
+              required: [id, name, compared_with]
               properties:
                 id: { type: string }
                 name: { type: string }
-                exposure_lower_pct:
-                  type: [integer, "null"]
-                  description: How much lower the guideline-relative concentration is on this route than on compared_with at the run hour (route factors are demo values).
                 compared_with: { type: [string, "null"] }
               additionalProperties: false
         start_heading_deg:
@@ -445,7 +445,7 @@ components:
               additionalProperties: false
         experimental:
           type: object
-          description: Experimental heat-budget values for this hour at the planned pace. Not for runner screens.
+          description: Research-only heat-budget values for this hour at the planned pace (only with include=experimental). Not for runner screens.
           required: [minutes_to_39c, sweat_rate_ml_per_h, core_steady_c]
           properties:
             minutes_to_39c: { type: [integer, "null"], description: null = no limit (heat can be shed). }
@@ -470,7 +470,8 @@ components:
     Experimental:
       type: object
       description: >-
-        Experimental model output for partners and research. Not validated for running and never for runner screens.
+        Research-only model output. Returned only with include=experimental. Not validated for running and never for
+        runner screens.
       required: [heat_budget, note]
       properties:
         heat_budget:

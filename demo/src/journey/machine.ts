@@ -6,7 +6,7 @@ export type MomentId = "onboarding" | "evening" | "glance" | "today" | "why" | "
 export interface Moment { id: MomentId; label: string; step: number; title: string; sees: string; principle: string; placeholder?: boolean }
 
 export const MOMENTS: Moment[] = [
-  { id: "onboarding", label: "Onboard", step: 2, title: "Onboarding", sees: "Three questions: usual pace, used to heat, hay fever. One line on consent.", principle: "Effort kept low; personal from the start" },
+  { id: "onboarding", label: "Onboard", step: 2, title: "Onboarding", sees: "Three questions: usual pace, trained in heat in the last 1-2 weeks (yes / no / not sure), hay fever. One line on consent.", principle: "Effort kept low; personal from the start" },
   { id: "evening", label: "Evening", step: 2, title: "Evening heads-up", sees: "Tomorrow's slot on the lock screen, sent only because tomorrow differs from the usual run. One tap adds it to the calendar.", principle: "Implementation intention; change-only" },
   { id: "glance", label: "Glance", step: 2, title: "Morning glance", sees: "One verb, one time, with the window on a time ring.", principle: "Decision moment" },
   { id: "today", label: "Today", step: 1, title: "Today card", sees: "Decision, one subline, the window on a timeline, three rows (pace, start direction, water), Why.", principle: "A decision, not data" },
@@ -14,7 +14,7 @@ export const MOMENTS: Moment[] = [
   { id: "route", label: "Route", step: 2, title: "Route", sees: "Map, where to start, the first direction into the wind, the cleaner-air route.", principle: "Effort lowered; personal" },
   { id: "run", label: "Run", step: 2, title: "The run", sees: "On the watch: pace against the heat cap, body heat, gentle cues such as turn for a tailwind.", principle: "Prompt at the moment of action" },
   { id: "after", label: "After", step: 2, title: "After the run", sees: "Well judged, the conditions avoided (engine: your hour against the worst hour), water, how it felt.", principle: "Peak-end; visible benefit" },
-  { id: "week", label: "Week", step: 4, title: "Week view", sees: "Runs in the best window, conditions avoided, the streak (indoor counts), and a promise to speak up only when something changes.", principle: "Reward decisions; habit loop" },
+  { id: "week", label: "Week", step: 4, title: "Week view", sees: "Runs in the best window, conditions avoided (indoor counts, rest days neutral; no streak), and a promise to speak up only when something changes.", principle: "Reward decisions; habit loop" },
 ];
 
 /** Steps built so far. Placeholder moments are reachable but show a stub. */

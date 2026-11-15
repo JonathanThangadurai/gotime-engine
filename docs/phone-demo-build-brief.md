@@ -141,7 +141,7 @@ A footer line is visible in every layout: "Weather and air: Open-Meteo / ERA5 (C
 
 - Lead with one verb and one time; numbers only one tap deeper.
 - Gain framing; never show mortality, relative risk or "heart attack" wording on consumer screens.
-- Every "no" offers alternatives; indoor days keep the streak.
+- Every "no" offers alternatives; indoor days count as well timed (no streak).
 - Change-only notifications; at most one proactive message a day.
 - No real brand names, logos or colours (no Strava, Garmin, Apple). The host app is fictional.
 - No invented statistics about other runners.

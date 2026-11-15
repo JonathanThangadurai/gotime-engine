@@ -35,7 +35,7 @@
       "planned_pace_s_per_km": 380
     },
     "summary": {
-      "action": "go_later",
+      "action": "indoor",
       "level": 2,
       "level_name": "red",
       "window": {
@@ -44,43 +44,51 @@
         "latest_start": "2025-01-13T17:15:00+05:30"
       },
       "headline": {
-        "code": "GO_BETWEEN",
+        "code": "INDOOR_TODAY",
+        "params": {},
+        "text": "Train indoors today"
+      },
+      "detail": {
+        "code": "LEAST_BAD_WINDOW",
         "params": {
           "start": "12:00",
           "end": "18:00"
         },
-        "text": "Run 12:00–18:00"
-      },
-      "detail": {
-        "code": "EASY_AIR",
-        "params": {},
-        "text": "Go easy: the air is poor."
+        "text": "If you go out, 12:00–18:00 is least bad."
       },
       "notification": {
-        "title": "Run 12:00–18:00",
-        "body": "Go easy: the air is poor."
+        "title": "Train indoors today",
+        "body": "If you go out, 12:00–18:00 is least bad."
       }
     },
     "guidance": {
       "intensity": "easy",
       "pace": {
         "planned_s_per_km": 380,
-        "advice": "as_planned"
+        "advice": "indoor"
       },
-      "route": {
-        "id": "marina-promenade",
-        "name": "Marina promenade",
-        "exposure_lower_pct": 23,
-        "compared_with": "Anna Salai"
-      },
-      "start_heading_deg": 0,
-      "start_heading_status": "into_wind",
+      "route": null,
+      "start_heading_deg": null,
+      "start_heading_status": "indoor",
       "hydration": {
-        "advice": "drink_to_thirst",
-        "carry_water": true
+        "advice": "none",
+        "carry_water": false
       },
       "warm_up_indoors": false,
-      "indoor_alternatives": []
+      "indoor_alternatives": [
+        {
+          "code": "INDOOR_TREADMILL",
+          "params": {
+            "minutes": 40
+          },
+          "text": "Treadmill, 40 min easy"
+        },
+        {
+          "code": "INDOOR_CROSS_TRAINING",
+          "params": {},
+          "text": "Strength, stairs, spin or a swim"
+        }
+      ]
     },
     "air_today": {
       "pm25_24h_mean_ugm3": 140,
@@ -116,9 +124,9 @@
         "params": {
           "speed_kmh": 16,
           "from": "north-east",
-          "heading": "north"
+          "heading": null
         },
-        "text": "16 km/h from the north-east. Start heading north, into the wind; tailwind home."
+        "text": "16 km/h from the north-east. Start heading , into the wind; tailwind home."
       },
       {
         "factor": "athlete",
@@ -151,7 +159,7 @@
         "code": "TIP_RUN_BY_FEEL",
         "evidence": "published_research",
         "params": {
-          "dew_point_c": 22.7
+          "dew_point_c": 22.9
         },
         "text": "Muggy today: run by feel. Your watch pace will be slower, and that is fine.",
         "skip_if": null
@@ -180,7 +188,7 @@
       }
     ],
     "data": {
-      "engine_version": "3.0.0",
+      "engine_version": "3.1.0",
       "status": "ok",
       "not_assessed": [],
       "unassessed_hours": [],
@@ -221,18 +229,6 @@
       "params": {},
       "text": "Advisory only, not medical advice. Stop if you feel unwell."
     },
-    "experimental": {
-      "heat_budget": {
-        "model": "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
-        "uncompensable_heat": false,
-        "minutes_to_39c": null,
-        "suggested_max_pace_s_per_km": 271,
-        "sweat_rate_ml_per_h": 948,
-        "sweat_loss_ml": 711,
-        "core_steady_c": 38.2
-      },
-      "note": "Experimental model output; not for runner screens."
-    },
     "hours": [
       {
         "start": "2025-01-13T05:00:00+05:30",
@@ -269,11 +265,6 @@
         "wind": {
           "speed_mps": 2.8,
           "from_deg": 30
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 552,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -311,11 +302,6 @@
         "wind": {
           "speed_mps": 2.1,
           "from_deg": 32
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 606,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -353,11 +339,6 @@
         "wind": {
           "speed_mps": 2.5,
           "from_deg": 30
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 618,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -395,11 +376,6 @@
         "wind": {
           "speed_mps": 2.6,
           "from_deg": 30
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 831,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -437,11 +413,6 @@
         "wind": {
           "speed_mps": 3.5,
           "from_deg": 43
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 892,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -479,11 +450,6 @@
         "wind": {
           "speed_mps": 3.9,
           "from_deg": 54
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 939,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -521,11 +487,6 @@
         "wind": {
           "speed_mps": 4.5,
           "from_deg": 54
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 991,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -563,11 +524,6 @@
         "wind": {
           "speed_mps": 5.1,
           "from_deg": 59
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 948,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -605,11 +561,6 @@
         "wind": {
           "speed_mps": 5.3,
           "from_deg": 64
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 987,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -647,11 +598,6 @@
         "wind": {
           "speed_mps": 5,
           "from_deg": 67
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 1032,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -689,11 +635,6 @@
         "wind": {
           "speed_mps": 4.4,
           "from_deg": 67
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 954,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -731,11 +672,6 @@
         "wind": {
           "speed_mps": 4.5,
           "from_deg": 63
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 842,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -773,11 +709,6 @@
         "wind": {
           "speed_mps": 4.2,
           "from_deg": 66
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 738,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -815,11 +746,6 @@
         "wind": {
           "speed_mps": 3.6,
           "from_deg": 75
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 676,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -857,11 +783,6 @@
         "wind": {
           "speed_mps": 3.4,
           "from_deg": 73
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 684,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -899,11 +820,6 @@
         "wind": {
           "speed_mps": 3.3,
           "from_deg": 71
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 685,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -941,11 +857,6 @@
         "wind": {
           "speed_mps": 3.3,
           "from_deg": 67
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 673,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -983,11 +894,6 @@
         "wind": {
           "speed_mps": 3.1,
           "from_deg": 68
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 666,
-          "core_steady_c": 38.2
         }
       },
       {
@@ -1025,11 +931,6 @@
         "wind": {
           "speed_mps": 2.6,
           "from_deg": 58
-        },
-        "experimental": {
-          "minutes_to_39c": null,
-          "sweat_rate_ml_per_h": 666,
-          "core_steady_c": 38.2
         }
       }
     ]

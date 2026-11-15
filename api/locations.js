@@ -7,7 +7,6 @@ const noPollen = () => ({ grass: rep(0), birch: rep(0), alder: rep(0), mugwort: 
 const grassOnly = a => ({ grass: a, birch: rep(0), alder: rep(0), mugwort: rep(0) });
 const LOCATIONS = {
   ams: { name: "Amsterdam", tz: "Europe/Amsterdam", lat: 52.3584, lon: 4.8697, aqDomain: "cams_europe", pollen: true,
-    hotClimate: false,   // residents are not assumed heat-adapted
     persona: { kg: 72, height: 1.80, acc: false, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
     routes: [
       { name: "Vondelpark", x: {}, axis: 60, into: ["Head north-east", "Start at the Amstelveenseweg end, into the wind; tailwind home."], away: ["Head south-west", "Start at the Leidseplein end, into the wind; tailwind home."] },
@@ -15,7 +14,6 @@ const LOCATIONS = {
     indoor: ["Treadmill, 40 min easy", "Spin class or a swim", "Or run tomorrow morning"],
     drinkTip: "" },
   chn: { name: "Chennai", tz: "Asia/Kolkata", lat: 13.0827, lon: 80.2707, aqDomain: "cams_global", pollen: false,
-    hotClimate: true,    // residents are assumed heat-adapted unless the request says otherwise
     persona: { kg: 62, height: 1.68, acc: true, cloth: "kit", hay: false, pace: 6 + 20/60, dur: 45 },
     routes: [
       { name: "Marina promenade", x: {}, axis: 0, into: ["Head north first", "Start at the lighthouse end, north into the wind; tailwind home."], away: ["Head south first", "Start at the north end, south into the wind; tailwind home."] },

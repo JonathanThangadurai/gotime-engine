@@ -44,7 +44,7 @@ export const ENG = engineModule as {
   compass(deg: number): string;
 };
 
-interface Location { name: string; tz: string; lat: number; lon: number; hotClimate: boolean; drinkTip: string }
+interface Location { name: string; tz: string; lat: number; lon: number; drinkTip: string }
 interface ScenarioData { label: string; date: string; pollen: Record<string, number[] | null> | null }
 const { LOCATIONS, SCENARIOS } = locationsModule as {
   LOCATIONS: Record<CityKey, Location>;
@@ -103,7 +103,7 @@ export function evaluateDay(inp: RunInputs): EngineDay {
   const L = location(inp.city), d = scenarioData(inp.city, inp.scenario), a = inp.request.athlete, act = inp.request.activity;
   return ENG.evaluate(d, {
     pace: act.planned_pace_s_per_km / 60, minutes: act.planned_duration_s / 60,
-    kg: a.mass_kg ?? 70, height: a.height_m ?? 1.75, acc: a.heat_acclimatised ?? L.hotClimate,
+    kg: a.mass_kg ?? 70, height: a.height_m ?? 1.75, acc: a.heat_acclimatised === true || a.heat_acclimatised === "yes",   // no city default: unknown = not adapted
     cloth: CLOTH_IN[a.clothing ?? "running_kit"], hayfever: a.hay_fever ?? false, now: inp.localHour,
   }, L);
 }

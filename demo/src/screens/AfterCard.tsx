@@ -11,6 +11,7 @@ export function AfterCard({ view }: { view: AfterView }) {
   return (
     <section class="gt gt-module" data-testid="after-card">
       <p class="gt-label">{t("AFTER_LABEL")}</p>
+      <p class="example-note" data-testid="example-run">{t("AFTER_EXAMPLE")}</p>
       <h2 class="gt-decision">{t(view.title.code)}</h2>
       {view.sub && <p class="gt-sub">{t(view.sub.code, view.sub.params)}</p>}
       {view.planned && <p class="gt-confirm" data-testid="as-planned"><Icon name="check" />{t(view.planned.code, view.planned.params)}</p>}

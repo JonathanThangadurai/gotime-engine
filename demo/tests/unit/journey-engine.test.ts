@@ -114,7 +114,7 @@ describe("indoor branch (Sanne visiting Chennai, 6 May 2024)", () => {
   it("after: indoor counts (the outdoor comparison is tested in reference.test.ts)", () => {
     const day = evaluateDay(inp), v = afterView(rec, day, runTrace(inp, inp.localHour));
     expect(v.indoor).toBe(true);
-    expect(t(v.sub!.code)).toBe("Indoor counts. Your streak continues.");
+    expect(t(v.sub!.code)).toBe("Indoor counts as a well-timed session.");
   });
   it("evening: always sent on an indoor day", () => {
     expect(eveningView(rec, PERSONAS.sanne.usualHour).notify).toBe(true);

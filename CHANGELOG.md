@@ -2,7 +2,18 @@
 
 All notable changes to the GOTime API contract (`api/openapi.yaml`) and the run engine. Dates are local (Europe/Amsterdam).
 
-## Unreleased (schema 0.9.0, engine 3.0.0)
+## Unreleased (schema 0.9.0, engine 3.1.0)
+
+Batch C (copy, user test, review fixes):
+- `athlete.heat_acclimatised`: `yes` / `no` / `unknown`, no city default; unknown uses the non-adapted bands.
+- Windows: every feasible interval of the planned duration is scored and the best is picked; a shorter run is offered
+  only when no full interval qualifies.
+- `guidance.route.exposure_lower_pct` removed. `AIR_CLEAN` renamed `AIR_BELOW_GUIDELINE` (and `_PARTIAL`).
+- `experimental` is omitted by default (only with `include=experimental`); `/live` is out of pilot scope.
+- Smoke days (PM2.5 24-h mean very poor and every hour red for air): `indoor` first, with `LEAST_BAD_WINDOW` and a window.
+- Copy: `TIP_HEAT_NOT_ADAPTED` no longer promises a benefit; `REASON_HEAT` "Too hot to run outside today."
+
+Batch B:
 
 Science reframing. Rule: forecast facts and suggestions may reach runners; body estimates are experimental and never on
 runner screens.

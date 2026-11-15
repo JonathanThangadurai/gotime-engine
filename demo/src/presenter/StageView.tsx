@@ -47,7 +47,7 @@ function Phone({ run, label }: { run: Run; label?: string }) {
 
 const personaLabel = (run: Run) => {
   const p = run.persona.value, acc = run.request.value.athlete.heat_acclimatised;
-  return `${p.name} · ${acc ? "used to heat" : "not used to heat"}`;
+  return `${p.name} · ${acc === true || acc === "yes" ? "used to heat" : acc === "no" || acc === false ? "not used to heat" : "heat adaptation unknown"}`;
 };
 
 /** The API response (or app-side computation) behind the current screen. */
@@ -71,7 +71,7 @@ function lensPayload(run: Run): { title: string; body: unknown } {
       return { title: "Computed in the app from /live and hours[]", body: {
         experimental_peak_core_c: Math.max(...tr.map(p => p.live.experimental.core_estimate_c)),
         alerts: tr.filter(p => p.live.alert).map(p => ({ minute: p.minute, code: p.live.alert!.code })),
-        experimental_heat_budget: run.recommendation.value.experimental.heat_budget,
+        experimental_heat_budget: run.recommendation.value.experimental?.heat_budget ?? null,
         reference_hour: cmp && { kind: cmp.kind, factor: cmp.factor, time: cmp.time },
       } };
     }

@@ -285,3 +285,7 @@ button { cursor: pointer; }
   padding: 14px 14px calc(18px + env(safe-area-inset-bottom)); display: grid; gap: 12px; }
 .drawer header { display: flex; justify-content: space-between; align-items: center; }
 .drawer .hint { margin-left: 0; }
+
+/* week: planned rest day, neutral (no icon, no status) */
+.icon-gap { display: inline-block; width: 20px; flex: none; }
+.methods-title { font-size: 15px; font-weight: 600; margin: 20px 0 4px; }

@@ -35,7 +35,7 @@ describe("May heat, 6 May 2024: same morning, two runners", () => {
   it("kit choice re-runs the engine: it changes only the experimental heat budget, not the advice", () => {
     const cotton = recommend(inputs("chn-heat", "arjun", "full_length_cotton"));
     expect(cotton.summary.headline.text).toBe(arjun.summary.headline.text);       // decisions use heat bands only
-    expect(cotton.experimental.heat_budget!.sweat_rate_ml_per_h).toBeGreaterThan(arjun.experimental.heat_budget!.sweat_rate_ml_per_h);
+    expect(cotton.experimental!.heat_budget!.sweat_rate_ml_per_h).toBeGreaterThan(arjun.experimental!.heat_budget!.sweat_rate_ml_per_h);
     const you = whyView(cotton, null, 9).reasons.find(r => r.factor === "athlete")!;
     expect(t(you.code, you.params)).toBe("Used to heat, 62 kg, 168 cm, cotton full-length kit.");
   });
@@ -48,13 +48,15 @@ describe("May heat, 6 May 2024: same morning, two runners", () => {
 describe("Bhogi, 13 January 2025 (Arjun)", () => {
   const inp = inputs("chn-bhogi"), rec = recommend(inp), plan = rec;
 
-  it("the engine moves him to the cleaner afternoon, and the card names his usual slot", () => {
-    expect(rec.summary.headline.text).toBe("Run 12:00–18:00");
-    expect(rec.summary.detail.text).toBe("Go easy: the air is poor.");          // PM2.5 24-h mean in the very poor band
-    expect(rec.air_today.naqi_pm25_band).toBe(2);
-    const note = todayView(rec, 5.25, PERSONAS.arjun.usualHour).usualNote!;
-    expect(t(note.code, note.params)).toBe("Skip your usual 5:30 run today: smoke.");
-    // the note rests on the API's own hourly level at 5:00
+  it("smoke day: indoors first, the least bad slot second", () => {
+    expect(rec.summary.action).toBe("indoor");
+    expect(rec.summary.headline.text).toBe("Train indoors today");
+    expect(rec.summary.detail.text).toBe("If you go out, 12:00–18:00 is least bad.");
+    expect(t(rec.summary.detail.code, rec.summary.detail.params)).toBe("If you go out, 12:00–18:00 is least bad.");
+    expect(rec.summary.window).not.toBeNull();
+    expect(rec.air_today.naqi_pm25_band).toBe(2);                              // PM2.5 24-h mean in the very poor band
+    void PERSONAS; void todayView;
+    // every hour is at least red for air, from the API's own hourly levels
     const h5 = rec.hours!.find(h => h.start.slice(11, 13) === "05")!;
     expect(h5.air!.level).toBeGreaterThanOrEqual(2);
   });

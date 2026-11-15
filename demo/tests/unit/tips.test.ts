@@ -101,11 +101,11 @@ describe("tip copy", () => {
   it("the six sentences, exactly as agreed (EN)", () => {
     expect(CODES.map(c => t(c))).toEqual([
       "Below −15 °C: do the hard session indoors today.",
-      "Not used to heat yet: keep it easy and a bit shorter. In about a week your body copes better.",
+      "Not used to heat yet: keep it easy and a bit shorter. Build up gradually over 1-2 weeks.",
       "A cool shower just before you go makes the first kilometres easier.",
       "Hot tomorrow: drink normally tonight and have a glass of water before you go.",
       "Muggy today: run by feel. Your watch pace will be slower, and that is fine.",
-      "Freezing today: warm up 10 minutes indoors, start slowly, buff over your mouth.",
+      "Freezing today: warm up 10 minutes indoors, start slowly, neck warmer over your mouth.",
     ]);
   });
   it("Dutch for every tip, the label and the new evidence level", () => {

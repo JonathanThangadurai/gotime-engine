@@ -3,7 +3,10 @@ import type { Action } from "../engine";
 import { t } from "../copy";
 import { Icon } from "./icons";
 
-/** Bottom sheet: the benefit first, then plain reasons with a quiet evidence line, then disclaimer and credits. */
+/** Where a fact comes from: the forecast or the runner's own settings. The method sits one tap deeper (Numbers). */
+export const sourceOf = (factor: string) => factor === "athlete" ? "SOURCE_athlete" : "SOURCE_forecast";
+
+/** Bottom sheet: the benefit first, then plain reasons with a quiet source line, then disclaimer and credits. */
 export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view: WhyView; action: Action; subtitle: string; onClose: () => void; onNumbers: () => void }) {
   return (
     <div class="sheet-scrim" onClick={onClose}>
@@ -25,7 +28,7 @@ export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view:
               <div>
                 <p class="reason-title">{t(`FACTOR_${r.factor}`)}</p>
                 <p class="reason-text">{t(r.code, r.params, { action })}</p>
-                <p class="evidence"><span class="dot" aria-hidden="true" />{t(`EVIDENCE_${r.evidence}`)}</p>
+                <p class="evidence" data-testid="source"><span class="dot" aria-hidden="true" />{t(sourceOf(r.factor))}</p>
               </div>
             </li>
           ))}
@@ -35,7 +38,7 @@ export function WhySheet({ view, action, subtitle, onClose, onNumbers }: { view:
               <div>
                 <p class="reason-title">{t("TIP_LABEL")}</p>
                 <p class="reason-text">{t(view.tip.code, view.tip.params)}</p>
-                <p class="evidence"><span class="dot" aria-hidden="true" />{t(`EVIDENCE_${view.tip.evidence}`)}</p>
+                <p class="evidence" data-testid="source"><span class="dot" aria-hidden="true" />{t("SOURCE_tip")}</p>
               </div>
             </li>
           )}

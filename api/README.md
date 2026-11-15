@@ -7,7 +7,7 @@ One call, one decision a partner can show as-is, plus the evidence behind it.
 > are experimental, sit only under `experimental`, and must not be shown to runners.
 >
 > **Prototype.** Schema 0.9.0: the contract may still change. Authentication (bearer) and rate limiting (429) are
-> planned, not implemented. `/live` is experimental. Not licensed for use (`UNLICENSED`). Advisory only, not medical advice.
+> planned, not implemented. `/live` is out of pilot scope (experimental, no further work). Not licensed for use (`UNLICENSED`). Advisory only, not medical advice.
 
 | File | What it is |
 |---|---|
@@ -30,7 +30,7 @@ POST /v1/recommendations
 { "location": { "lat": 52.37, "lon": 4.89 },
   "activity": { "type": "run", "date": "2026-06-27", "planned_duration_s": 2700, "planned_pace_s_per_km": 380,
                 "start_after": "06:45" },
-  "athlete":  { "mass_kg": 72, "height_m": 1.80, "heat_acclimatised": false } }
+  "athlete":  { "mass_kg": 72, "height_m": 1.80, "heat_acclimatised": "no" } }
 ```
 - `activity.date` is the local date at the location, up to 4 days ahead. The server fetches enough forecast days and
   slices that date; a past date is refused (`422`). `start_after` / `start_before` (local `HH:MM`) limit the start.
@@ -54,10 +54,10 @@ for 45 minutes), `action` is `go_short` with `FITS_IN_WINDOW`; when not even 15 
 **3. Optionally show `guidance`, `air_today`, `reasons` and `tips[]`.** Guidance covers effort advice
 (`as_planned` or `consider_shorter_or_easier`, no numbers), route, start heading, "drink according to thirst"
 (`hydration.advice`, plus `carry_water`) and indoor options. `air_today` gives the day's air with each guideline's
-averaging (WHO 24-h means and the maximum 8-h ozone mean, the NAQI PM2.5 band). Do not show `experimental`. Reasons are ranked, and each one has an evidence level. `tips[]` ("What pros do") holds at most one tip, with
+averaging (WHO 24-h means and the maximum 8-h ozone mean, the NAQI PM2.5 band). `experimental` is research-only and returned only with `include=experimental`; never show it to runners. Reasons are ranked, and each one has an evidence level. `tips[]` ("What pros do") holds at most one tip, with
 its evidence level and an optional `skip_if`; show it quietly below the main advice.
 
-**4. Experimental: during a run**, call `POST /v1/live` every 30-60 s with `recommendation_id`, elapsed time and speed,
+**4. Out of pilot scope (experimental, no further work): during a run**, call `POST /v1/live` every 30-60 s with `recommendation_id`, elapsed time and speed,
 and echo back `state` unchanged. The state is signed and bound to the recommendation; a tampered, foreign, stale
 (over 6 hours) or out-of-order state returns `400`. Show `alert` with its `haptic` pattern.
 
@@ -76,13 +76,13 @@ and echo back `state` unchanged. The state is signed and bound to the recommenda
   (`as_planned`, `consider_shorter_or_easier`, `indoor`) and `guidance.start_heading_status` (`into_wind`, `any`,
   `unknown`, `indoor`). The value fields are null unless the status says otherwise.
 - **Heat-adapted** (`athlete.heat_acclimatised`) means repeated training or work in the heat over the last 1-2 weeks,
-  not one warm day. It moves the heat bands up by 4.4 °C. Bands are conservative prompts, not diagnoses.
+  not one warm day. Values `yes` / `no` / `unknown`; only `yes` moves the heat bands up by 4.4 °C. Bands are conservative prompts, not diagnoses.
 - **Air averaging.** WHO 2021 guidelines as 24-h means (PM2.5, PM10, NO₂) and the maximum 8-h mean (ozone); India NAQI
   PM2.5 bands on the 24-h mean; EU ozone 180 / 240 on hourly values (information and alert, not a clearance). Hourly
   values only rank hours for timing.
 - **Pollen per taxon.** The 50 grains/m³ threshold applies to grass only; birch, alder and mugwort are information.
 - **Levels** 0-3 = green, yellow, red, black. Black means do not run outdoors, and `action` is then `indoor` with `indoor_alternatives`.
-- **Defaults are declared.** Anything the engine assumed is listed in `assumptions`. For example, `heat_acclimatised: true` with basis `local_climate` in Chennai.
+- **Defaults are declared.** Anything the engine assumed is listed in `assumptions`. For example, `heat_acclimatised: "unknown"` with basis `not_provided` when it is omitted (there is no city default; unknown uses the non-adapted bands).
 - **Evidence is labelled.** Every reason and tip carries `published_standard`, `published_slopes`, `published_consensus`, `published_research`, `mechanism`, `assumption`, `demo_value` and so on, so a partner can choose what to show.
 - **Caching.** Re-fetch after `valid_until` (top of the next hour, when forecasts update).
 - **Versioning.** Prototype: `schema_version` 0.9.0, which may still change. From 1.0, fields and enum values will only be added within a major version.

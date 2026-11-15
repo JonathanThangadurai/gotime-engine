@@ -26,7 +26,7 @@ These rules decide every screen. Each comes from established behavioural science
 5. **Earn trust by being quiet.** Alerts that fire too often get ignored (alert fatigue). The 2026 back-test showed the placeholder alert levels firing on 48 of 184 days, which is too many. The rule is **change-only notifications**: speak only when the advice differs from what the runner would do anyway. On ordinary days the app says "Nothing to change today", and that silence is part of the product.
 6. **Make the invisible benefit visible.** When prevention works, nothing happens, so nobody notices (the prevention paradox). After a well-timed run the app shows what was avoided: "At 15:00 it would have been 6 °C hotter in heat stress terms." This counterfactual turns a good decision into a felt reward.
 7. **End on a high.** People remember an experience by its peak and its end (peak-end rule). The post-run card is the memory of the whole interaction, so it is positive, short and specific: "Well judged. You dodged the hottest hour."
-8. **Reward good decisions, not suffering.** Streaks count *well-timed* runs. An indoor session on a dangerous day counts as a smart choice and keeps the streak alive. Nothing ever rewards running through heat or smoke.
+8. **Reward good decisions, not suffering.** The week view counts *well-timed* runs, with no streak. An indoor session on a dangerous day counts as a smart choice, and planned rest days are shown neutrally. Nothing ever rewards running through heat or smoke.
 9. **Make it about me.** Information about oneself is noticed and remembered better (self-reference effect). The app uses the runner's own pace, route, heat adaptation and hay fever, and says so in plain words ("for your 6:20 pace").
 10. **Be honest about uncertainty.** Calibrated honesty builds more trust than false precision. Each reason carries its evidence level, and the app says when the forecast is less certain ("forecast may shift; we will tell you by 6:30").
 11. **Lower the effort to act** (Fogg: behaviour happens when motivation, ability and a prompt meet). The prompt arrives at the right time, the action is one tap (add to calendar, start run, swap to indoor), and motivation comes from personal relevance and the counterfactual.
@@ -65,9 +65,9 @@ The journey has eight moments. Each one is a single screen state that the presen
 | Numbers view | Hourly strip (heat stress, air, pollen), the raw API response (partner lens) | For experts and partners only |
 | Route | OpenStreetMap, route line, start arrow, wind arrow | Ease of action |
 | Watch handoff | The existing watch prototype screens, embedded | Continuity across devices |
-| Post-run card | Result line, avoided conditions, peak core estimate, water | Peak-end |
+| Post-run card | "Example run", result line, avoided conditions, drink according to thirst | Peak-end |
 | Week view | Decisions made, conditions avoided, next week's outlook | Habit, reward |
-| Indoor alternative | Three options, tomorrow's best slot, streak kept | Autonomy, no punishment |
+| Indoor alternative | Three options, tomorrow's best slot (on a smoke day: the least bad slot second) | Autonomy, no punishment |
 | Onboarding | Three questions, consent line | Low effort, personal |
 
 Visual language: the FerryWellCo design system, one accent colour for the runner's own plan, no tables on consumer screens.
@@ -96,7 +96,7 @@ Record: decision change (yes or no), comprehension (could they explain the reaso
 |---|---|
 | The engine, running on the phone itself (under 1 ms per day) | Notifications and lock screen (shown inside the demo) |
 | Scenario weather and air data (Open-Meteo and ERA5, CC BY 4.0, credited) | The host app and its brand |
-| The decisions, reasons, pace caps and counterfactuals | Persona history and the week view |
+| The decisions, reasons, effort advice (no numbers) and counterfactuals | Persona history and the week view |
 | OpenStreetMap routes | The watch (embedded prototype) |
 | | Live data in partner pitches (off; on only in unpaid user tests) |
 

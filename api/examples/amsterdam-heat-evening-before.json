@@ -69,7 +69,6 @@
       "route": {
         "id": "vondelpark",
         "name": "Vondelpark",
-        "exposure_lower_pct": 44,
         "compared_with": "Stadhouderskade"
       },
       "start_heading_deg": 60,
@@ -153,7 +152,7 @@
         "params": {
           "heat_level": 1
         },
-        "text": "Not used to heat yet: keep it easy and a bit shorter. In about a week your body copes better.",
+        "text": "Not used to heat yet: keep it easy and a bit shorter. Build up gradually over 1-2 weeks.",
         "skip_if": null
       }
     ],
@@ -180,7 +179,7 @@
       }
     ],
     "data": {
-      "engine_version": "3.0.0",
+      "engine_version": "3.1.0",
       "status": "ok",
       "not_assessed": [],
       "unassessed_hours": [],
@@ -204,18 +203,6 @@
       "code": "ADVISORY_NOT_MEDICAL",
       "params": {},
       "text": "Advisory only, not medical advice. Stop if you feel unwell."
-    },
-    "experimental": {
-      "heat_budget": {
-        "model": "simplified ISO 7933 (Predicted Heat Strain), not validated for running",
-        "uncompensable_heat": false,
-        "minutes_to_39c": null,
-        "suggested_max_pace_s_per_km": null,
-        "sweat_rate_ml_per_h": 646,
-        "sweat_loss_ml": 485,
-        "core_steady_c": 38.2
-      },
-      "note": "Experimental model output; not for runner screens."
     }
   }
 }

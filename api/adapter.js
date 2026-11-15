@@ -4,7 +4,7 @@ const ENG = require("./engine.js");
 const COND = require("./conditions.js");
 const { LOCATIONS } = require("./locations.js");
 const MSG = { "en-GB": require("./messages/en-GB.json") };
-const SCHEMA_VERSION = "0.9.0", ENGINE_VERSION = "3.0.0";
+const SCHEMA_VERSION = "0.9.0", ENGINE_VERSION = "3.1.0";
 
 /** A request the API refuses, with an RFC 9457 problem shape (status, slug, title, detail, extra members). */
 class ApiError extends Error {
@@ -59,12 +59,12 @@ function toEngineUser(req, L, nowHour) {
   const take = (field, v, dflt, basis) => { if (v === undefined) { assumptions.push({ field, value: dflt, basis }); return dflt; } return v; };
   const paceS = act.planned_pace_s_per_km ?? (act.planned_speed_mps ? Math.round(1000 / act.planned_speed_mps) : undefined);
   const pace = take("activity.planned_pace_s_per_km", paceS, act.type === "walk" ? 690 : 380, "population_default");
-  const accDefault = !!L.hotClimate;   // a hot-climate location: assume a resident is heat-adapted (declared in assumptions)
   const u = {
     pace: pace / 60, minutes: act.planned_duration_s / 60,
     kg: take("athlete.mass_kg", a.mass_kg, 70, "population_default"),
     height: take("athlete.height_m", a.height_m, 1.75, "population_default"),
-    acc: take("athlete.heat_acclimatised", a.heat_acclimatised, accDefault, "local_climate"),
+    // yes | no | unknown (no city default); unknown uses the non-adapted bands. Booleans are accepted for now.
+    acc: (v => v === true || v === "yes")(take("athlete.heat_acclimatised", a.heat_acclimatised, "unknown", "not_provided")),
     cloth: CLOTH_IN[take("athlete.clothing", a.clothing, "running_kit", "population_default")],
     hayfever: take("athlete.hay_fever", a.hay_fever, false, "population_default"),
     now: nowHour,
@@ -136,6 +136,7 @@ function recommend(req, ctx) {
   const nowH = Math.floor(Math.max(u.now, u.after ?? 0));
   const pool = r.hours.filter(x => x.h >= Math.max(5, nowH) && x.h <= 21);
   const indoor = r.indoor, none = r.mode === "none";
+  const withExp = (req.include || []).includes("experimental");   // research-only block, omitted by default
   const action = none ? "none_today" : indoor ? "indoor" : r.mode === "short" ? "go_short" : r.start <= u.now + 0.5 && date === clock.date ? "go_now" : "go_later";
   const at = h => isoLocal(L.tz, date, h);
 
@@ -151,7 +152,7 @@ function recommend(req, ctx) {
   const airReason = r.reasons.find(x => x.k === "Air");
   const other = L.routes[1 - b.route];
   const route = indoor || none ? null : { id: slug(r.route.name), name: r.route.name,
-    exposure_lower_pct: airReason && airReason.exposureLowerPct > 5 ? airReason.exposureLowerPct : null, compared_with: other ? other.name : null };
+    compared_with: other ? other.name : null };
   const headingStatus = indoor || none ? "indoor" : r.direction.unknown ? "unknown" : r.direction.short === "Any direction" ? "any" : "into_wind";
   const heading = headingStatus === "into_wind" ? Math.round(r.along >= 0 ? r.route.axis : (r.route.axis + 180) % 360) : null;
   // hydration: drink according to thirst; carry water on long or warm runs. Personal sweat estimates are experimental.
@@ -186,7 +187,7 @@ function recommend(req, ctx) {
   const headline = msg(r.hc.code, r.hc.params, lang), detail = msg(r.sc.code, r.sc.params, lang);
   const title = (headline.text || r.headline).slice(0, 40), body = (detail.text || r.sub).slice(0, 120);
   const valid = new Date(Math.ceil((genMs + 1) / 3600000) * 3600000);
-  const window = indoor || none ? null : { start: at(r.start), end: at(r.end), latest_start: at(Math.max(r.start, r.latestStart)) };
+  const window = (indoor && !r.leastBad) || none ? null : { start: at(r.start), end: at(r.end), latest_start: at(Math.max(r.start, r.latestStart)) };
   // the returned window must be on the activity date
   if (window && window.start.slice(0, 10) !== date) throw new ApiError(500, "window-date-mismatch", "Window is not on the activity date", `${window.start} vs ${date}`);
 
@@ -206,7 +207,7 @@ function recommend(req, ctx) {
     assumptions,
     data: info,
     disclaimer: msg("ADVISORY_NOT_MEDICAL", {}, lang),
-    experimental: experimentalBlock(r, u, indoor || none),
+    ...(withExp ? { experimental: experimentalBlock(r, u, indoor || none) } : {}),
   };
   if ((req.include || []).includes("hours")) out.hours = r.hours.filter(x => x.h >= (date === clock.date ? Math.floor(clock.hour) : 0)).map(x => x.na ? {
     start: at(x.h), assessed: false, level: null, level_name: null, in_window: false, heat: null, air: null, cold: null,
@@ -218,7 +219,7 @@ function recommend(req, ctx) {
     cold: { wind_chill_c: x.t < 10 ? r1(x.head) : null, level: x.cb },
     pollen: pollenOut(x),
     wind: { speed_mps: r1(x.ws / 3.6), from_deg: x.wd == null ? null : Math.round(x.wd) % 360 },
-    experimental: { minutes_to_39c: x.b.dlim >= 240 ? null : x.b.dlim, sweat_rate_ml_per_h: Math.round(x.b.sweatMlH), core_steady_c: r1(x.b.Teq) },
+    ...(withExp ? { experimental: { minutes_to_39c: x.b.dlim >= 240 ? null : x.b.dlim, sweat_rate_ml_per_h: Math.round(x.b.sweatMlH), core_steady_c: r1(x.b.Teq) } } : {}),
   });
   return out;
 }
@@ -288,4 +289,4 @@ function live(req, ctx) {
     state };
 }
 
-module.exports = { recommend, live, findLocation, render, isoLocal, instantFor, localClock, addDays, ApiError, LOCATIONS, SCHEMA_VERSION, ENGINE_VERSION };
+module.exports = { recommend, toEngineUser, live, findLocation, render, isoLocal, instantFor, localClock, addDays, ApiError, LOCATIONS, SCHEMA_VERSION, ENGINE_VERSION };

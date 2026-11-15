@@ -9,8 +9,8 @@ export interface RecommendationRequest {
   location: { lat: number; lon: number };
   activity: { type: "run" | "walk"; planned_duration_s: number; planned_pace_s_per_km: number;
     date?: string; start_after?: string; start_before?: string };
-  athlete: { mass_kg?: number; height_m?: number; heat_acclimatised?: boolean; clothing?: string; hay_fever?: boolean };
-  include?: "hours"[];
+  athlete: { mass_kg?: number; height_m?: number; heat_acclimatised?: "yes" | "no" | "unknown" | boolean; clothing?: string; hay_fever?: boolean };
+  include?: ("hours" | "experimental")[];
   context?: "now" | "evening_before";   // since 1.1: evening_before enables evening-only tips
 }
 
@@ -57,7 +57,7 @@ export interface Recommendation {
   guidance: {
     intensity: "normal" | "easy";
     pace: { planned_s_per_km: number; advice: "as_planned" | "consider_shorter_or_easier" | "indoor" };
-    route: { id: string; name: string; exposure_lower_pct: number | null; compared_with: string | null } | null;
+    route: { id: string; name: string; compared_with: string | null } | null;
     start_heading_deg: number | null;
     start_heading_status: "into_wind" | "any" | "unknown" | "indoor";
     hydration: { advice: "drink_to_thirst" | "none"; carry_water: boolean };
@@ -71,8 +71,8 @@ export interface Recommendation {
   data: { engine_version: string; status: "ok" | "degraded" | "unavailable"; not_assessed: string[]; unassessed_hours: string[]; sources: (Source & { age_s: number | null })[] };
   air_today: { pm25_24h_mean_ugm3: number | null; pm10_24h_mean_ugm3: number | null; no2_24h_mean_ugm3: number | null; o3_max_8h_mean_ugm3: number | null;
     above_who_guideline: string[]; naqi_pm25_band: number | null };
-  /** Experimental model output: partner lens and research only, never runner screens. */
-  experimental: { heat_budget: null | { uncompensable_heat: boolean; minutes_to_39c: number | null; suggested_max_pace_s_per_km: number | null;
+  /** Research-only model output (only with include=experimental): partner lens, never runner screens. */
+  experimental?: { heat_budget: null | { uncompensable_heat: boolean; minutes_to_39c: number | null; suggested_max_pace_s_per_km: number | null;
     sweat_rate_ml_per_h: number; sweat_loss_ml: number; core_steady_c: number }; note: string };
 }
 

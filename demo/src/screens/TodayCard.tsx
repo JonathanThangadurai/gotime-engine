@@ -2,14 +2,9 @@ import type { TodayView } from "../engine/view";
 import { t } from "../copy";
 import { Icon } from "./icons";
 import { Timeline } from "./Timeline";
-import { useRun, type Clothing } from "../presenter/state";
-
-const KITS: Clothing[] = ["running_kit", "full_length_light", "full_length_cotton"];
 
 /** The GOTime module a partner embeds: label, decision, one subline, the window line, three rows, Why. */
-export function TodayCard({ view, onWhy, kitChoice }: { view: TodayView; onWhy: () => void; kitChoice?: boolean }) {
-  const { clothing, request } = useRun();
-  const kit = (request.value.athlete.clothing ?? "running_kit") as Clothing;
+export function TodayCard({ view, onWhy }: { view: TodayView; onWhy: () => void }) {
   const o = { action: view.action };
   return (
     <section class="gt gt-module" aria-labelledby="gt-headline" data-testid="today-card">
@@ -28,17 +23,6 @@ export function TodayCard({ view, onWhy, kitChoice }: { view: TodayView; onWhy: 
           <p class="tip-label">{t("TIP_LABEL")}</p>
           <p class="tip-text">{t(view.tip.code, view.tip.params)}</p>
         </div>
-      )}
-      {kitChoice && (
-        <fieldset class="q kit">
-          <legend>{t("KIT_LABEL")}</legend>
-          <div class="seg-row" role="radiogroup" aria-label={t("KIT_LABEL")}>
-            {KITS.map(k => (
-              <button type="button" role="radio" aria-checked={kit === k} key={k} class={kit === k ? "on" : ""} data-testid={`kit-${k}`}
-                onClick={() => { clothing.value = k; }}>{t(`KIT_${k}`)}</button>
-            ))}
-          </div>
-        </fieldset>
       )}
       <button class="row row-link" type="button" onClick={onWhy} data-testid="why-button">
         <span>{t("WHY_ROW")}</span><Icon name="chevron" />

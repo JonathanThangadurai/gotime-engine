@@ -84,6 +84,10 @@ python3 test_cv_exertion.py checks it. Not yet wired into run_window.py - do tha
   no Stafoggia/RR term (that stays in the Python population alert). Air: WHO 24-h means + max 8-h O3 (exceedance), NAQI
   PM2.5 on the 24-h mean, EU O3 180/240 hourly (information/alert); hourly values only rank hours. Pollen per taxon, 50 for
   grass only. Water: drink according to thirst. WBGT is checked against ECMWF thermofeel (api/test/fixtures).
+- Batch C (15 Nov 2026): heat_acclimatised yes|no|unknown, no city default (unknown = non-adapted bands). Windows score every
+  feasible interval of the planned duration; shorter only when none fits. experimental only with include=experimental;
+  /live out of pilot scope. Smoke days: indoor first + LEAST_BAD_WINDOW. Runner copy: "Below WHO guideline" (never clean/safe);
+  Why shows sources (Forecast / Your settings), methods sit in Numbers. Week view: no streak, rest days neutral.
 - prototype/gotime-watch.html is BUILT from prototype/template.html + api/engine.js + api/locations.js + api/conditions.js (python3 prototype/build.py).
   Never edit the built file.
 - Wind: AeroWise (separate private repo, Python, Benelux, cycling) gives headwind/gust/path/elevation every 200 m. Planned as a

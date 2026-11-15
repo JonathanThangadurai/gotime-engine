@@ -47,7 +47,11 @@ export function summarize(s: Session) {
   const a = s.answers, has = (k: string) => k in a;
   return {
     consent: a.consent === true,
-    decision_change: has("evening_plan") ? a.evening_plan === "window" : null,
+    // baseline (asked before any advice) vs the choice after the evening message; "not sure" on either side = no verdict
+    usual_time: has("usual_time") ? a.usual_time : null,
+    plan_after_message: has("plan_after_message") ? a.plan_after_message : null,
+    decision_change: has("usual_time") && has("plan_after_message") && a.usual_time !== "unsure" && a.plan_after_message !== "unsure"
+      ? a.plan_after_message !== a.usual_time : null,
     comprehension: has("comprehension") ? a.comprehension : null,
     usefulness_1_7: has("useful") ? a.useful : null,
     trust_1_7: has("trust") ? a.trust : null,

@@ -123,7 +123,6 @@ The run engine uses no epidemiological relative risk: the Stafoggia et al. (2023
 ### Adapting to place
 
 The same physics runs everywhere. Each location supplies:
-- whether residents are assumed heat-adapted by default (declared in `assumptions`);
 - local content (indoor options, drink advice, named routes);
 - its time zone (UTC offsets are computed per instant from the IANA zone).
 
@@ -142,10 +141,10 @@ Thresholds move with **heat acclimatisation**, not with nationality. A heat-adap
 - `summary`: the action, the level (green, yellow, red, black), the time window, the headline and a ready-made notification.
 - `guidance`: effort advice (no numbers), route, start heading, "drink according to thirst", warm-up and indoor alternatives.
 - `air_today`: the day's air with each guideline's averaging (24-h means, max 8-h ozone).
-- `experimental`: heat-budget estimates for partners and research; not for runner screens.
+- `experimental`: research-only heat-budget estimates, only with `include=experimental`; never for runner screens.
 - `reasons`: ranked, each with its evidence level.
 - `hours`: an optional hour-by-hour timeline.
-- `/live` (experimental): forecast-based alerts with vibration patterns; body estimates only under `experimental`.
+- `/live` (out of pilot scope, experimental): forecast-based alerts with vibration patterns; body estimates only under `experimental`.
 
 Every message is a stable code with parameters. Text is optional, so partners can use their own wording and language.
 

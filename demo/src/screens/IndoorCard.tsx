@@ -4,7 +4,7 @@ import { Icon } from "./icons";
 
 const ALT_ICON: Record<string, string> = { INDOOR_TREADMILL: "pace", INDOOR_CROSS_TRAINING: "athlete", TOMORROW_EARLY: "start" };
 
-/** Indoor branch of the Today card: the engine said "indoor". Options, never a dead end; the streak is kept. */
+/** Indoor branch of the Today card: the engine said "indoor". Options, never a dead end. On a smoke day, the least bad slot comes second. */
 export function IndoorCard({ rec, onWhy }: { rec: Recommendation; onWhy: () => void }) {
   const s = rec.summary, o = { action: s.action }, tip = rec.tips?.[0] ?? null;
   return (

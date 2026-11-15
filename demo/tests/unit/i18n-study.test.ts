@@ -68,13 +68,19 @@ describe("user test", () => {
   });
   it("answers are stored per participant and exported with the plan's summary fields", () => {
     clearAll();
-    answer("evening_plan", "window");
+    answer("usual_time", "evening");          // baseline, before any advice
+    answer("plan_after_message", "early");    // after the evening message
     answer("trust", 6);
     answer("notify", true);
     newParticipant();
-    answer("evening_plan", "usual");
+    answer("usual_time", "evening");
+    answer("plan_after_message", "evening");
     expect(sessions.value).toHaveLength(2);
-    expect(current.value!.answers).toEqual({ evening_plan: "usual" });
+    expect(current.value!.answers).toEqual({ usual_time: "evening", plan_after_message: "evening" });
+    expect(summarize(sessions.value[0])).toMatchObject({ usual_time: "evening", plan_after_message: "early" });
+    answer("plan_after_message", "unsure");
+    expect(summarize(current.value!).decision_change).toBeNull();          // "not sure" gives no verdict
+    answer("plan_after_message", "evening");
     expect(summarize(sessions.value[0])).toMatchObject({ consent: false, decision_change: true, trust_1_7: 6, would_allow_notifications: true, usefulness_1_7: null });
     expect(summarize(sessions.value[1]).decision_change).toBe(false);
     const out = JSON.parse(exportJson());
